@@ -1705,18 +1705,18 @@ async function handleCreateAccount(event) {
   dom.loginForm.classList.remove("hidden");
 }
 
-function handleForgotPassword(event) {
+async function handleForgotPassword(event) {
   event.preventDefault();
   const universal = dom.universalPasswordInput.value;
   const username = dom.resetUsername.value.trim().toLowerCase();
   const newPassword = dom.resetNewPassword.value;
   
-  if (universal !== UNIVERSAL_PASSWORD) {
+  if (universal !== LOGIN_PASSWORD) {
     dom.forgotPasswordError.textContent = "Incorrect universal password.";
     return;
   }
   
-  const accounts = getAccounts();
+  const accounts = await getAccounts();
   const userIndex = accounts.findIndex(a => a.username.toLowerCase() === username);
   
   if (userIndex === -1 && username !== LOGIN_USERNAME.toLowerCase()) {
@@ -1729,8 +1729,7 @@ function handleForgotPassword(event) {
     return;
   }
   
-  accounts[userIndex].password = newPassword;
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  await updateCloudUser(username, { password: newPassword });
   
   showToast("Password reset successfully!");
   dom.forgotPasswordForm.reset();
