@@ -1463,9 +1463,6 @@ async function handleLogin(event) {
       dom.loginError.textContent = "Your account is pending approval.";
       return;
     }
-      dom.loginError.textContent = "Account pending Admin approval.";
-      return;
-    }
 
     localStorage.setItem(AUTH_KEY, "yes");
     localStorage.setItem(AUTH_USER_KEY, username);
