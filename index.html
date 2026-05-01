@@ -1,0 +1,784 @@
+
+
+
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UNITY Dashboard App</title>
+    <link rel="stylesheet" href="styles.css?v=17">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      (function() {
+        const AUTH_KEY = "unity_v16_auth_persistent";
+        const auth = localStorage.getItem(AUTH_KEY);
+        if (auth === "yes") {
+          document.documentElement.classList.add("is-authenticated");
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <section class="login-screen" id="loginScreen">
+      <form class="login-card" id="loginForm">
+        <img src="assets/unity-logo.png" alt="UNITY E&C logo">
+        <label>
+          <span>Username</span>
+          <input id="loginUsername" type="text" autocomplete="username">
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="loginPassword" type="password" autocomplete="current-password">
+        </label>
+        <label class="checkbox-row">
+          <input id="rememberMe" type="checkbox">
+          <span>Remember Me</span>
+        </label>
+        <p id="loginError"></p>
+        <button class="primary-button full-button" type="submit">Login</button>
+        <div class="login-footer">
+          <button type="button" class="link-button" id="showCreateAccount">Create Account</button>
+          <button type="button" class="link-button" id="showForgotPassword">Forgot Password</button>
+        </div>
+      </form>
+
+      <form class="login-card hidden" id="createAccountForm">
+        <img src="assets/unity-logo.png" alt="UNITY E&C logo">
+        <label>
+          <span>Username</span>
+          <input id="createUsername" type="text" required>
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="createPassword" type="password" required>
+        </label>
+        <label>
+          <span>Nickname</span>
+          <input id="createNickname" type="text" placeholder="e.g. Nihad" required>
+        </label>
+        <label>
+          <span>Confirm Password</span>
+          <input id="confirmPassword" type="password" required>
+        </label>
+        <p id="createAccountError" class="error-text"></p>
+        <button class="primary-button full-button" type="submit">Create Account</button>
+        <button type="button" class="secondary-button full-button" id="backToLoginFromCreate">Back to Login</button>
+      </form>
+
+      <form class="login-card hidden" id="forgotPasswordForm">
+        <img src="assets/unity-logo.png" alt="UNITY E&C logo">
+        <p>Please enter the universal password to reset.</p>
+        <label>
+          <span>Universal Password</span>
+          <input id="universalPasswordInput" type="password" required>
+        </label>
+        <label>
+          <span>Username to Reset</span>
+          <input id="resetUsername" type="text" required>
+        </label>
+        <label>
+          <span>New Password</span>
+          <input id="resetNewPassword" type="password" required>
+        </label>
+        <p id="forgotPasswordError" class="error-text"></p>
+        <button class="primary-button full-button" type="submit">Reset Password</button>
+        <button type="button" class="secondary-button full-button" id="backToLoginFromForgot">Back to Login</button>
+      </form>
+    </section>
+
+    <div class="app-shell" id="appShell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <img id="brandLogo" src="assets/unity-logo.png" alt="UNITY E&C logo">
+          <div class="brand-text" hidden>
+            <h1 id="appTitle">UNITY Dashboard</h1>
+            <p id="appSubtitle">Engineering and Construction</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button class="secondary-button" id="settingsButton" type="button">Settings</button>
+          <button class="secondary-button" id="openClientsButton" type="button">Clients</button>
+          <button class="secondary-button" id="openRecordsButton" type="button">Records</button>
+          <button class="ghost-button" id="resetDataButton" type="button">Reset</button>
+          <button class="secondary-button" id="undoButton" type="button">Undo</button>
+          <button class="secondary-button" id="redoButton" type="button">Redo</button>
+          <button class="secondary-button" id="newDocumentButton" type="button">New</button>
+          <button class="primary-button" id="saveDocumentButton" type="button">Save</button>
+          <button class="secondary-button" id="printButton" type="button" hidden>Print/PDF</button>
+          <button class="secondary-button" id="exportButton" type="button" hidden>Excel</button>
+          <button class="secondary-button" id="editPreviewButton" type="button">Edit Preview</button>
+          <button class="secondary-button" id="themeToggleButton" type="button">Theme</button>
+          <button class="ghost-button" id="cancelPreviewButton" type="button" hidden>Cancel Edit</button>
+          <button class="primary-button" id="savePreviewButton" type="button" hidden>Save Preview</button>
+          <button class="ghost-button" id="logoutButton" type="button">Logout</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="editor-panel" aria-label="Document editor">
+          <div class="panel-heading">
+            <div>
+              <h2>Document</h2>
+              <p id="documentStatus">Ready</p>
+            </div>
+          </div>
+
+          <div class="form-grid document-fields">
+            <label>
+              <span>Type</span>
+              <select id="documentType">
+                <option>QUOTATION</option>
+                <option>INVOICE</option>
+                <option>CHANGE NOTE</option>
+              </select>
+            </label>
+            <label>
+              <span>Document No</span>
+              <input id="documentNumber" type="text" inputmode="numeric">
+            </label>
+            <label>
+              <span>Date Choice</span>
+              <select id="documentDateMode">
+                <option value="today">Today</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>
+              <span>Document Date</span>
+              <input id="documentDate" type="date">
+            </label>
+            <label>
+              <div class="label-with-action">
+                <span>Prepared By</span>
+                <button type="button" class="set-default-btn" data-setting="defaultPreparedBy" data-input="preparedBy" title="Set current as default">★</button>
+              </div>
+              <input id="preparedBy" type="text">
+            </label>
+            <label>
+              <span>Client</span>
+              <select id="clientSelect"></select>
+            </label>
+            <label>
+              <div class="label-with-action">
+                <span>Contact Person</span>
+                <button type="button" class="set-default-btn" data-setting="defaultContactPerson" data-input="contactPerson" title="Set current as default">★</button>
+              </div>
+              <input id="contactPerson" type="text">
+            </label>
+            <label>
+              <div class="label-with-action">
+                <span>Phone</span>
+                <button type="button" class="set-default-btn" data-setting="defaultPhone" data-input="phone" title="Set current as default">★</button>
+              </div>
+              <input id="phone" type="text">
+            </label>
+            <label id="poNumberField">
+              <span>PO No</span>
+              <input id="poNumber" type="text">
+            </label>
+            <label class="wide-field">
+              <span>Address</span>
+              <textarea id="clientAddress" rows="2"></textarea>
+            </label>
+            <label class="wide-field">
+              <span>Email / Tel / Fax</span>
+              <input id="clientEmail" type="text">
+            </label>
+            <label class="wide-field">
+              <span>RE</span>
+              <input id="referenceText" class="uppercase-input" type="text">
+            </label>
+          </div>
+
+            <div class="item-section">
+              <div class="section-line">
+                <h3>Items</h3>
+              <div class="item-actions">
+                <div class="description-formatbar" aria-label="Description formatting">
+                  <button class="format-button" id="descriptionBoldButton" type="button" title="Bold">B</button>
+                  <button class="format-button italic-label" id="descriptionItalicButton" type="button" title="Italic">I</button>
+                  <button class="format-button underline-label" id="descriptionUnderlineButton" type="button" title="Underline">U</button>
+                  <button class="format-button superscript-label" id="descriptionSuperscriptButton" type="button" title="Superscript">X<sup>2</sup></button>
+                </div>
+                <button class="secondary-button small-button" id="addItemButton" type="button">Add Row</button>
+              </div>
+              </div>
+            <div class="item-table-wrap">
+              <table class="item-table">
+                <thead>
+                  <tr>
+                    <th>S/N</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>UOM</th>
+                    <th>U/Rate</th>
+                    <th>Amount</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="itemRows"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="totals-panel">
+            <label id="adjustmentTypeGroup">
+              <span>Adjustment</span>
+              <select id="adjustmentType">
+                <option>GST</option>
+                <option>DISCOUNT</option>
+                <option>PREVIOUSLY PAID</option>
+                <option>NONE</option>
+              </select>
+            </label>
+            <label id="gstRateGroup" class="amount-group">
+              <span>GST Rate</span>
+              <input id="gstRate" class="amount-input" type="number" min="0" max="100" step="0.01">
+            </label>
+            <label id="adjustmentAmountGroup" class="amount-group">
+              <span>Amount</span>
+              <input id="adjustmentAmount" class="amount-input" type="number" min="0" step="0.01">
+            </label>
+            <div class="invoice-claim-panel" id="invoiceClaimPanel" hidden>
+              <label>
+                <span>Claim Label</span>
+                <input id="invoiceClaimLabelInput" type="text">
+              </label>
+              <label class="amount-group">
+                <span>Invoice No</span>
+                <input id="invoiceClaimNumber" class="amount-input" type="number" min="1" step="1">
+              </label>
+              <label class="amount-group">
+                <span>Claim Amount</span>
+                <input id="invoiceClaimAmount" class="amount-input" type="number" min="0" step="0.01">
+              </label>
+              <label class="amount-group">
+                <span>Contract Value</span>
+                <input id="contractValue" class="amount-input" type="number" min="0" step="0.01" readonly>
+              </label>
+              <label class="amount-group">
+                <span>Previously Paid</span>
+                <input id="previouslyPaid" class="amount-input" type="number" min="0" step="0.01">
+              </label>
+              <div class="invoice-balance-card">
+                <span>Remaining Balance</span>
+                <strong id="remainingBalanceValue">$0.00</strong>
+              </div>
+            </div>
+            <div class="summary-strip" id="summaryStrip">
+              <div id="summarySubtotalCard">
+                <span id="summarySubtotalLabel">Sub-total</span>
+                <strong id="subtotalValue">$0.00</strong>
+              </div>
+              <div id="summaryAdjustmentCard">
+                <span id="adjustmentLabel">GST</span>
+                <strong id="adjustmentValue">$0.00</strong>
+              </div>
+              <div id="summaryRemainingCard" hidden>
+                <span id="summaryRemainingLabel">Remaining Balance</span>
+                <strong id="summaryRemainingValue">$0.00</strong>
+              </div>
+              <div id="summaryTotalCard">
+                <span id="summaryTotalLabel">Total</span>
+                <strong id="totalValue">$0.00</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="preview-panel" aria-label="Quotation preview">
+          <div class="preview-toolbar">
+            <div>
+              <h2>Preview</h2>
+              <p id="previewHint">A4 view</p>
+            </div>
+          </div>
+          <div class="preview-formatbar" id="previewFormatbar" hidden>
+            <div class="format-group">
+              <button class="format-button" id="boldButton" type="button" title="Bold">B</button>
+              <button class="format-button italic-label" id="italicButton" type="button" title="Italic">I</button>
+              <button class="format-button underline-label" id="underlineButton" type="button" title="Underline">U</button>
+            </div>
+            <div class="format-group">
+              <select id="fontFamilySelect" title="Font family">
+                <option value="">Font</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Aptos, Arial, sans-serif">Aptos</option>
+                <option value="'Times New Roman', serif">Times</option>
+                <option value="'Courier New', monospace">Courier</option>
+              </select>
+              <select id="fontWeightSelect" title="Font weight">
+                <option value="">Weight</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="300">300</option>
+                <option value="400">400</option>
+                <option value="500">500</option>
+                <option value="600">600</option>
+                <option value="700">700</option>
+                <option value="800">800</option>
+                <option value="900">900</option>
+              </select>
+              <input id="fontSizeInput" type="number" min="6" max="72" step="1" title="Font size" placeholder="Size">
+              <input id="fontColorInput" type="color" title="Text color">
+            </div>
+            <div class="format-group">
+              <select id="textAlignSelect" title="Text alignment">
+                <option value="">Align</option>
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+                <option value="justify">Justify</option>
+              </select>
+              <input id="boxSpacingInput" class="narrow-input" type="number" min="-50" max="100" step="0.5" title="Text box spacing" placeholder="Spc">
+              <input id="letterSpacingInput" class="narrow-input" type="number" min="-50" max="50" step="0.5" title="Letter spacing" placeholder="Ltr">
+            </div>
+            <div class="format-group">
+              <input id="backgroundColorInput" type="color" title="Background color">
+              <button class="format-button" id="clearBackgroundButton" type="button" title="Clear background">BG</button>
+              <input id="boxWidthInput" type="number" min="10" max="1200" step="1" title="Box width" placeholder="W">
+              <input id="boxHeightInput" type="number" min="10" max="1200" step="1" title="Box height" placeholder="H">
+            </div>
+            <div class="format-group">
+              <input id="borderWidthInput" type="number" min="0" max="12" step="1" title="Border width" placeholder="Border">
+              <select id="borderStyleSelect" title="Border style">
+                <option value="solid">Solid</option>
+                <option value="double">Double</option>
+                <option value="dashed">Dashed</option>
+                <option value="dotted">Dotted</option>
+                <option value="none">None</option>
+              </select>
+              <select id="borderSideSelect" title="Border side">
+                <option value="all">All</option>
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+              <input id="borderColorInput" type="color" title="Border color">
+              <button class="format-button" id="clearBorderButton" type="button" title="Clear border">BR</button>
+            </div>
+            <div class="format-group">
+              <input id="boxXInput" type="number" min="-1200" max="1200" step="1" title="Box horizontal position" placeholder="X">
+              <input id="boxYInput" type="number" min="-1200" max="1200" step="1" title="Box vertical position" placeholder="Y">
+              <button class="secondary-button small-button" id="resetSelectedStyleButton" type="button">Reset</button>
+            </div>
+          </div>
+          <article class="paper" id="printArea">
+            <section class="paper-page" id="previewPrimaryPage">
+            <div class="paper-fit-content" id="previewFitContent">
+            <header class="paper-header" id="previewHeaderBlock">
+              <img class="paper-logo" id="paperLogo" src="assets/unity-logo.png" alt="UNITY E&C logo">
+              <div class="document-title" id="previewDocumentType">QUOTATION</div>
+              <img class="bizsafe" id="bizsafeLogo" src="assets/bizsafe.png" alt="bizSAFE level 3">
+            </header>
+            <section class="preview-details-grid">
+              <div class="preview-left-details">
+                <section class="company-row" id="previewCompanyBlock">
+                  <div>
+                    <strong id="previewCompanyName">UNITY ENGINEERING AND CONSTRUCTION PTE LTD</strong>
+                    <span id="previewCompanyAddress">92B Syed Alwi Road Singapore 207668</span>
+                    <span id="previewCompanyEmail">eMail: unityengltd19@gmail.com</span>
+                  </div>
+                </section>
+                <section class="client-row">
+                  <div id="previewClientBlock">
+                    <strong id="previewClientName"></strong>
+                    <span id="previewClientAddress"></span>
+                    <span id="previewClientEmail"></span>
+                    <span class="preview-re-line" id="previewReLine">
+                      <span class="edge-colon-label preview-re-label" id="previewReLabel">RE</span>
+                      <span class="preview-re-value" id="previewRe"></span>
+                    </span>
+                  </div>
+                </section>
+              </div>
+              <dl class="document-info-block" id="previewDocumentInfoBlock">
+                <div><dt class="edge-colon-label" id="previewDocNoLabel">Document No</dt><dd id="previewDocNo"></dd></div>
+                <div class="paper-po-row is-hidden" id="previewPoRow"><dt class="edge-colon-label" id="previewPoLabel">PO No</dt><dd id="previewPo"></dd></div>
+                <div><dt class="edge-colon-label" id="previewDateLabel">Document Date</dt><dd id="previewDate"></dd></div>
+                <div><dt class="edge-colon-label" id="previewPreparedByLabel">Prepared By</dt><dd id="previewPreparedBy"></dd></div>
+                <div><dt class="edge-colon-label" id="previewContactLabel">Contact person</dt><dd id="previewContact"></dd></div>
+                <div><dt class="edge-colon-label" id="previewPhoneLabel">H/P</dt><dd id="previewPhone"></dd></div>
+                <div><dt class="edge-colon-label" id="previewPageNoLabel">Page No</dt><dd id="previewPageNo">1 of 1</dd></div>
+                <div class="document-info-placeholder" id="previewPoPlaceholder" aria-hidden="true"><dt></dt><dd></dd></div>
+              </dl>
+            </section>
+            <table class="preview-items" id="previewItemsTable">
+              <thead>
+                <tr>
+                  <th id="previewSnHeader">S/N</th>
+                  <th id="previewDescriptionHeader">Description</th>
+                  <th id="previewQtyHeader">Qty</th>
+                  <th id="previewUomHeader">UOM</th>
+                  <th id="previewRateHeader">U/Rate</th>
+                  <th id="previewAmountHeader">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="previewItems"></tbody>
+            </table>
+            <section class="paper-totals" id="previewTotalsBlock">
+              <div class="paper-total-notes" id="previewTotalNotes">
+                <p class="invoice-note" id="previewInvoiceNote"></p>
+                <p id="amountWords"></p>
+              </div>
+              <dl>
+                <div id="previewSubtotalRow"><dt id="previewSubtotalLabel">SUB-TOTAL</dt><dd id="previewSubtotal">$0.00</dd></div>
+                <div id="previewAdjustmentRow"><dt id="previewAdjustmentLabel">GST</dt><dd id="previewAdjustment">$0.00</dd></div>
+                <div id="previewRemainingRow" hidden><dt id="previewRemainingLabel">Remaining Balance</dt><dd id="previewRemaining">$0.00</dd></div>
+                <div class="grand-total" id="previewTotalRow"><dt id="previewTotalLabel">TOTAL AMOUNT</dt><dd id="previewTotal">$0.00</dd></div>
+              </dl>
+            </section>
+            <section class="bank-details" id="bankDetails">
+              <strong id="previewBankHeading">PAY BY BANK TRANSFER</strong>
+              <span id="previewBankLineOne">ACCOUNT NUMBER: 663851756001 (OCBC)</span>
+              <span id="previewBankLineTwo">UEN NUMBER: 201901932D</span>
+            </section>
+            <footer class="paper-footer" id="previewFooterBlock">
+              <div>
+                <span id="previewFooterGreeting">Sincerely Yours,</span>
+                <img id="stampImage" src="assets/stamp-signature.png" alt="Company stamp and signature">
+                <strong id="previewFooterCompany">UNITY ENGINEERING AND CONSTRUCTION PTE LTD</strong>
+              </div>
+            </footer>
+            </div>
+            </section>
+            <div class="preview-continuation-pages" id="previewContinuationPages"></div>
+          </article>
+        </section>
+
+        <aside class="side-panel" id="toolsPanel" aria-label="Client and record tools" aria-hidden="true">
+          <div class="tools-panel-header">
+            <strong>Tools</strong>
+            <button class="icon-button" id="closeToolsButton" type="button" aria-label="Close tools">X</button>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Tools">
+            <button class="tab-button active" data-tab="clients" type="button">Clients</button>
+            <button class="tab-button" data-tab="records" type="button">Records</button>
+          </div>
+
+          <section class="tab-page active" id="clientsPage">
+            <div class="panel-heading compact">
+              <div>
+                <h2>Clients</h2>
+                <p id="clientCount"></p>
+              </div>
+              <button class="secondary-button small-button" id="newClientButton" type="button">Add New Client</button>
+            </div>
+            <input class="search-box" id="clientSearch" type="search" placeholder="Search client">
+            <div class="client-list" id="clientList"></div>
+            <form class="side-form" id="clientForm">
+              <h3>Add or Update Client</h3>
+              <label>
+                <span>Name</span>
+                <input id="clientNameInput" type="text" required>
+              </label>
+              <label>
+                <span>Address</span>
+                <textarea id="clientAddressInput" rows="3" required></textarea>
+              </label>
+              <label>
+                <span>Email / Tel</span>
+                <textarea id="clientEmailInput" rows="2" required></textarea>
+              </label>
+              <div class="inline-form-actions">
+                <button class="secondary-button small-button" id="addClientEmailButton" type="button">Add Email</button>
+                <span>Multiple emails save with | between them.</span>
+              </div>
+              <button class="primary-button full-button" type="submit">Save Client</button>
+            </form>
+          </section>
+
+          <section class="tab-page" id="recordsPage">
+            <div class="panel-heading compact">
+              <div>
+                <h2>Records</h2>
+                <div id="recordStats" class="record-stats-row"></div>
+                <p id="recordCount"></p>
+              </div>
+            </div>
+            <input class="search-box" id="recordSearch" type="search" placeholder="Search record, type, or document no">
+            <div class="record-list" id="recordList"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <div class="unlock-overlay" id="unlockOverlay" aria-hidden="true">
+      <form class="unlock-card" id="unlockForm">
+        <h2>Unlock Fields</h2>
+        <label>
+          <span>Password</span>
+          <input id="unlockPasswordInput" type="password" autocomplete="current-password">
+        </label>
+        <p id="unlockError"></p>
+        <div class="unlock-actions">
+          <button class="ghost-button" id="unlockCancelButton" type="button">Cancel</button>
+          <button class="primary-button" type="submit">Unlock</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="settings-overlay" id="settingsOverlay" aria-hidden="true">
+      <aside class="settings-drawer" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="settings-header">
+          <div>
+            <h2 id="settingsTitle">Settings</h2>
+          </div>
+          <button class="icon-button" id="closeSettingsButton" type="button" aria-label="Close settings">X</button>
+        </div>
+        <form class="settings-form" id="settingsForm">
+          <section class="settings-section">
+            <h3>App</h3>
+            <div class="settings-grid">
+              <label class="lock-toggle settings-lock-toggle">
+                <input id="lockToggle" type="checkbox">
+                <span>Header Lock</span>
+              </label>
+              <label hidden>
+                <span>App Title</span>
+                <input id="settingAppName" type="text">
+              </label>
+              <label hidden>
+                <span>Subtitle</span>
+                <input id="settingAppSubtitle" type="text">
+              </label>
+              <label>
+                <span>Default Prepared By</span>
+                <input id="settingDefaultPreparedBy" type="text">
+              </label>
+              <label>
+                <span>Default Contact</span>
+                <input id="settingDefaultContact" type="text">
+              </label>
+              <label>
+                <span>Default H/P</span>
+                <input id="settingDefaultPhone" type="text">
+              </label>
+              <label>
+                <span>Default GST Rate</span>
+                <input id="settingDefaultGstRate" type="number" min="0" max="100" step="0.01">
+              </label>
+              <label>
+                <span>Currency Symbol</span>
+                <input id="settingCurrencySymbol" type="text" maxlength="4">
+              </label>
+              <label>
+                <span>Next Document No</span>
+                <input id="settingNextDocumentNumber" type="text" inputmode="numeric">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Company</h3>
+            <div class="settings-grid">
+              <label class="wide-field">
+                <span>Company Name</span>
+                <input id="settingCompanyName" type="text">
+              </label>
+              <label class="wide-field">
+                <span>Company Address</span>
+                <textarea id="settingCompanyAddress" rows="2"></textarea>
+              </label>
+              <label class="wide-field">
+                <span>Company Email</span>
+                <input id="settingCompanyEmail" type="text">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Documents</h3>
+            <div class="settings-grid">
+              <label class="wide-field">
+                <span>Document Types</span>
+                <input id="settingDocumentTypes" type="text">
+              </label>
+              <label class="wide-field">
+                <span>Show PO No For</span>
+                <select id="settingPoDocumentTypes"></select>
+              </label>
+              <label class="wide-field">
+                <span>Units</span>
+                <input id="settingUomOptions" type="text">
+              </label>
+              <label class="wide-field">
+                <span>Adjustment Options</span>
+                <input id="settingAdjustmentTypes" type="text">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Save Paths</h3>
+            <div class="settings-grid">
+              <label class="wide-field">
+                <span>PDF Save Path</span>
+                <input id="settingPdfSavePath" type="text">
+              </label>
+              <label class="wide-field">
+                <span>Excel Save Path</span>
+                <input id="settingExcelSavePath" type="text">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Preview Template</h3>
+            <div class="settings-grid">
+              <label>
+                <span>Page Size</span>
+                <select id="settingPageSize">
+                  <option value="A4">A4</option>
+                  <option value="A3">A3</option>
+                  <option value="LETTER">Letter</option>
+                </select>
+              </label>
+              <label>
+                <span>Orientation</span>
+                <select id="settingPageOrientation">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </label>
+              <label class="checkbox-field wide-field">
+                <input id="settingCompressToFitPage" type="checkbox">
+                <span>Compress to fit in one page</span>
+              </label>
+            </div>
+            <section class="settings-section">
+              <h3>Profile Portability</h3>
+              <p class="settings-hint">Move your custom preview template and data to another browser or device.</p>
+              <div class="settings-row">
+                <button type="button" class="secondary-button" id="exportProfileButton">Export User Profile</button>
+                <button type="button" class="secondary-button" id="importProfileButton">Import User Profile</button>
+                <input type="file" id="profileImportInput" accept=".json" hidden>
+              </div>
+            </section>
+            
+            <div class="settings-actions inline-settings-actions">
+              <button class="secondary-button" id="settingsEditPreviewButton" type="button">Edit Preview</button>
+              <button class="ghost-button" id="settingsCancelPreviewButton" type="button" hidden>Cancel Edit</button>
+              <button class="primary-button" id="settingsSavePreviewButton" type="button" hidden>Save Preview</button>
+            </div>
+            
+            <section class="settings-section" id="adminUserManagement" hidden>
+              <h3>User Management (Admin)</h3>
+              <p class="settings-hint">Manage user accounts and reset passwords.</p>
+              <div class="admin-user-list" id="adminUserList">
+                <!-- User rows will be injected here -->
+              </div>
+            </section>
+          </section>
+
+          <section class="settings-section">
+            <h3>Labels</h3>
+            <div class="settings-grid">
+              <label>
+                <span>Document No</span>
+                <input id="settingDocumentNoLabel" type="text">
+              </label>
+              <label>
+                <span>Document Date</span>
+                <input id="settingDocumentDateLabel" type="text">
+              </label>
+              <label>
+                <span>Prepared By</span>
+                <input id="settingPreparedByLabel" type="text">
+              </label>
+              <label>
+                <span>Contact</span>
+                <input id="settingContactLabel" type="text">
+              </label>
+              <label>
+                <span>Phone</span>
+                <input id="settingPhoneLabel" type="text">
+              </label>
+              <label>
+                <span>Page No</span>
+                <input id="settingPageNoLabel" type="text">
+              </label>
+              <label>
+                <span>PO No</span>
+                <input id="settingPoLabel" type="text">
+              </label>
+              <label>
+                <span>RE</span>
+                <input id="settingReLabel" type="text">
+              </label>
+              <label>
+                <span>Email Prefix</span>
+                <select id="settingEmailPrefix">
+                  <option value="eMail :">eMail</option>
+                  <option value="Tel :">Tel</option>
+                  <option value="Fax :">Fax</option>
+                </select>
+              </label>
+              <label>
+                <span>Sub-total</span>
+                <input id="settingSubtotalLabel" type="text">
+              </label>
+              <label>
+                <span>Total</span>
+                <input id="settingTotalLabel" type="text">
+              </label>
+              <label>
+                <span>Footer Greeting</span>
+                <input id="settingFooterGreeting" type="text">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Bank</h3>
+            <div class="settings-grid">
+              <label class="wide-field">
+                <span>Heading</span>
+                <input id="settingBankHeading" type="text">
+              </label>
+              <label class="wide-field">
+                <span>Line 1</span>
+                <input id="settingBankLineOne" type="text">
+              </label>
+              <label class="wide-field">
+                <span>Line 2</span>
+                <input id="settingBankLineTwo" type="text">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Assets</h3>
+            <div class="settings-grid">
+              <label class="wide-field">
+                <span>Logo Path</span>
+                <input id="settingLogoUrl" type="text">
+              </label>
+              <label class="wide-field">
+                <span>bizSAFE Path</span>
+                <input id="settingBizsafeUrl" type="text">
+              </label>
+              <label class="wide-field">
+                <span>Stamp Path</span>
+                <input id="settingStampUrl" type="text">
+              </label>
+            </div>
+          </section>
+
+          <div class="settings-actions">
+            <button class="ghost-button" id="restoreSettingsButton" type="button">Restore Settings</button>
+            <button class="secondary-button" id="cancelSettingsButton" type="button">Cancel</button>
+            <button class="primary-button" type="submit">Save Settings</button>
+          </div>
+        </form>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js?v=17"></script>
+  </body>
+</html>

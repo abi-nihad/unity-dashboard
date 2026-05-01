@@ -1,0 +1,27 @@
+{
+  "name": "unity-dashboard-app",
+  "version": "1.0.0",
+  "description": "Unity Dashboard Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.unity.dashboard",
+    "mac": {
+      "category": "public.app-category.business",
+      "target": "dmg"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
