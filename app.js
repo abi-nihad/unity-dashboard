@@ -525,9 +525,11 @@ function promptInvoiceClaimNumber() {
 
 function init() {
   cacheDom();
+  bindEvents();
+  loadTheme();
+  renderLoginState();
+  
   loadState().then(() => {
-    loadTheme();
-    bindEvents();
     renderLoginState();
     refreshAll();
     setupCloudRealtime();
@@ -1445,12 +1447,12 @@ function renderLoginState() {
   }
 }
 
-function handleLogin(event) {
+async function handleLogin(event) {
   event.preventDefault();
   const username = dom.loginUsername.value.trim().toLowerCase();
   const password = dom.loginPassword.value;
   
-  const accounts = getAccounts();
+  const accounts = await getAccounts();
   const user = accounts.find(a => a.username.toLowerCase() === username && a.password === password);
   
   if (user || (username === LOGIN_USERNAME.toLowerCase() && password === LOGIN_PASSWORD)) {
@@ -1458,6 +1460,9 @@ function handleLogin(event) {
     const approved = isMaster || (user && user.isApproved);
     
     if (!approved) {
+      dom.loginError.textContent = "Your account is pending approval.";
+      return;
+    }
       dom.loginError.textContent = "Account pending Admin approval.";
       return;
     }
@@ -1660,7 +1665,7 @@ function getAccountsLocal() {
   }
 }
 
-function handleCreateAccount(event) {
+async function handleCreateAccount(event) {
   event.preventDefault();
   const username = dom.createUsername.value.trim();
   const password = dom.createPassword.value;
