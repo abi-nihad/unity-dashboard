@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.45";
+const APP_VERSION = "v21.46";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -626,10 +626,7 @@ function applyRemoteTemplate(data) {
   appState.previewOverrides = data.previewOverrides || appState.previewOverrides;
   appState.settings = { ...appState.settings, ...(data.settings || {}) };
   
-  if (data.records) {
-    appState.records = data.records;
-    renderRecords();
-  }
+  // Records are now PRIVATE per user device, so we don't sync them globally anymore
   
   // Persist locally so it survives refresh
   localStorage.setItem(getStorageKey(), JSON.stringify(appState));
@@ -925,6 +922,8 @@ function cacheDom() {
     "previewAdminGroup",
     "setGlobalDefaultButton",
     "themeToggleButton",
+    "setSaveFolderButton",
+    "saveFolderStatus",
     "recordStats",
     "toast",
   ].forEach((id) => {
@@ -1015,8 +1014,8 @@ function saveState(options = {}) {
              previewLayout: appState.previewLayout,
              previewStyles: appState.previewStyles,
              previewOverrides: appState.previewOverrides,
-             settings: appState.settings,
-             records: appState.records
+             settings: appState.settings
+             // records: appState.records // Removed global records sync
           },
           updated_at: new Date().toISOString()
         }).then(() => {
@@ -1031,8 +1030,8 @@ function saveState(options = {}) {
                    previewLayout: appState.previewLayout,
                    previewStyles: appState.previewStyles,
                    previewOverrides: appState.previewOverrides,
-                   settings: appState.settings,
-                   records: appState.records
+                   settings: appState.settings
+                   // records: appState.records // Removed global records broadcast
                  }
                }
              });
@@ -1324,6 +1323,7 @@ function bindEvents() {
   dom.cancelPreviewButton.addEventListener("click", cancelPreviewEdits);
   dom.savePreviewButton.addEventListener("click", savePreviewEdits);
   dom.logoutButton.addEventListener("click", handleLogoutAction);
+  dom.setSaveFolderButton.addEventListener("click", authorizeSaveFolder);
   dom.exportProfileButton.addEventListener("click", exportUserProfile);
   dom.importProfileButton.addEventListener("click", () => dom.profileImportInput.click());
   dom.profileImportInput.addEventListener("change", importUserProfile);
@@ -4110,7 +4110,7 @@ function recordCardElement(record) {
       <button class="secondary-button small-button" data-action="clone" type="button">Clone</button>
       ${recordFileControlHtml(record, "pdf")}
       ${recordFileControlHtml(record, "excel")}
-      ${isAdmin() ? '<button class="ghost-button small-button" data-action="delete" type="button">Delete</button>' : ''}
+      <button class="ghost-button small-button" data-action="delete" type="button">Delete</button>
     </div>
   `;
   card.querySelector('[data-action="open"]').addEventListener("click", () => loadRecord(record));
@@ -4870,34 +4870,60 @@ window.__unityMacSaveFinished = function unityMacSaveFinished(requestId, result)
 };
 
 async function saveBlobToPermittedFolder(fileType, blob, fileName) {
-  if (!configuredSavePath(fileType)) return "unavailable";
   if (!window.showDirectoryPicker || !window.indexedDB) return "unavailable";
   const label = fileTypeLabel(fileType);
   try {
-    let directoryHandle = await storedDirectoryHandle(fileType);
-    if (!directoryHandle) {
-      showToast(`Select ${label} save folder to allow permission.`);
-      directoryHandle = await window.showDirectoryPicker({
-        id: `unity-dashboard-${fileType}-folder`,
-        mode: "readwrite",
-      });
-      await saveStoredDirectoryHandle(fileType, directoryHandle);
-    }
+    let directoryHandle = await storedDirectoryHandle("global") || await storedDirectoryHandle(fileType);
+    if (!directoryHandle) return "unavailable"; // Fallback to picker if no authorized folder
+
     const allowed = await requestDirectoryWritePermission(directoryHandle);
     if (!allowed) {
+      await forgetStoredDirectoryHandle("global");
       await forgetStoredDirectoryHandle(fileType);
       showToast(`${label} folder permission was not allowed.`);
       return "cancelled";
     }
-    const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+    
+    // Create sub-folder if path is defined
+    const subPath = configuredSavePath(fileType);
+    let targetDir = directoryHandle;
+    if (subPath && subPath !== "/") {
+       // Simple path splitting logic
+       const parts = subPath.split("/").filter(Boolean);
+       for (const part of parts) {
+         targetDir = await targetDir.getDirectoryHandle(part, { create: true });
+       }
+    }
+
+    const fileHandle = await targetDir.getFileHandle(fileName, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(blob);
     await writable.close();
     return "saved";
   } catch (error) {
-    if (error?.name === "AbortError") return "cancelled";
-    await forgetStoredDirectoryHandle(fileType);
+    console.error("Local FS Save Error:", error);
     return "unavailable";
+  }
+}
+
+async function authorizeSaveFolder() {
+  if (!window.showDirectoryPicker) {
+    showToast("File System Access is not supported in this browser.");
+    return;
+  }
+  try {
+    const handle = await window.showDirectoryPicker({
+      id: "unity-dashboard-global-folder",
+      mode: "readwrite",
+    });
+    await saveStoredDirectoryHandle("global", handle);
+    if (dom.saveFolderStatus) dom.saveFolderStatus.textContent = "Authorized: " + handle.name;
+    showToast("Save folder authorized successfully!");
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error("Folder Auth Error:", err);
+      showToast("Could not authorize folder.");
+    }
   }
 }
 
