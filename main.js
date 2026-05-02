@@ -32,7 +32,7 @@ ipcMain.handle('save-file', async (event, options) => {
     return { cancelled: false, path: path.dirname(filePath) };
   } catch (err) {
     console.error('Save error:', err);
-    throw err;
+    return { cancelled: true, error: err.message };
   }
 });
 

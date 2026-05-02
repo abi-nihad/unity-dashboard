@@ -203,7 +203,7 @@ html.is-authenticated .app-shell {
 .preview-toolbar h2 {
   margin: 0;
   font-size: 14px;
-  color: var(--text-dim);
+  color: var(--muted);
 }
 
 .user-row-actions {

@@ -1119,9 +1119,10 @@ function saveState(options = {}) {
   } catch (err) {
     console.error("Storage error:", err);
     if (err.name === "QuotaExceededError") {
-      showToast("Browser storage full! Delete old records or clear browser data.");
+      showToast("Browser storage full! Delete old records or clear browser data.", true);
     } else {
-      throw err;
+      console.error("Non-quota storage error:", err);
+      showToast("Storage error: " + (err.message || "Unknown error"), true);
     }
   }
   
@@ -1364,93 +1365,101 @@ function cleanList(value, fallback) {
 }
 
 function bindEvents() {
-  dom.settingsButton.addEventListener("click", openSettings);
-  dom.adminPanelButton.addEventListener("click", openAdminPanel);
-  dom.closeAdminPanelButton.addEventListener("click", closeAdminPanel);
-  dom.adminPanelOverlay.addEventListener("click", (event) => {
+  if (dom.settingsButton) dom.settingsButton.addEventListener("click", openSettings);
+  if (dom.adminPanelButton) dom.adminPanelButton.addEventListener("click", openAdminPanel);
+  if (dom.closeAdminPanelButton) dom.closeAdminPanelButton.addEventListener("click", closeAdminPanel);
+  if (dom.adminPanelOverlay) dom.adminPanelOverlay.addEventListener("click", (event) => {
     if (event.target === dom.adminPanelOverlay) closeAdminPanel();
   });
-  dom.openToolsButton.addEventListener("click", () => openToolsPanel("records"));
-  dom.closeToolsButton.addEventListener("click", closeToolsPanel);
-  dom.closeSettingsButton.addEventListener("click", closeSettings);
-  dom.cancelSettingsButton.addEventListener("click", closeSettings);
-  dom.unlockForm.addEventListener("submit", handleUnlockSubmit);
-  dom.unlockCancelButton.addEventListener("click", closeUnlockDialog);
-  dom.unlockOverlay.addEventListener("click", (event) => {
+  if (dom.openToolsButton) dom.openToolsButton.addEventListener("click", () => openToolsPanel("records"));
+  if (dom.closeToolsButton) dom.closeToolsButton.addEventListener("click", closeToolsPanel);
+  if (dom.closeSettingsButton) dom.closeSettingsButton.addEventListener("click", closeSettings);
+  if (dom.cancelSettingsButton) dom.cancelSettingsButton.addEventListener("click", closeSettings);
+  if (dom.unlockForm) dom.unlockForm.addEventListener("submit", handleUnlockSubmit);
+  if (dom.unlockCancelButton) dom.unlockCancelButton.addEventListener("click", closeUnlockDialog);
+  if (dom.unlockOverlay) dom.unlockOverlay.addEventListener("click", (event) => {
     if (event.target === dom.unlockOverlay) closeUnlockDialog();
   });
-  dom.settingsOverlay.addEventListener("click", (event) => {
+  if (dom.settingsOverlay) dom.settingsOverlay.addEventListener("click", (event) => {
     if (event.target === dom.settingsOverlay) closeSettings();
   });
-  dom.settingsForm.addEventListener("submit", saveSettings);
-  dom.restoreSettingsButton.addEventListener("click", restoreSettings);
-  dom.newDocumentButton.addEventListener("click", saveDocumentRecord);
-  dom.saveDocumentButton.addEventListener("click", saveDocumentRecord);
-  dom.printButton.addEventListener("click", printPdf);
-  dom.exportButton.addEventListener("click", exportExcel);
-  dom.editPreviewButton.addEventListener("click", togglePreviewEditMode);
-  dom.cancelPreviewButton.addEventListener("click", cancelPreviewEdits);
-  dom.savePreviewButton.addEventListener("click", savePreviewEdits);
-  dom.logoutButton.addEventListener("click", handleLogoutAction);
-  dom.setSaveFolderButton.addEventListener("click", authorizeSaveFolder);
-  dom.togglePasswordChange.addEventListener("click", () => {
+  if (dom.settingsForm) dom.settingsForm.addEventListener("submit", saveSettings);
+  if (dom.restoreSettingsButton) dom.restoreSettingsButton.addEventListener("click", restoreSettings);
+  if (dom.newDocumentButton) dom.newDocumentButton.addEventListener("click", saveDocumentRecord);
+  if (dom.saveDocumentButton) dom.saveDocumentButton.addEventListener("click", saveDocumentRecord);
+  if (dom.printButton) dom.printButton.addEventListener("click", printPdf);
+  if (dom.exportButton) dom.exportButton.addEventListener("click", exportExcel);
+  if (dom.editPreviewButton) dom.editPreviewButton.addEventListener("click", togglePreviewEditMode);
+  if (dom.cancelPreviewButton) dom.cancelPreviewButton.addEventListener("click", cancelPreviewEdits);
+  if (dom.savePreviewButton) dom.savePreviewButton.addEventListener("click", savePreviewEdits);
+  if (dom.logoutButton) dom.logoutButton.addEventListener("click", handleLogoutAction);
+  if (dom.setSaveFolderButton) dom.setSaveFolderButton.addEventListener("click", authorizeSaveFolder);
+  if (dom.togglePasswordChange) dom.togglePasswordChange.addEventListener("click", () => {
     const isHidden = dom.passwordFields.hidden;
     dom.passwordFields.hidden = !isHidden;
-    dom.togglePasswordChange.innerHTML = isHidden 
-      ? '<span class="material-symbols-rounded" style="font-size: 18px;">close</span> Cancel Change'
-      : '<span class="material-symbols-rounded" style="font-size: 18px;">lock_reset</span> Change Password';
+    dom.togglePasswordChange.textContent = "";
+    const span = document.createElement("span");
+    span.className = "material-symbols-rounded";
+    span.style.fontSize = "18px";
+    span.textContent = isHidden ? "close" : "lock_reset";
+    dom.togglePasswordChange.appendChild(span);
+    dom.togglePasswordChange.appendChild(document.createTextNode(isHidden ? " Cancel Change" : " Change Password"));
   });
-  dom.exportProfileButton.addEventListener("click", exportUserProfile);
-  dom.importProfileButton.addEventListener("click", () => dom.profileImportInput.click());
-  dom.profileImportInput.addEventListener("change", importUserProfile);
+  if (dom.exportProfileButton) dom.exportProfileButton.addEventListener("click", exportUserProfile);
+  if (dom.importProfileButton) dom.importProfileButton.addEventListener("click", () => {
+    if (dom.profileImportInput) dom.profileImportInput.click();
+  });
+  if (dom.profileImportInput) dom.profileImportInput.addEventListener("change", importUserProfile);
   
   document.querySelectorAll(".set-default-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const settingKey = btn.dataset.setting;
       const inputId = btn.dataset.input;
-      const value = dom[inputId].value.trim();
-      if (value) {
-        appState.settings[settingKey] = value;
-        saveState();
-        showToast(`Default ${settingKey.replace("default", "")} saved!`);
-        btn.classList.add("active");
-        setTimeout(() => btn.classList.remove("active"), 1000);
+      if (dom[inputId]) {
+        const value = dom[inputId].value.trim();
+        if (value) {
+          appState.settings[settingKey] = value;
+          saveState();
+          showToast(`Default ${settingKey.replace("default", "")} saved!`);
+          btn.classList.add("active");
+          setTimeout(() => btn.classList.remove("active"), 1000);
+        }
       }
     });
   });
   
-  dom.settingsEditPreviewButton.addEventListener("click", togglePreviewEditMode);
-  dom.settingsCancelPreviewButton.addEventListener("click", cancelPreviewEdits);
-  dom.settingsSavePreviewButton.addEventListener("click", savePreviewEdits);
-  dom.printArea.addEventListener("input", handlePreviewInput);
-  dom.printArea.addEventListener("blur", handlePreviewBlur, true);
-  dom.printArea.addEventListener("focusin", handlePreviewFocusIn);
-  dom.printArea.addEventListener("pointerdown", handlePreviewPointerDown);
+  if (dom.settingsEditPreviewButton) dom.settingsEditPreviewButton.addEventListener("click", togglePreviewEditMode);
+  if (dom.settingsCancelPreviewButton) dom.settingsCancelPreviewButton.addEventListener("click", cancelPreviewEdits);
+  if (dom.settingsSavePreviewButton) dom.settingsSavePreviewButton.addEventListener("click", savePreviewEdits);
+  if (dom.printArea) dom.printArea.addEventListener("input", handlePreviewInput);
+  if (dom.printArea) dom.printArea.addEventListener("blur", handlePreviewBlur, true);
+  if (dom.printArea) dom.printArea.addEventListener("focusin", handlePreviewFocusIn);
+  if (dom.printArea) dom.printArea.addEventListener("pointerdown", handlePreviewPointerDown);
   
   // Login Screen Events
-  dom.showCreateAccount.addEventListener("click", () => {
-    dom.loginForm.classList.add("hidden");
-    dom.createAccountForm.classList.remove("hidden");
+  if (dom.showCreateAccount) dom.showCreateAccount.addEventListener("click", () => {
+    if (dom.loginForm) dom.loginForm.classList.add("hidden");
+    if (dom.createAccountForm) dom.createAccountForm.classList.remove("hidden");
   });
-  dom.showForgotPassword.addEventListener("click", () => {
-    dom.loginForm.classList.add("hidden");
-    dom.forgotPasswordForm.classList.remove("hidden");
+  if (dom.showForgotPassword) dom.showForgotPassword.addEventListener("click", () => {
+    if (dom.loginForm) dom.loginForm.classList.add("hidden");
+    if (dom.forgotPasswordForm) dom.forgotPasswordForm.classList.remove("hidden");
   });
-  dom.backToLoginFromCreate.addEventListener("click", () => {
-    dom.createAccountForm.classList.add("hidden");
-    dom.loginForm.classList.remove("hidden");
+  if (dom.backToLoginFromCreate) dom.backToLoginFromCreate.addEventListener("click", () => {
+    if (dom.createAccountForm) dom.createAccountForm.classList.add("hidden");
+    if (dom.loginForm) dom.loginForm.classList.remove("hidden");
   });
-  dom.backToLoginFromForgot.addEventListener("click", () => {
-    dom.forgotPasswordForm.classList.add("hidden");
-    dom.loginForm.classList.remove("hidden");
+  if (dom.backToLoginFromForgot) dom.backToLoginFromForgot.addEventListener("click", () => {
+    if (dom.forgotPasswordForm) dom.forgotPasswordForm.classList.add("hidden");
+    if (dom.loginForm) dom.loginForm.classList.remove("hidden");
   });
-  dom.createAccountForm.addEventListener("submit", handleCreateAccount);
-  dom.forgotPasswordForm.addEventListener("submit", handleForgotPassword);
-  dom.loginForm.addEventListener("submit", handleLogin);  
+  if (dom.createAccountForm) dom.createAccountForm.addEventListener("submit", handleCreateAccount);
+  if (dom.forgotPasswordForm) dom.forgotPasswordForm.addEventListener("submit", handleForgotPassword);
+  if (dom.loginForm) dom.loginForm.addEventListener("submit", handleLogin);  
   bindDescriptionFormatControls();
   bindPreviewFormatControls();
   
-  dom.documentNumber.addEventListener("change", () => {
+  if (dom.documentNumber) dom.documentNumber.addEventListener("change", () => {
     const val = dom.documentNumber.value.trim();
     const num = Number(val);
     if (!isNaN(num) && val !== "") {
@@ -1891,7 +1900,7 @@ function renderAdminUsers() {
     `).join("");
   }).catch(err => {
     console.error("Error fetching accounts:", err);
-    dom.adminUserList.innerHTML = `<p class="error-text">Failed to load users: ${err.message}</p>`;
+    dom.adminUserList.innerHTML = `<p class="error-text">Failed to load users: ${escapeHtml(err.message || "Unknown error")}</p>`;
   });
 }
 
