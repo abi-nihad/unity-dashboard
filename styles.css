@@ -2195,6 +2195,8 @@ function updateRecordStats(records) {
     overflow: visible !important;
     box-shadow: none !important;
     background: #fff !important;
+    font-size: 0 !important; /* Eliminate whitespace between pages */
+    line-height: 0 !important;
   }
 
   .paper-page {
@@ -2209,8 +2211,10 @@ function updateRecordStats(records) {
     box-sizing: border-box;
     overflow: hidden !important;
     box-shadow: none !important;
-    break-after: auto !important;
-    page-break-after: auto !important;
+    font-size: 12px !important; /* Restore font size inside page */
+    line-height: 1.4 !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
   .paper-page:not(:last-child) {
