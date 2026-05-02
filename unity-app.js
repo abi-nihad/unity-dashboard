@@ -1521,7 +1521,17 @@ async function handleLogin(event) {
     
     loadState();
     if (isMaster) {
-      // Master admin nickname
+      // Ensure master exists in cloud for management visibility
+      if (unityDb && !user) {
+         unityDb.from('profiles').insert([{ 
+           username: LOGIN_USERNAME.toLowerCase(), 
+           password: LOGIN_PASSWORD, 
+           nickname: "Admin",
+           isApproved: true, 
+           isAdmin: true,
+           createdAt: new Date().toISOString()
+         }]).then(() => console.log("Master admin auto-registered in cloud."));
+      }
       appState.document.preparedBy = appState.document.preparedBy || "Nihad";
     } else if (user && user.nickname) {
       appState.document.preparedBy = user.nickname;
@@ -1606,13 +1616,24 @@ function isAdmin() {
 }
 
 function renderAdminUsers() {
+  console.log("Rendering Admin Users...");
   getAccounts().then(accounts => {
-    if (accounts.length === 0) {
-      dom.adminUserList.innerHTML = `<p class="settings-hint">No other users found.</p>`;
+    console.log("Accounts received from sync:", accounts);
+    if (!accounts || accounts.length === 0) {
+      dom.adminUserList.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+          <p class="settings-hint">No other users found in cloud.</p>
+          <button class="secondary-button small-button" onclick="renderAdminUsers()">Refresh List</button>
+        </div>
+      `;
       return;
     }
     
-    dom.adminUserList.innerHTML = accounts.map(user => `
+    dom.adminUserList.innerHTML = `
+      <div style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
+        <button class="ghost-button small-button" onclick="renderAdminUsers()">↻ Refresh</button>
+      </div>
+    ` + accounts.map(user => `
       <div class="admin-user-row">
         <div class="user-row-info">
           <strong>${escapeHtml(user.nickname || user.username)}</strong>
@@ -1633,6 +1654,9 @@ function renderAdminUsers() {
         </div>
       </div>
     `).join("");
+  }).catch(err => {
+    console.error("Error fetching accounts:", err);
+    dom.adminUserList.innerHTML = `<p class="error-text">Failed to load users: ${err.message}</p>`;
   });
 }
 
