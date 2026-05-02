@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.42";
+const APP_VERSION = "v21.43";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -574,7 +574,7 @@ function init() {
     window.addEventListener("resize", schedulePreviewFitScale);
     window.addEventListener("focus", () => {
        console.log("App focused - checking for template updates...");
-       loadState().then(() => refreshAll());
+       syncCloudTemplateOnly();
     });
     console.log("Init complete.");
   } catch (err) {
@@ -637,6 +637,23 @@ function applyRemoteTemplate(data) {
   
   refreshAll();
   showToast("Cloud sync: Template updated from Admin.");
+}
+
+async function syncCloudTemplateOnly() {
+  if (!unityDb) return;
+  try {
+    const { data, error } = await unityDb
+      .from('global_config')
+      .select('data')
+      .eq('key', 'app_state')
+      .maybeSingle();
+      
+    if (data && data.data) {
+      applyRemoteTemplate(data.data);
+    }
+  } catch (err) {
+    console.error("Cloud template sync failed:", err);
+  }
 }
 
 function cacheDom() {
@@ -4190,7 +4207,7 @@ function createInvoiceFromRecord(record) {
 function deleteRecord(record) {
   const ok = window.confirm(`Delete record "${record.documentNumber}"?`);
   if (!ok) return;
-  appState.records = appState.records.filter((item) => item !== record);
+  appState.records = appState.records.filter((item) => item.documentNumber !== record.documentNumber);
   saveState();
   renderRecords();
   showToast("Record deleted.");
