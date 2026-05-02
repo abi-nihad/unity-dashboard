@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.51";
+const APP_VERSION = "v21.53";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -936,7 +936,8 @@ function cacheDom() {
 }
 
 function getStorageKey() {
-  return STORAGE_KEY;
+  const user = localStorage.getItem(AUTH_USER_KEY) || "guest";
+  return `${STORAGE_KEY}-${user}`;
 }
 
 function getUserPrefsKey() {
@@ -1613,11 +1614,27 @@ function renderLoginState() {
       dom.appVersion.classList.toggle("hidden", !admin);
       dom.appVersion.textContent = APP_VERSION;
     }
-    dom.adminPanelButton.classList.toggle("hidden", !admin);
-    dom.editPreviewButton.classList.toggle("hidden", !admin);
-    dom.settingsEditPreviewButton.classList.toggle("hidden", !admin);
+    const adminDisplay = admin ? "" : "none";
+    if (dom.adminPanelButton) dom.adminPanelButton.style.display = admin ? "inline-flex" : "none";
+    if (dom.editPreviewButton) dom.editPreviewButton.style.display = admin ? "inline-flex" : "none";
+    
+    // Hard-hide or show administrative sections in settings
+    [
+      "settingsSectionCompany",
+      "settingsSectionDocuments",
+      "settingsSectionAppearance",
+      "settingsSectionSavePaths",
+      "settingsSectionPortability",
+      "settingsSectionPreviewActions",
+      "settingsSectionLabels",
+      "settingNextDocumentNumberGroup"
+    ].forEach(id => {
+      if (dom[id]) dom[id].style.display = adminDisplay;
+    });
+    
+    if (dom.settingsEditPreviewButton) dom.settingsEditPreviewButton.style.display = adminDisplay;
     document.querySelectorAll(".set-default-btn").forEach(btn => {
-      btn.classList.toggle("hidden", !admin);
+      btn.style.display = adminDisplay;
     });
   }
 }
@@ -4391,6 +4408,14 @@ async function saveDocumentRecord() {
     }
     
     newDocument({ silent: true });
+    
+    // Increment global next document number
+    const currentNum = Number(appState.settings.nextDocumentNumber);
+    if (!isNaN(currentNum)) {
+      appState.settings.nextDocumentNumber = String(currentNum + 1);
+      saveState({ force: true });
+    }
+    
     showToast("Record, PDF, and Excel saved. New document ready.");
   } catch (err) {
     console.error("Save failed:", err);
@@ -4438,29 +4463,14 @@ function newDocument(options = {}) {
 
 function nextDocumentNumber() {
   const currentYearStr = String(new Date().getFullYear());
-  
-  let maxForCurrentYear = 0;
-  for (const record of appState.records) {
-    const numStr = String(record.documentNumber || "");
-    if (numStr.startsWith(currentYearStr) && numStr.length === 8) {
-      const num = Number(numStr);
-      if (num > maxForCurrentYear) maxForCurrentYear = num;
-    }
-  }
-
-  let nextNum;
-  if (maxForCurrentYear > 0) {
-    nextNum = maxForCurrentYear + 1;
-  } else {
-    nextNum = Number(`${currentYearStr}0001`);
-  }
-
   const manualNext = Number(appState.settings.nextDocumentNumber);
-  if (manualNext && String(manualNext).startsWith(currentYearStr) && manualNext > nextNum) {
-    nextNum = manualNext;
+  
+  if (manualNext && String(manualNext).startsWith(currentYearStr)) {
+    return manualNext;
   }
   
-  return nextNum;
+  // Fallback to year + 0001
+  return Number(`${currentYearStr}0001`);
 }
 
 function persistDocumentDefaults() {
@@ -4719,7 +4729,7 @@ function saveSettings(event) {
     }
   });
   appState.settings = settings;
-  saveState();
+  saveState({ force: true });
   refreshAll();
   closeSettings();
   showToast("Settings saved.");
@@ -4732,7 +4742,7 @@ function restoreSettings() {
   if (!appState.settings.documentTypes.includes(appState.document.type)) {
     appState.settings.documentTypes.push(appState.document.type);
   }
-  saveState();
+  saveState({ force: true });
   syncSettingsFields();
   refreshAll();
   showToast("Settings restored.");
