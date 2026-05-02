@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.57";
+const APP_VERSION = "v21.58";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1621,8 +1621,6 @@ function renderLoginState() {
       "adminPanelButton",
       "editPreviewButton",
       "settingsEditPreviewButton",
-      "settingsSectionCompany",
-      "settingsSectionDocuments",
       "settingsSectionAppearance",
       "settingsSectionSavePaths",
       "settingsSectionPortability",
@@ -1635,7 +1633,6 @@ function renderLoginState() {
       const el = document.getElementById(id);
       if (el) {
         el.classList.toggle("hidden", !admin);
-        // Also force style.display just in case
         if (!admin) el.style.setProperty("display", "none", "important");
         else el.style.removeProperty("display");
       }
