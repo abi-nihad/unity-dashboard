@@ -594,12 +594,9 @@ function setupCloudRealtime() {
 
 function cacheDom() {
   [
-    "resetDataButton",
-    "undoButton",
-    "redoButton",
     "settingsButton",
-    "openClientsButton",
-    "openRecordsButton",
+    "adminPanelButton",
+    "openToolsButton",
     "closeToolsButton",
     "closeSettingsButton",
     "cancelSettingsButton",
@@ -611,6 +608,7 @@ function cacheDom() {
     "editPreviewButton",
     "cancelPreviewButton",
     "savePreviewButton",
+    "logoutButton",
     "settingsEditPreviewButton",
     "settingsCancelPreviewButton",
     "settingsSavePreviewButton",
@@ -1189,8 +1187,13 @@ function cleanList(value, fallback) {
 
 function bindEvents() {
   dom.settingsButton.addEventListener("click", openSettings);
-  dom.openClientsButton.addEventListener("click", () => openToolsPanel("clients"));
-  dom.openRecordsButton.addEventListener("click", () => openToolsPanel("records"));
+  dom.adminPanelButton.addEventListener("click", () => {
+    openSettings();
+    setTimeout(() => {
+      dom.adminUserManagement.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  });
+  dom.openToolsButton.addEventListener("click", () => openToolsPanel("records"));
   dom.closeToolsButton.addEventListener("click", closeToolsPanel);
   dom.closeSettingsButton.addEventListener("click", closeSettings);
   dom.cancelSettingsButton.addEventListener("click", closeSettings);
@@ -1204,9 +1207,6 @@ function bindEvents() {
   });
   dom.settingsForm.addEventListener("submit", saveSettings);
   dom.restoreSettingsButton.addEventListener("click", restoreSettings);
-  dom.resetDataButton.addEventListener("click", resetData);
-  dom.undoButton.addEventListener("click", undoDocument);
-  dom.redoButton.addEventListener("click", redoDocument);
   dom.newDocumentButton.addEventListener("click", newDocument);
   dom.saveDocumentButton.addEventListener("click", saveDocumentRecord);
   dom.printButton.addEventListener("click", printPdf);
@@ -1215,7 +1215,6 @@ function bindEvents() {
   dom.cancelPreviewButton.addEventListener("click", cancelPreviewEdits);
   dom.savePreviewButton.addEventListener("click", savePreviewEdits);
   dom.logoutButton.addEventListener("click", handleLogoutAction);
-  dom.themeToggleButton.addEventListener("click", toggleTheme);
   dom.exportProfileButton.addEventListener("click", exportUserProfile);
   dom.importProfileButton.addEventListener("click", () => dom.profileImportInput.click());
   dom.profileImportInput.addEventListener("change", importUserProfile);
@@ -1478,6 +1477,7 @@ function renderLoginState() {
   } else {
     // Check permissions
     const admin = isAdmin();
+    dom.adminPanelButton.classList.toggle("hidden", !admin);
     dom.editPreviewButton.classList.toggle("hidden", !admin);
     dom.settingsEditPreviewButton.classList.toggle("hidden", !admin);
     document.querySelectorAll(".set-default-btn").forEach(btn => {
