@@ -18,6 +18,11 @@
   --paper-margin-top: 42px;
   --paper-margin-side: 60px;
   --paper-margin-bottom: 60px;
+  --paper-print-width: 210mm;
+  --paper-print-height: 297mm;
+  --paper-print-margin-top: 11.1mm;
+  --paper-print-margin-side: 15.9mm;
+  --paper-print-margin-bottom: 12mm;
 }
 
 [data-theme="dark"] {
@@ -31,8 +36,6 @@
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   --primary: #22d3ee;
   --primary-strong: #67e8f9;
-}
-  --paper-print-margin-bottom: 12mm;
 }
 
 body {

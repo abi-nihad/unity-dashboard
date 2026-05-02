@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.55";
+const APP_VERSION = "v21.56";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1633,11 +1633,18 @@ function renderLoginState() {
     
     adminIds.forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.classList.toggle("hidden", !admin);
+      if (el) {
+        el.classList.toggle("hidden", !admin);
+        // Also force style.display just in case
+        if (!admin) el.style.setProperty("display", "none", "important");
+        else el.style.removeProperty("display");
+      }
     });
 
     document.querySelectorAll(".set-default-btn").forEach(btn => {
       btn.classList.toggle("hidden", !admin);
+      if (!admin) btn.style.setProperty("display", "none", "important");
+      else btn.style.removeProperty("display");
     });
   }
 }
@@ -3629,19 +3636,18 @@ function placeTotalsAfterFilledRows(pages, metrics) {
     if (lastPage.rows.length > 1) {
       const lastItem = lastPage.rows.pop();
       const lastHeight = lastPage.heights.pop();
-      const nextStartIndex = fitted.reduce((total, page) => total + page.rows.length, 0);
+      const nextStartIndex = lastPage.startIndex + lastPage.rows.length;
       fitted.push({ rows: [lastItem], heights: [lastHeight], startIndex: nextStartIndex });
-    } else if (fitted.length > 1) {
-      // If the last page only has one row, move that entire row to the next page
-      const movedPage = fitted.pop();
-      fitted.push({ rows: movedPage.rows, heights: movedPage.heights, startIndex: movedPage.startIndex });
     } else {
-      // Single page document, but totals don't fit. Force break even with one row.
-      const nextStartIndex = fitted.reduce((total, page) => total + page.rows.length, 0);
-      fitted.push({ rows: [], heights: [], startIndex: nextStartIndex });
+      // If totals don't fit and we only have one row, we HAVE to push the totals to the next page.
+      // But we should try to move the last row to the next page too if possible (already handled above).
+      // If we are here, we just add the totals page.
+      const nextStartIndex = lastPage.startIndex + lastPage.rows.length;
+      fitted.push({ rows: [], heights: [], startIndex: nextStartIndex, isTotalsOnly: true });
     }
   }
-  return reindexPreviewPages(fitted);
+  // Filter out any pages that have NO rows and are NOT the totals-only page
+  return reindexPreviewPages(fitted.filter(p => p.rows.length > 0 || p.isTotalsOnly));
 }
 
 function reindexPreviewPages(pages) {
