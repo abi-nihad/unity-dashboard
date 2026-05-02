@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.43";
+const APP_VERSION = "v21.44";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -626,6 +626,11 @@ function applyRemoteTemplate(data) {
   appState.previewOverrides = data.previewOverrides || appState.previewOverrides;
   appState.settings = { ...appState.settings, ...(data.settings || {}) };
   
+  if (data.records) {
+    appState.records = data.records;
+    renderRecords();
+  }
+  
   // Persist locally so it survives refresh
   localStorage.setItem(getStorageKey(), JSON.stringify(appState));
   const globalTemplate = {
@@ -1010,7 +1015,8 @@ function saveState(options = {}) {
              previewLayout: appState.previewLayout,
              previewStyles: appState.previewStyles,
              previewOverrides: appState.previewOverrides,
-             settings: appState.settings
+             settings: appState.settings,
+             records: appState.records
           },
           updated_at: new Date().toISOString()
         }).then(() => {
@@ -1025,7 +1031,8 @@ function saveState(options = {}) {
                    previewLayout: appState.previewLayout,
                    previewStyles: appState.previewStyles,
                    previewOverrides: appState.previewOverrides,
-                   settings: appState.settings
+                   settings: appState.settings,
+                   records: appState.records
                  }
                }
              });
