@@ -2232,15 +2232,13 @@ function updateRecordStats(records) {
     display: table-row-group;
   }
 .app-version-tag {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--muted);
-  background: var(--surface-muted);
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--line);
-  margin-left: 4px;
-  align-self: center;
+  font-size: 8px;
+  font-weight: 500;
+  color: #666;
+  margin-left: 2px;
+  align-self: flex-end;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
   white-space: nowrap;
 }
   .preview-items tr {
