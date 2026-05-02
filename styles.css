@@ -2229,7 +2229,18 @@ function updateRecordStats(records) {
   .preview-items thead {
     display: table-row-group;
   }
-
+.app-version-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  margin-left: 4px;
+  align-self: center;
+  white-space: nowrap;
+}
   .preview-items tr {
     break-inside: avoid;
     page-break-inside: avoid;

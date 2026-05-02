@@ -669,6 +669,7 @@ function cacheDom() {
     "appShell",
     "toolsPanel",
     "brandLogo",
+    "appVersion",
     "appTitle",
     "appSubtitle",
     "documentStatus",
@@ -1476,8 +1477,11 @@ function renderLoginState() {
       dom.rememberMe.checked = true;
     }
   } else {
-    // Check permissions
     const admin = isAdmin();
+    if (dom.appVersion) {
+      dom.appVersion.classList.toggle("hidden", !admin);
+      dom.appVersion.textContent = "v21.11";
+    }
     dom.adminPanelButton.classList.toggle("hidden", !admin);
     dom.editPreviewButton.classList.toggle("hidden", !admin);
     dom.settingsEditPreviewButton.classList.toggle("hidden", !admin);
