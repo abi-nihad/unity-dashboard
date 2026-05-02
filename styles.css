@@ -1395,7 +1395,7 @@ td {
 
 /* Last row of each page table gets a solid single bottom border */
 .preview-items tbody tr:last-child td {
-  border-bottom: 1px solid #000;
+  border-bottom: 1.5px solid #000 !important;
 }
 
 /* All table text/cells stay dark on white paper regardless of theme */
@@ -1406,8 +1406,9 @@ td {
 
 .paper-page .preview-items th {
   background: #ffffff;
-  border-top: 1.5px solid #000;
-  border-bottom: 1.5px solid #000;
+  border-top: 1.5px solid #000 !important;
+  border-bottom: 1.5px solid #000 !important;
+  color: #000 !important;
 }
 
 .paper.preview-editing [contenteditable="true"] {

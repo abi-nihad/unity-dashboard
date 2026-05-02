@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.34";
+const APP_VERSION = "v21.35";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -5524,9 +5524,9 @@ function buildPreviewExcelHtml() {
         overflow-wrap: break-word;
       }
       .preview-items th, .preview-items td { border: 0; padding: 7px 6px; color: #111; font-size: 12px; vertical-align: top; }
-      .preview-items th { background: #fff; border-top: 1px solid #111; border-bottom: 1px solid #111; text-align: center; }
+      .preview-items th { background: #fff; border-top: 1.5px solid #000 !important; border-bottom: 1.5px solid #000 !important; text-align: center; color: #000 !important; }
       .preview-items tbody tr td { border-bottom: none; }
-      .preview-items tbody tr:last-child td { border-bottom: 1px solid #000; }
+      .preview-items tbody tr:last-child td { border-bottom: 1.5px solid #000 !important; }
       .preview-items th:first-child, .preview-items td:first-child { width: 44px; text-align: center; }
       .preview-items th:nth-child(2), .preview-items td:nth-child(2) { text-align: left; }
       .preview-items th:nth-child(3), .preview-items td:nth-child(3), .preview-items th:nth-child(4), .preview-items td:nth-child(4) { width: 62px; text-align: center; }
