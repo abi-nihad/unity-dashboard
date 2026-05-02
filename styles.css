@@ -1405,25 +1405,30 @@ td {
 
 .preview-items th,
 .preview-items td {
-  border: 0;
-  padding: 7px 6px;
+  border: 1px solid #000 !important;
+  padding: 6px 8px;
   color: #111;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .preview-items th {
-  background: var(--surface);
-  border-top: 1px solid #111;
-  border-bottom: 1px solid #111;
+  background: #f8fafc !important; /* Light gray Excel-like header */
+  border-top: 1.5px solid #000 !important;
+  border-bottom: 1.5px solid #000 !important;
   text-align: center;
+  font-weight: 700;
 }
 
-/* Every table row is now borderless internally */
+/* Internal rows now have gridlines */
 .preview-items tbody tr td {
-  border-bottom: none;
+  border-bottom: 1px solid #000 !important;
+  border-right: 1px solid #000 !important;
 }
 
-/* Last row of each page table gets a solid single bottom border */
+.preview-items tbody tr td:first-child {
+  border-left: 1px solid #000 !important;
+}
+
 .preview-items tbody tr:last-child td {
   border-bottom: 1.5px solid #000 !important;
 }
