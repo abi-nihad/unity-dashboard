@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.70";
+const APP_VERSION = "v21.71";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -83,7 +83,7 @@ const defaultUomOptions = [
 const defaultSettings = {
   appName: "UNITY Dashboard",
   appSubtitle: "Engineering and Construction",
-  logoUrl: "assets/unity-logo.png",
+  logoUrl: "assets/unity-app-icon.png",
   bizsafeUrl: "assets/bizsafe.png",
   stampUrl: "assets/stamp-signature.png",
   companyName: "UNITY ENGINEERING AND CONSTRUCTION PTE LTD",
