@@ -1531,10 +1531,10 @@ td {
   margin: 0;
 }
 
-/* Only the TOTAL AMOUNT row gets accounting borders */
+/* Only the TOTAL AMOUNT row gets solid borders */
 .paper-totals .grand-total {
-  border-top: 3px double #111;
-  border-bottom: 3px double #111;
+  border-top: 1.5px solid #000;
+  border-bottom: 1.5px solid #000;
   padding-top: 4px;
   padding-bottom: 4px;
   margin-top: 4px;

@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.27";
+const APP_VERSION = "v21.28";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -5473,7 +5473,7 @@ function buildPreviewExcelHtml() {
       .invoice-note { font-weight: 500; }
       .paper-totals dl { border-top: 1px solid #111; }
       .paper-totals dl div { grid-template-columns: 1fr 96px; padding: 6px 0; border-bottom: 1px solid #111; }
-      .paper-totals .grand-total { border-bottom: 3px double #111; font-weight: 800; }
+      .paper-totals .grand-total { border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; font-weight: 800; }
       .paper-totals dd, .paper-totals .grand-total dd { font-weight: 700; }
       .bank-details { margin-top: 18px; font-size: 12px; }
       .paper-footer { margin-top: 22px; }
