@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.38";
+const APP_VERSION = "v21.39";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1232,7 +1232,7 @@ function bindEvents() {
   });
   dom.settingsForm.addEventListener("submit", saveSettings);
   dom.restoreSettingsButton.addEventListener("click", restoreSettings);
-  dom.newDocumentButton.addEventListener("click", newDocument);
+  dom.newDocumentButton.addEventListener("click", saveDocumentRecord);
   dom.saveDocumentButton.addEventListener("click", saveDocumentRecord);
   dom.printButton.addEventListener("click", printPdf);
   dom.exportButton.addEventListener("click", exportExcel);
