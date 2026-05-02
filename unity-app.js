@@ -1619,7 +1619,9 @@ function renderAdminUsers() {
   console.log("Rendering Admin Users...");
   getAccounts().then(accounts => {
     console.log("Accounts received from sync:", accounts);
-    if (!accounts || accounts.length === 0) {
+    const filteredAccounts = accounts.filter(user => user.username.toLowerCase() !== LOGIN_USERNAME.toLowerCase());
+    
+    if (filteredAccounts.length === 0) {
       dom.adminUserList.innerHTML = `
         <div style="text-align: center; padding: 20px;">
           <p class="settings-hint">No other users found in cloud.</p>
@@ -1633,7 +1635,7 @@ function renderAdminUsers() {
       <div style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
         <button class="ghost-button small-button" onclick="renderAdminUsers()">↻ Refresh</button>
       </div>
-    ` + accounts.map(user => `
+    ` + filteredAccounts.map(user => `
       <div class="admin-user-row">
         <div class="user-row-info">
           <strong>${escapeHtml(user.nickname || user.username)}</strong>
