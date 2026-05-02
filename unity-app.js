@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.41";
+const APP_VERSION = "v21.42";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -572,6 +572,10 @@ function init() {
       refreshAll();
     });
     window.addEventListener("resize", schedulePreviewFitScale);
+    window.addEventListener("focus", () => {
+       console.log("App focused - checking for template updates...");
+       loadState().then(() => refreshAll());
+    });
     console.log("Init complete.");
   } catch (err) {
     console.error("Critical Init Error:", err);
@@ -581,17 +585,58 @@ function init() {
 
 function setupCloudRealtime() {
   if (!unityDb) return;
-  unityDb
-    .channel('public:global_config')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'global_config', filter: 'key=eq.app_state' }, payload => {
-       const remoteState = payload.new.data;
-       if (remoteState) {
-         appState = normalizeState({ ...appState, ...remoteState });
-         refreshAll();
-         showToast("Cloud sync: Template updated from another device.");
-       }
-    })
-    .subscribe();
+  
+  const channel = unityDb.channel('unity_realtime_sync');
+
+  // 1. Database level sync (Postgres Changes)
+  channel.on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'global_config', 
+    filter: 'key=eq.app_state' 
+  }, (payload) => {
+    console.log("Realtime DB Change Detected:", payload);
+    const remoteData = payload.new ? payload.new.data : null;
+    if (remoteData) {
+      applyRemoteTemplate(remoteData);
+    }
+  });
+
+  // 2. Faster Broadcast sync (Direct Browser-to-Browser)
+  channel.on('broadcast', { event: 'admin_template_update' }, (payload) => {
+    console.log("Realtime Broadcast Received:", payload);
+    if (payload.payload?.data) {
+      applyRemoteTemplate(payload.payload.data);
+    } else {
+      // Fallback: full refetch if no data in payload
+      loadState().then(() => refreshAll());
+    }
+  });
+
+  channel.subscribe((status) => {
+    console.log("Realtime Subscription Status:", status);
+  });
+}
+
+function applyRemoteTemplate(data) {
+  if (!data) return;
+  console.log("Applying remote template changes...");
+  appState.previewLayout = data.previewLayout || appState.previewLayout;
+  appState.previewStyles = data.previewStyles || appState.previewStyles;
+  appState.previewOverrides = data.previewOverrides || appState.previewOverrides;
+  appState.settings = { ...appState.settings, ...(data.settings || {}) };
+  
+  // Persist locally so it survives refresh
+  localStorage.setItem(getStorageKey(), JSON.stringify(appState));
+  const globalTemplate = {
+    previewLayout: appState.previewLayout,
+    previewStyles: appState.previewStyles,
+    previewOverrides: appState.previewOverrides
+  };
+  localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
+  
+  refreshAll();
+  showToast("Cloud sync: Template updated from Admin.");
 }
 
 function cacheDom() {
@@ -953,6 +998,21 @@ function saveState(options = {}) {
           updated_at: new Date().toISOString()
         }).then(() => {
            console.log("Cloud sync: State pushed to Supabase.");
+           // Broadcast the change for instant sync on other browsers
+           if (unityDb) {
+             unityDb.channel('unity_realtime_sync').send({
+               type: 'broadcast',
+               event: 'admin_template_update',
+               payload: { 
+                 data: {
+                   previewLayout: appState.previewLayout,
+                   previewStyles: appState.previewStyles,
+                   previewOverrides: appState.previewOverrides,
+                   settings: appState.settings
+                 }
+               }
+             });
+           }
         });
       }
     }
