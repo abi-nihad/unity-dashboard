@@ -1302,6 +1302,19 @@ function bindEvents() {
 
 
   [
+    "settingPageSize",
+    "settingPageOrientation",
+    "settingCompressToFitPage"
+  ].forEach(id => {
+    if (dom[id]) {
+      dom[id].addEventListener("change", () => {
+        saveSettings();
+        refreshCalculationsAndPreview();
+      });
+    }
+  });
+
+  [
     ["documentType", "type"],
     ["documentNumber", "number"],
     ["poNumber", "poNumber"],
