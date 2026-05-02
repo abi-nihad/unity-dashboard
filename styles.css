@@ -1393,9 +1393,9 @@ td {
   border-bottom: 0.5px solid #ddd;
 }
 
-/* Last row of each page table gets a solid bottom border */
+/* Last row of each page table gets a double solid bottom border */
 .preview-items tbody tr:last-child td {
-  border-bottom: 1.5px solid #000;
+  border-bottom: 3.5px double #000;
 }
 
 /* All table text/cells stay dark on white paper regardless of theme */
