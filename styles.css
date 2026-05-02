@@ -1583,9 +1583,9 @@ td {
   display: grid;
   gap: 20px;
   grid-template-columns: 1fr 220px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #ddd;
+  margin-top: 0;
+  padding-top: 10px;
+  border-top: none;
 }
 
 .paper-total-notes {
