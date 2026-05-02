@@ -1,8 +1,29 @@
-const STORAGE_KEY = "unity-dashboard-app-v2";
-const GLOBAL_TEMPLATE_KEY = "unity-global-template-v1";
-const SUPABASE_URL = "https://ujhljzsbslqszwewkdtf.supabase.co";
-const SUPABASE_KEY = "sb_publishable_tWopA344Hp_lvbL8FcXh7g_jsUQLvoA";
-const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+var STORAGE_KEY = "unity-dashboard-app-v2";
+var GLOBAL_TEMPLATE_KEY = "unity-global-template-v1";
+var SUPABASE_URL = "https://ujhljzsbslqszwewkdtf.supabase.co";
+var SUPABASE_KEY = "sb_secret_KYEaEqZYtp0P6IeKIc4LQg_j_SAncWM";
+
+console.log("UNITY Dashboard App v21.0 - Initializing...");
+
+var unityDb = null;
+try {
+  if (window.supabase && typeof window.supabase.createClient === "function") {
+    unityDb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log("Supabase (unityDb) initialized.");
+  }
+} catch (e) {
+  console.error("Supabase init error:", e);
+}
+
+// Global Error Logging
+window.addEventListener("error", (e) => {
+  console.error("Global Error:", e.message);
+  if (typeof showToast === "function") showToast("Error: " + e.message);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("Unhandled Rejection:", e.reason);
+  if (typeof showToast === "function") showToast("Sync Error: " + (e.reason?.message || e.reason));
+});
 
 const HIDDEN_NEXT_DOCUMENT = 20260108;
 const PREVIEW_TEMPLATE_KEY = "template";
@@ -524,22 +545,40 @@ function promptInvoiceClaimNumber() {
 }
 
 function init() {
-  cacheDom();
-  bindEvents();
-  loadTheme();
-  renderLoginState();
-  
-  loadState().then(() => {
+  console.log("Init starting...");
+  try {
+    cacheDom();
+    bindEvents();
+    loadTheme();
     renderLoginState();
-    refreshAll();
-    setupCloudRealtime();
-  });
-  window.addEventListener("resize", schedulePreviewFitScale);
+    
+    loadState().then(() => {
+      // Sync accounts in background to ensure isAdmin() is accurate
+      getAccounts().then(() => {
+        renderLoginState();
+        refreshAll();
+      }).catch(err => {
+        console.error("Account sync failed:", err);
+        renderLoginState();
+        refreshAll();
+      });
+      setupCloudRealtime();
+    }).catch(err => {
+      console.error("State load failed:", err);
+      renderLoginState();
+      refreshAll();
+    });
+    window.addEventListener("resize", schedulePreviewFitScale);
+    console.log("Init complete.");
+  } catch (err) {
+    console.error("Critical Init Error:", err);
+    alert("Critical Init Error: " + err.message);
+  }
 }
 
 function setupCloudRealtime() {
-  if (!supabase) return;
-  supabase
+  if (!unityDb) return;
+  unityDb
     .channel('public:global_config')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'global_config', filter: 'key=eq.app_state' }, payload => {
        const remoteState = payload.new.data;
@@ -832,8 +871,8 @@ async function loadState() {
     }
 
     // 2. Fetch latest from Cloud (Supabase) if available
-    if (supabase) {
-      const { data, error } = await supabase
+    if (unityDb) {
+      const { data, error } = await unityDb
         .from('global_config')
         .select('data')
         .eq('key', 'app_state')
@@ -876,9 +915,9 @@ function saveState(options = {}) {
       };
       localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
 
-      // 3. Push to Cloud (Supabase)
-      if (supabase) {
-        supabase.from('global_config').upsert({
+      // 3. Push to Cloud (SupabaseClient)
+      if (unityDb) {
+        unityDb.from('global_config').upsert({
           key: 'app_state',
           data: {
              previewLayout: appState.previewLayout,
@@ -1148,7 +1187,6 @@ function cleanList(value, fallback) {
 }
 
 function bindEvents() {
-  dom.loginForm.addEventListener("submit", handleLogin);
   dom.settingsButton.addEventListener("click", openSettings);
   dom.openClientsButton.addEventListener("click", () => openToolsPanel("clients"));
   dom.openRecordsButton.addEventListener("click", () => openToolsPanel("records"));
@@ -1223,7 +1261,7 @@ function bindEvents() {
   });
   dom.createAccountForm.addEventListener("submit", handleCreateAccount);
   dom.forgotPasswordForm.addEventListener("submit", handleForgotPassword);
-  
+  dom.loginForm.addEventListener("submit", handleLogin);  
   bindDescriptionFormatControls();
   bindPreviewFormatControls();
   
@@ -1459,6 +1497,13 @@ async function handleLogin(event) {
     const isMaster = username === LOGIN_USERNAME.toLowerCase();
     const approved = isMaster || (user && user.isApproved);
     
+    console.log("Login Check:", { username, isMaster, approved, user_found: !!user });
+
+    if (user && user.isBlocked && !isMaster) {
+      dom.loginError.textContent = "Your account has been blocked. Contact Admin.";
+      return;
+    }
+    
     if (!approved) {
       dom.loginError.textContent = "Your account is pending approval.";
       return;
@@ -1551,8 +1596,8 @@ function isAdmin() {
   if (!username) return false;
   if (username.toLowerCase() === LOGIN_USERNAME.toLowerCase()) return true;
   
-  // Also check if the approved account has admin privileges
-  const accounts = getAccounts();
+  // Use local accounts cache for synchronous check
+  const accounts = getAccountsLocal();
   const user = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
   return !!(user && user.isAdmin);
 }
@@ -1568,12 +1613,18 @@ function renderAdminUsers() {
       <div class="admin-user-row">
         <div class="user-row-info">
           <strong>${escapeHtml(user.nickname || user.username)}</strong>
-          <span>@${escapeHtml(user.username)} | ${user.isApproved ? '<span class="status-approved">Approved</span>' : '<span class="status-pending">Pending Approval</span>'}</span>
+          <span>@${escapeHtml(user.username)} | 
+            ${user.isBlocked ? '<span class="status-blocked" style="color: var(--danger)">Blocked</span>' : 
+              (user.isApproved ? '<span class="status-approved">Approved</span>' : '<span class="status-pending">Pending Approval</span>')}
+          </span>
         </div>
         <div class="user-row-actions">
-          ${!user.isApproved ? `<button class="primary-button small-button" onclick="handleAdminApproveUser('${escapeAttr(user.username)}')">Approve</button>` : ''}
-          ${user.isApproved && !user.isAdmin ? `<button class="secondary-button small-button" style="background: var(--accent); border-color: var(--accent)" onclick="handleAdminSetRole('${escapeAttr(user.username)}', true)">Make Admin</button>` : ''}
+          ${!user.isApproved && !user.isBlocked ? `<button class="primary-button small-button" onclick="handleAdminApproveUser('${escapeAttr(user.username)}')">Approve</button>` : ''}
+          ${user.isApproved && !user.isAdmin && !user.isBlocked ? `<button class="secondary-button small-button" style="background: var(--accent); border-color: var(--accent)" onclick="handleAdminSetRole('${escapeAttr(user.username)}', true)">Make Admin</button>` : ''}
           ${user.isApproved && user.isAdmin && user.username.toLowerCase() !== LOGIN_USERNAME.toLowerCase() ? `<button class="secondary-button small-button" onclick="handleAdminSetRole('${escapeAttr(user.username)}', false)">Demote</button>` : ''}
+          <button class="secondary-button small-button" onclick="handleAdminToggleBlock('${escapeAttr(user.username)}', ${!user.isBlocked})">
+            ${user.isBlocked ? 'Unblock' : 'Block'}
+          </button>
           <button class="secondary-button" onclick="handleAdminResetPassword('${escapeAttr(user.username)}')">Reset PWD</button>
           <button class="ghost-button" style="color: var(--danger)" onclick="handleAdminDeleteUser('${escapeAttr(user.username)}')">Delete</button>
         </div>
@@ -1598,9 +1649,21 @@ window.handleAdminSetRole = function(username, isAdmin) {
   });
 };
 
+window.handleAdminToggleBlock = function(username, isBlocked) {
+  if (!window.isAdmin()) return;
+  if (username.toLowerCase() === LOGIN_USERNAME.toLowerCase()) {
+    showToast("Master admin cannot be blocked.");
+    return;
+  }
+  updateCloudUser(username, { isBlocked }).then(() => {
+    showToast(`User ${username} ${isBlocked ? 'blocked' : 'unblocked'}.`);
+    renderAdminUsers();
+  });
+};
+
 async function updateCloudUser(username, data) {
-  if (supabase) {
-    await supabase.from('profiles').update(data).eq('username', username);
+  if (unityDb) {
+    await unityDb.from('profiles').update(data).eq('username', username);
   }
   // Sync local for performance
   const accounts = await getAccountsLocal();
@@ -1611,30 +1674,31 @@ async function updateCloudUser(username, data) {
   }
 }
 
-window.handleAdminResetPassword = function(username) {
+window.handleAdminResetPassword = async function(username) {
   if (!isAdmin()) return;
   const newPwd = prompt(`Enter new password for ${username}:`);
   if (!newPwd) return;
   
-  const accounts = getAccounts();
-  const idx = accounts.findIndex(a => a.username.toLowerCase() === username.toLowerCase());
-  if (idx !== -1) {
-    accounts[idx].password = newPwd;
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-    showToast(`Password updated for ${username}`);
-    renderAdminUsers();
-  }
+  await updateCloudUser(username, { password: newPwd });
+  showToast(`Password updated for ${username}`);
+  renderAdminUsers();
 };
 
-window.handleAdminDeleteUser = function(username) {
+window.handleAdminDeleteUser = async function(username) {
   if (!isAdmin()) return;
   if (!confirm(`Are you sure you want to delete user ${username}? This will also PERMANENTLY WIPE all their saved documents and settings.`)) return;
   
-  const accounts = getAccounts();
+  // 1. Delete from Cloud
+  if (unityDb) {
+    await unityDb.from('profiles').delete().eq('username', username);
+  }
+
+  // 2. Delete from Local
+  const accounts = await getAccounts();
   const filtered = accounts.filter(a => a.username.toLowerCase() !== username.toLowerCase());
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(filtered));
   
-  // Wipe user-specific data
+  // 3. Wipe user-specific data if any (legacy check)
   const userKey = `${STORAGE_KEY}-${username.toLowerCase()}`;
   localStorage.removeItem(userKey);
   
@@ -1643,8 +1707,8 @@ window.handleAdminDeleteUser = function(username) {
 };
 
 async function getAccounts() {
-  if (supabase) {
-    const { data } = await supabase.from('profiles').select('*');
+  if (unityDb) {
+    const { data } = await unityDb.from('profiles').select('*');
     if (data) {
        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(data));
        return data;
@@ -1685,6 +1749,7 @@ async function handleCreateAccount(event) {
     password, 
     nickname, 
     isApproved: false,
+    isBlocked: false,
     isAdmin: false,
     createdAt: new Date().toISOString()
   };
@@ -1692,8 +1757,8 @@ async function handleCreateAccount(event) {
   accounts.push(newUser);
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
 
-  if (supabase) {
-    await supabase.from('profiles').insert([newUser]);
+  if (unityDb) {
+    await unityDb.from('profiles').insert([newUser]);
   }
   
   showToast("Account created! Wait for Admin approval.");
@@ -4057,7 +4122,7 @@ function newDocument(options = {}) {
   persistDocumentDefaults();
   const settings = appState.settings;
   appState.document = {
-    type: options.type || settings.documentTypes[0] || "QUOTATION",
+    type: options.type || appState.document.type || settings.documentTypes[0] || "QUOTATION",
     number: String(nextDocumentNumber()),
     dateMode: "tomorrow",
     date: tomorrowInput(),
@@ -4381,8 +4446,12 @@ function switchTab(tabName) {
 function resetData() {
   const ok = window.confirm("Clean the current page? Settings, clients, records, and preview template will stay saved.");
   if (!ok) return;
+  
   const settings = appState.settings;
   previewOverrideMapFor(previewDocumentKey(), true, {});
+  
+  // Reset ONLY the current document state
+  // This explicitly avoids touching AUTH_KEY or AUTH_USER_KEY
   appState.document = {
     type: appState.document.type || settings.documentTypes[0] || "QUOTATION",
     number: appState.document.number || settings.nextDocumentNumber,
@@ -4406,6 +4475,7 @@ function resetData() {
     adjustmentAmount: 0,
     items: [emptyItem()],
   };
+  
   appState.locked = true;
   saveState();
   refreshAll();
