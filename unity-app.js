@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.79";
+const APP_VERSION = "v21.80";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2040,6 +2040,9 @@ async function handleUpdateProfile() {
     if (error) throw error;
     
     await getAccounts(); // Refresh cache
+    
+    // Auto-update preparedBy in the current document if nickname changed
+    appState.document.preparedBy = newNickname;
     
     showToast("Profile updated successfully!");
     dom.passwordFields.hidden = true;
@@ -4773,8 +4776,12 @@ function syncSettingsFields() {
   if (dom.settingStampUrl) dom.settingStampUrl.value = settings.stampUrl;
 }
 
-function saveSettings(event) {
+async function saveSettings(event) {
   if (event) event.preventDefault();
+  
+  // Save personal info / credentials if any
+  await handleUpdateProfile();
+  
   const previousPdfSavePath = appState.settings.pdfSavePath;
   const previousExcelSavePath = appState.settings.excelSavePath;
   const settings = normalizeSettings({
@@ -4820,6 +4827,7 @@ function saveSettings(event) {
     logoUrl: appState.settings.logoUrl,
     bizsafeUrl: appState.settings.bizsafeUrl,
     stampUrl: appState.settings.stampUrl,
+    darkMode: dom.settingDarkMode.checked,
   });
   if (previousPdfSavePath !== settings.pdfSavePath) {
     forgetStoredDirectoryHandle("pdf");
