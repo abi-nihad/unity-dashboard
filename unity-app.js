@@ -4293,11 +4293,6 @@ function openSettings() {
   dom.settingAppName.focus();
 }
 
-function closeSettings() {
-  dom.settingsOverlay.classList.remove("open");
-  dom.settingsOverlay.setAttribute("aria-hidden", "true");
-}
-
 function openAdminPanel() {
   if (!isAdmin()) return;
   dom.adminPanelOverlay.classList.add("open");
@@ -4306,8 +4301,19 @@ function openAdminPanel() {
 }
 
 function closeAdminPanel() {
+  if (document.activeElement && dom.adminPanelOverlay.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
   dom.adminPanelOverlay.classList.remove("open");
   dom.adminPanelOverlay.setAttribute("aria-hidden", "true");
+}
+
+function closeSettings() {
+  if (document.activeElement && dom.settingsOverlay.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
+  dom.settingsOverlay.classList.remove("open");
+  dom.settingsOverlay.setAttribute("aria-hidden", "true");
 }
 
 
