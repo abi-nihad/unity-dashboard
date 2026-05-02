@@ -563,19 +563,36 @@
             <div class="settings-grid">
               <label>
                 <span>Username</span>
-                <input id="settingPersonalUsername" type="text">
+                <input id="settingPersonalUsername" type="text" readonly style="opacity: 0.7; cursor: not-allowed;">
               </label>
               <label>
-                <span>Nickname</span>
+                <span>Prepared By (Nickname)</span>
                 <input id="settingPersonalNickname" type="text">
               </label>
-              <label>
-                <span>Password</span>
-                <input id="settingPersonalPassword" type="text">
-              </label>
             </div>
-            <div style="margin-top: 12px;">
-              <button class="secondary-button icon-btn small-button" id="updateProfileButton" type="button" aria-label="Update Profile"><span class="material-symbols-rounded">save</span></button>
+            
+            <div class="password-change-area" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+              <button type="button" class="secondary-button small-button" id="togglePasswordChange" style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-rounded" style="font-size: 18px;">lock_reset</span>
+                Change Password
+              </button>
+              
+              <div id="passwordFields" hidden>
+                <div class="settings-grid">
+                  <label>
+                    <span>Current Password</span>
+                    <input id="settingCurrentPassword" type="password" placeholder="Verify current">
+                  </label>
+                  <label>
+                    <span>New Password</span>
+                    <input id="settingNewPassword" type="password" placeholder="Enter new">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <button class="primary-button icon-btn" id="updateProfileButton" type="button" aria-label="Update Profile"><span class="material-symbols-rounded">save</span></button>
             </div>
           </section>
 

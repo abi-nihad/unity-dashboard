@@ -1571,18 +1571,23 @@ td {
 .paper-totals .grand-total dt {
   color: #000;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .paper-totals .grand-total dd {
   color: #000;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
 }
 
-.paper-totals.single-total {
-  grid-template-columns: minmax(170px, 220px);
-  justify-content: end;
+/* Unified structure: no more single-total special layout */
+.paper-totals {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 220px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
 }
 
 .paper-total-notes {

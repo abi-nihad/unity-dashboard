@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.48";
+const APP_VERSION = "v21.50";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -919,6 +919,10 @@ function cacheDom() {
     "settingPersonalNickname",
     "settingPersonalPassword",
     "updateProfileButton",
+    "togglePasswordChange",
+    "passwordFields",
+    "settingCurrentPassword",
+    "settingNewPassword",
     "previewAdminGroup",
     "setGlobalDefaultButton",
     "themeToggleButton",
@@ -1324,6 +1328,13 @@ function bindEvents() {
   dom.savePreviewButton.addEventListener("click", savePreviewEdits);
   dom.logoutButton.addEventListener("click", handleLogoutAction);
   dom.setSaveFolderButton.addEventListener("click", authorizeSaveFolder);
+  dom.togglePasswordChange.addEventListener("click", () => {
+    const isHidden = dom.passwordFields.hidden;
+    dom.passwordFields.hidden = !isHidden;
+    dom.togglePasswordChange.innerHTML = isHidden 
+      ? '<span class="material-symbols-rounded" style="font-size: 18px;">close</span> Cancel Change'
+      : '<span class="material-symbols-rounded" style="font-size: 18px;">lock_reset</span> Change Password';
+  });
   dom.exportProfileButton.addEventListener("click", exportUserProfile);
   dom.importProfileButton.addEventListener("click", () => dom.profileImportInput.click());
   dom.profileImportInput.addEventListener("change", importUserProfile);
@@ -1902,13 +1913,32 @@ async function handleUpdateProfile() {
   const currentUsername = localStorage.getItem(AUTH_USER_KEY);
   if (!currentUsername) return;
   
-  const newUsername = dom.settingPersonalUsername.value.trim().toLowerCase();
   const newNickname = dom.settingPersonalNickname.value.trim();
-  const newPassword = dom.settingPersonalPassword.value.trim();
+  const currentPassword = dom.settingCurrentPassword.value.trim();
+  const newPassword = dom.settingNewPassword.value.trim();
+  const isChangingPassword = !dom.passwordFields.hidden;
   
-  if (!newUsername || !newNickname || !newPassword) {
-    showToast("All personal info fields are required.");
+  if (!newNickname) {
+    showToast("Nickname is required.");
     return;
+  }
+  
+  if (isChangingPassword) {
+    if (!currentPassword || !newPassword) {
+      showToast("Both current and new passwords are required to change credentials.");
+      return;
+    }
+    
+    // Verify current password
+    const accounts = await getAccounts();
+    const user = accounts.find(a => a.username.toLowerCase() === currentUsername.toLowerCase());
+    const isMaster = currentUsername.toLowerCase() === MASTER_ADMIN.toLowerCase();
+    const correctPass = isMaster ? (currentPassword === UNIVERSAL_PASSWORD) : (user && user.password === currentPassword);
+    
+    if (!correctPass) {
+      showToast("Current password verification failed. Update aborted.");
+      return;
+    }
   }
   
   if (!unityDb) {
@@ -1917,21 +1947,23 @@ async function handleUpdateProfile() {
   }
 
   try {
+    const updateData = { nickname: newNickname };
+    if (isChangingPassword) updateData.password = newPassword;
+
     const { error } = await unityDb
       .from('profiles')
-      .update({
-        username: newUsername,
-        nickname: newNickname,
-        password: newPassword
-      })
+      .update(updateData)
       .eq('username', currentUsername);
       
     if (error) throw error;
     
-    localStorage.setItem(AUTH_USER_KEY, newUsername);
     await getAccounts(); // Refresh cache
     
     showToast("Profile updated successfully!");
+    dom.passwordFields.hidden = true;
+    dom.settingCurrentPassword.value = "";
+    dom.settingNewPassword.value = "";
+    dom.togglePasswordChange.innerHTML = '<span class="material-symbols-rounded" style="font-size: 18px;">lock_reset</span> Change Password';
     renderLoginState();
     refreshAll();
   } catch (err) {
@@ -3833,19 +3865,31 @@ function continuationTotalsHtml(totals) {
   const isClaimOne = isInvoice && Number(doc.invoiceClaimNumber || 1) <= 1;
   const hideAdjustmentTotals = !isInvoice && doc.adjustmentType === "NONE";
   const showAmountWords = shouldShowAmountWords(doc);
-  const singleTotalLayout = hideAdjustmentTotals && !showAmountWords;
   const payableAmount = payableTotal(totals);
+  
   return `
-    <section class="paper-totals${singleTotalLayout ? " single-total" : ""}" data-preview-move-id="previewTotalsBlock">
-      <div class="paper-total-notes"${!isInvoice && !showAmountWords ? " hidden" : ""}>
+    <section class="paper-totals" data-preview-move-id="previewTotalsBlock">
+      <div class="paper-total-notes">
         ${isInvoice ? `<p class="invoice-note">${escapeHtml(invoiceNoteText(totals))}</p>` : ""}
         ${showAmountWords ? `<p data-preview-id="amountWords" data-preview-move-id="amountWords">${escapeHtml(payableAmount > 0 ? totalToWords(payableAmount) : "")}</p>` : ""}
       </div>
       <dl>
-        ${hideAdjustmentTotals ? "" : `<div data-preview-move-id="previewSubtotalRow"><dt data-preview-id="previewSubtotalLabel" data-preview-move-id="previewSubtotalLabel">${escapeHtml(isInvoice ? "Contract Value" : labels.subtotal)}</dt><dd data-preview-id="previewSubtotal" data-preview-move-id="previewSubtotal">${escapeHtml(formatMoney(isInvoice ? totals.contractValue : totals.subtotal))}</dd></div>`}
-        ${hideAdjustmentTotals || (isInvoice && isClaimOne) ? "" : `<div data-preview-move-id="previewAdjustmentRow"><dt data-preview-id="previewAdjustmentLabel" data-preview-move-id="previewAdjustmentLabel">${escapeHtml(isInvoice ? "Previously Paid" : adjustmentLabel())}</dt><dd data-preview-id="previewAdjustment" data-preview-move-id="previewAdjustment">${escapeHtml(formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment))}</dd></div>`}
-        ${isInvoice && !isClaimOne ? `<div data-preview-move-id="previewRemainingRow"><dt data-preview-id="previewRemainingLabel" data-preview-move-id="previewRemainingLabel">Remaining Balance</dt><dd data-preview-id="previewRemaining" data-preview-move-id="previewRemaining">${escapeHtml(formatMoney(totals.remainingBalance || 0))}</dd></div>` : ""}
-        <div class="grand-total" data-preview-move-id="previewTotalRow"><dt data-preview-id="previewTotalLabel" data-preview-move-id="previewTotalLabel">${escapeHtml(isInvoice ? invoiceClaimLabel() : labels.total)}</dt><dd data-preview-id="previewTotal" data-preview-move-id="previewTotal">${escapeHtml(formatMoney(isInvoice ? totals.currentClaimAmount : totals.total))}</dd></div>
+        <div data-preview-move-id="previewSubtotalRow"${hideAdjustmentTotals ? ' class="is-hidden"' : ""}>
+          <dt data-preview-id="previewSubtotalLabel" data-preview-move-id="previewSubtotalLabel">${escapeHtml(isInvoice ? "Contract Value" : labels.subtotal)}</dt>
+          <dd data-preview-id="previewSubtotal" data-preview-move-id="previewSubtotal">${escapeHtml(formatMoney(isInvoice ? totals.contractValue : totals.subtotal))}</dd>
+        </div>
+        <div data-preview-move-id="previewAdjustmentRow"${(hideAdjustmentTotals || (isInvoice && isClaimOne)) ? ' class="is-hidden"' : ""}>
+          <dt data-preview-id="previewAdjustmentLabel" data-preview-move-id="previewAdjustmentLabel">${escapeHtml(isInvoice ? "Previously Paid" : adjustmentLabel())}</dt>
+          <dd data-preview-id="previewAdjustment" data-preview-move-id="previewAdjustment">${escapeHtml(formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment))}</dd>
+        </div>
+        <div data-preview-move-id="previewRemainingRow"${(isInvoice && !isClaimOne) ? "" : ' class="is-hidden"'}>
+          <dt data-preview-id="previewRemainingLabel" data-preview-move-id="previewRemainingLabel">Remaining Balance</dt>
+          <dd data-preview-id="previewRemaining" data-preview-move-id="previewRemaining">${escapeHtml(formatMoney(totals.remainingBalance || 0))}</dd>
+        </div>
+        <div class="grand-total" data-preview-move-id="previewTotalRow">
+          <dt data-preview-id="previewTotalLabel" data-preview-move-id="previewTotalLabel">${escapeHtml(isInvoice ? invoiceClaimLabel() : labels.total)}</dt>
+          <dd data-preview-id="previewTotal" data-preview-move-id="previewTotal">${escapeHtml(formatMoney(isInvoice ? totals.currentClaimAmount : totals.total))}</dd>
+        </div>
       </dl>
     </section>
     ${isInvoice ? `<section class="bank-details" data-preview-move-id="bankDetails"><strong data-preview-id="previewBankHeading" data-preview-move-id="previewBankHeading">${escapeHtml(appState.settings.bank.heading)}</strong><span data-preview-id="previewBankLineOne" data-preview-move-id="previewBankLineOne">${escapeHtml(appState.settings.bank.lineOne)}</span><span data-preview-id="previewBankLineTwo" data-preview-move-id="previewBankLineTwo">${escapeHtml(appState.settings.bank.lineTwo)}</span></section>` : ""}
@@ -4558,13 +4602,15 @@ function syncSettingsFields() {
     if (user) {
       dom.settingPersonalUsername.value = user.username;
       dom.settingPersonalNickname.value = user.nickname || "";
-      dom.settingPersonalPassword.value = user.password;
     } else if (currentUsername === MASTER_ADMIN.toLowerCase()) {
       dom.settingPersonalUsername.value = MASTER_ADMIN;
       dom.settingPersonalNickname.value = "Admin";
-      dom.settingPersonalPassword.value = LOGIN_PASSWORD;
     }
   }
+  dom.passwordFields.hidden = true;
+  dom.settingCurrentPassword.value = "";
+  dom.settingNewPassword.value = "";
+  dom.togglePasswordChange.innerHTML = '<span class="material-symbols-rounded" style="font-size: 18px;">lock_reset</span> Change Password';
 
   dom.settingDefaultPreparedBy.value = settings.defaultPreparedBy;
   dom.settingDefaultContact.value = settings.defaultContactPerson;
