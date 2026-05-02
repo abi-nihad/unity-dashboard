@@ -2308,3 +2308,25 @@ function updateRecordStats(records) {
 .quick-settings-bar .checkbox-field {
   margin-left: auto;
 }
+
+.settings-section.premium-section {
+  background: var(--surface-dim);
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.settings-section.premium-section h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-section.premium-section h3::before {
+  content: "👤";
+  font-size: 14px;
+}
