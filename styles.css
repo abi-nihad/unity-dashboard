@@ -1571,13 +1571,14 @@ td {
 .paper-totals .grand-total dt {
   color: #000;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 10px;
+  text-transform: uppercase;
 }
 
 .paper-totals .grand-total dd {
   color: #000;
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* Unified structure: no more single-total special layout */
