@@ -274,8 +274,29 @@
           </div>
         </section>
 
-        <section class="preview-panel" aria-label="Quotation preview">
+        <section class="preview-panel" aria-label="Document preview">
           <div class="preview-toolbar">
+            <div class="quick-settings-bar">
+               <label>
+                 <span>Size:</span>
+                 <select id="settingPageSize">
+                   <option value="A4">A4</option>
+                   <option value="A3">A3</option>
+                   <option value="LETTER">Letter</option>
+                 </select>
+               </label>
+               <label>
+                 <span>Layout:</span>
+                 <select id="settingPageOrientation">
+                   <option value="portrait">Portrait</option>
+                   <option value="landscape">Landscape</option>
+                 </select>
+               </label>
+               <label class="checkbox-field">
+                 <input id="settingCompressToFitPage" type="checkbox">
+                 <span>Fit</span>
+               </label>
+            </div>
             <div>
               <h2 hidden>Preview</h2>
               <p id="previewHint">A4 view</p>
@@ -629,37 +650,14 @@
           </section>
 
           <section class="settings-section">
-            <h3>Preview Template</h3>
-            <div class="settings-grid">
-              <label>
-                <span>Page Size</span>
-                <select id="settingPageSize">
-                  <option value="A4">A4</option>
-                  <option value="A3">A3</option>
-                  <option value="LETTER">Letter</option>
-                </select>
-              </label>
-              <label>
-                <span>Orientation</span>
-                <select id="settingPageOrientation">
-                  <option value="portrait">Portrait</option>
-                  <option value="landscape">Landscape</option>
-                </select>
-              </label>
-              <label class="checkbox-field wide-field">
-                <input id="settingCompressToFitPage" type="checkbox">
-                <span>Compress to fit in one page</span>
-              </label>
+            <h3>Profile Portability</h3>
+            <p class="settings-hint">Move your custom preview template and data to another browser or device.</p>
+            <div class="settings-row">
+              <button type="button" class="secondary-button" id="exportProfileButton">Export User Profile</button>
+              <button type="button" class="secondary-button" id="importProfileButton">Import User Profile</button>
+              <input type="file" id="profileImportInput" accept=".json" hidden>
             </div>
-            <section class="settings-section">
-              <h3>Profile Portability</h3>
-              <p class="settings-hint">Move your custom preview template and data to another browser or device.</p>
-              <div class="settings-row">
-                <button type="button" class="secondary-button" id="exportProfileButton">Export User Profile</button>
-                <button type="button" class="secondary-button" id="importProfileButton">Import User Profile</button>
-                <input type="file" id="profileImportInput" accept=".json" hidden>
-              </div>
-            </section>
+          </section>
             
             <div class="settings-actions inline-settings-actions">
               <button class="secondary-button" id="settingsEditPreviewButton" type="button">Edit Preview</button>
