@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.77";
+const APP_VERSION = "v21.78";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3354,8 +3354,8 @@ function normalizeEmailPrefix(value) {
   const label = String(value || "").trim().replace(/\s*[:：]\s*$/, "").trim().toLowerCase();
   if (label === "tel") return "Tel :";
   if (label === "fax") return "Fax :";
-  if (label === "email" || label === "e-mail" || label === "mail") return "eMail :";
-  return emailPrefixOptions.includes(value) ? value : defaultSettings.labels.emailPrefix;
+  if (label === "email" || label === "e-mail" || label === "mail") return "Email :";
+  return emailPrefixOptions.includes(value) ? value : "Email :";
 }
 
 function parseMoney(text) {
@@ -4768,9 +4768,9 @@ function syncSettingsFields() {
   dom.settingBankHeading.value = settings.bank.heading;
   dom.settingBankLineOne.value = settings.bank.lineOne;
   dom.settingBankLineTwo.value = settings.bank.lineTwo;
-  dom.settingLogoUrl.value = settings.logoUrl;
-  dom.settingBizsafeUrl.value = settings.bizsafeUrl;
-  dom.settingStampUrl.value = settings.stampUrl;
+  if (dom.settingLogoUrl) dom.settingLogoUrl.value = settings.logoUrl;
+  if (dom.settingBizsafeUrl) dom.settingBizsafeUrl.value = settings.bizsafeUrl;
+  if (dom.settingStampUrl) dom.settingStampUrl.value = settings.stampUrl;
 }
 
 function saveSettings(event) {
@@ -4817,9 +4817,9 @@ function saveSettings(event) {
       lineOne: dom.settingBankLineOne.value.trim(),
       lineTwo: dom.settingBankLineTwo.value.trim(),
     },
-    logoUrl: dom.settingLogoUrl.value.trim() || defaultSettings.logoUrl,
-    bizsafeUrl: dom.settingBizsafeUrl.value.trim() || defaultSettings.bizsafeUrl,
-    stampUrl: dom.settingStampUrl.value.trim() || defaultSettings.stampUrl,
+    logoUrl: appState.settings.logoUrl,
+    bizsafeUrl: appState.settings.bizsafeUrl,
+    stampUrl: appState.settings.stampUrl,
   });
   if (previousPdfSavePath !== settings.pdfSavePath) {
     forgetStoredDirectoryHandle("pdf");
