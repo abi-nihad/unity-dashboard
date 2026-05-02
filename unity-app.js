@@ -1732,8 +1732,12 @@ window.handleAdminDeleteUser = async function(username) {
 
 async function getAccounts() {
   if (unityDb) {
-    const { data } = await unityDb.from('profiles').select('*');
-    if (data) {
+    console.log("Fetching accounts from Supabase...");
+    const { data, error } = await unityDb.from('profiles').select('*').order('createdAt', { ascending: false });
+    if (error) {
+      console.error("Supabase getAccounts error:", error);
+    } else if (data) {
+       console.log(`Successfully fetched ${data.length} accounts.`);
        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(data));
        return data;
     }
@@ -1780,9 +1784,17 @@ async function handleCreateAccount(event) {
   
   accounts.push(newUser);
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  console.log("Local account created:", username);
 
   if (unityDb) {
-    await unityDb.from('profiles').insert([newUser]);
+    console.log("Pushing new account to cloud...");
+    const { error } = await unityDb.from('profiles').insert([newUser]);
+    if (error) {
+      console.error("Cloud registration failed:", error);
+      showToast("Cloud sync failed, but local account created.");
+    } else {
+      console.log("Cloud registration successful.");
+    }
   }
   
   showToast("Account created! Wait for Admin approval.");
