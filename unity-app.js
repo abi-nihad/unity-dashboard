@@ -673,7 +673,6 @@ function cacheDom() {
     "appTitle",
     "appSubtitle",
     "documentStatus",
-    "lockToggle",
     "documentType",
     "documentNumber",
     "documentDateMode",
@@ -1290,20 +1289,7 @@ function bindEvents() {
   });
   document.addEventListener("pointermove", handlePreviewPointerMove);
   document.addEventListener("pointerup", handlePreviewPointerUp);
-  dom.lockToggle.addEventListener("change", () => {
-    if (!dom.lockToggle.checked) {
-      dom.lockToggle.checked = true;
-      appState.locked = true;
-      saveState();
-      renderLockedState();
-      openUnlockDialog();
-      return;
-    }
-    appState.locked = true;
-    saveState();
-    renderLockedState();
-    showToast("Header fields locked.");
-  });
+
 
   [
     ["documentType", "type"],
@@ -1999,7 +1985,7 @@ function syncDocumentFields() {
   dom.adjustmentType.value = doc.adjustmentType;
   dom.gstRate.value = doc.gstRate;
   dom.adjustmentAmount.value = doc.adjustmentAmount;
-  dom.lockToggle.checked = appState.locked;
+  if (dom.lockToggle) dom.lockToggle.checked = appState.locked;
   dom.settingDarkMode.checked = appState.settings.darkMode;
   renderPoNumberState();
   renderLockedState();
@@ -4237,7 +4223,7 @@ function persistDocumentDefaults() {
 }
 
 function renderLockedState() {
-  dom.lockToggle.checked = appState.locked;
+  if (dom.lockToggle) dom.lockToggle.checked = appState.locked;
   HEADER_LOCKED_FIELD_IDS.forEach((id) => {
     if (dom[id]) dom[id].disabled = appState.locked;
   });
@@ -4272,7 +4258,7 @@ function closeUnlockDialog() {
   dom.unlockOverlay.setAttribute("aria-hidden", "true");
   dom.unlockError.textContent = "";
   dom.unlockPasswordInput.value = "";
-  dom.lockToggle.checked = appState.locked;
+  if (dom.lockToggle) dom.lockToggle.checked = appState.locked;
 }
 
 function handleUnlockSubmit(event) {
