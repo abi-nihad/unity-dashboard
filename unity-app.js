@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.81";
+const APP_VERSION = "v21.82";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -590,6 +590,12 @@ function init() {
     window.addEventListener("focus", () => {
        console.log("App focused - checking for template updates...");
        syncCloudTemplateOnly();
+    });
+    window.addEventListener("beforeunload", (event) => {
+      if (appState.locked && hasSignificantContent()) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
     });
     console.log("Init complete.");
   } catch (err) {
@@ -6275,7 +6281,17 @@ function numberToWords(number) {
   return String(number);
 }
 
-function showToast(message) {
+function hasSignificantContent() {
+  const doc = appState.document;
+  if (!doc) return false;
+  if ((doc.clientName || "").trim().length > 2) return true;
+  if ((doc.re || "").trim().length > 2) return true;
+  if (doc.items.length > 1) return true;
+  if (doc.items[0] && (doc.items[0].description || "").trim().length > 5) return true;
+  return false;
+}
+
+function showToast(message, isError = false) {
   window.clearTimeout(toastTimer);
   dom.toast.textContent = message;
   dom.toast.classList.add("show");
