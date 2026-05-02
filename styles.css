@@ -1572,6 +1572,10 @@ td {
   margin-top: 2px;
 }
 
+.paper.type-change-note .paper-totals .grand-total {
+  border-top: none !important;
+}
+
 .paper-totals .grand-total dt,
 .paper-totals .grand-total dd {
   font-size: 11px;
@@ -1581,10 +1585,10 @@ td {
 /* Unified structure: no more single-total special layout */
 .paper-totals {
   display: grid;
-  gap: 20px;
+  gap: 0;
   grid-template-columns: 1fr 220px;
   margin-top: 0;
-  padding-top: 10px;
+  padding-top: 5px;
   border-top: none;
 }
 

@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.75";
+const APP_VERSION = "v21.76";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3522,26 +3522,7 @@ function renderPreview(totals) {
 
   // Update Table Headers dynamically for Change Notes
   const theadRow = dom.previewItemsTable.querySelector("thead tr");
-  if (isChangeNote) {
-    theadRow.innerHTML = `
-      <th style="width: 44px">S/N</th>
-      <th>Description of Variation</th>
-      <th style="width: 50px">Qty</th>
-      <th style="width: 50px">UOM</th>
-      <th style="width: 75px">Rate</th>
-      <th style="width: 75px">Addition</th>
-      <th style="width: 75px">Omission</th>
-    `;
-  } else {
-    theadRow.innerHTML = `
-      <th id="previewSnHeader" style="width: 44px">S/N</th>
-      <th id="previewDescriptionHeader">Description</th>
-      <th id="previewQtyHeader" style="width: 62px">Qty</th>
-      <th id="previewUomHeader" style="width: 62px">UOM</th>
-      <th id="previewRateHeader" style="width: 82px">U/Rate</th>
-      <th id="previewAmountHeader" style="width: 82px">Amount</th>
-    `;
-  }
+  theadRow.innerHTML = previewTableHeaderHtml();
   
   dom.previewInvoiceNote.textContent = isInvoice ? invoiceNoteText(totals) : "";
   dom.previewInvoiceNote.hidden = !isInvoice;
@@ -3878,8 +3859,8 @@ function previewItemRowHtml(item, index) {
   const isChangeNote = isChangeNoteDocument();
   
   if (isChangeNote) {
-    const amount = Number(item.amount || 0);
-    const addition = amount >= 0 ? formatMoney(amount) : "";
+    const amount = itemAmount(item);
+    const addition = amount > 0 ? formatMoney(amount) : "";
     const omission = amount < 0 ? formatMoney(Math.abs(amount)) : "";
     
     return `
@@ -3981,6 +3962,19 @@ function continuationPageHtml(pageNumber, pageCount, rows, startIndex, totals) {
 }
 
 function previewTableHeaderHtml() {
+  if (isChangeNoteDocument()) {
+    return `
+      <tr>
+        <th style="width: 44px">S/N</th>
+        <th>Description of Variation</th>
+        <th style="width: 50px">Qty</th>
+        <th style="width: 50px">UOM</th>
+        <th style="width: 75px">Rate</th>
+        <th style="width: 75px">Addition</th>
+        <th style="width: 75px">Omission</th>
+      </tr>
+    `;
+  }
   return `
     <tr>
       <th data-preview-id="previewSnHeader" data-preview-move-id="previewSnHeader">S/N</th>
