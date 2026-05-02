@@ -823,6 +823,15 @@ function cacheDom() {
     "settingDarkMode",
     "settingPdfSavePath",
     "settingExcelSavePath",
+    "settingsSectionApp",
+    "settingsSectionCompany",
+    "settingsSectionDocuments",
+    "settingsSectionAppearance",
+    "settingsSectionSavePaths",
+    "settingsSectionPortability",
+    "settingsSectionPreviewActions",
+    "settingsSectionLabels",
+    "settingNextDocumentNumberGroup",
     "settingDocumentNoLabel",
     "settingDocumentDateLabel",
     "settingPreparedByLabel",
@@ -4337,6 +4346,16 @@ function renderPoDocumentTypeSettingOptions(settings) {
 function syncSettingsFields() {
   const settings = appState.settings;
   const labels = settings.labels;
+  const admin = isAdmin();
+
+  // Visibility based on roles
+  if (dom.settingsSectionCompany) dom.settingsSectionCompany.classList.toggle("hidden", !admin);
+  if (dom.settingsSectionDocuments) dom.settingsSectionDocuments.classList.toggle("hidden", !admin);
+  if (dom.settingsSectionPortability) dom.settingsSectionPortability.classList.toggle("hidden", !admin);
+  if (dom.settingsSectionPreviewActions) dom.settingsSectionPreviewActions.classList.toggle("hidden", !admin);
+  if (dom.settingsSectionLabels) dom.settingsSectionLabels.classList.toggle("hidden", !admin);
+  if (dom.settingNextDocumentNumberGroup) dom.settingNextDocumentNumberGroup.classList.toggle("hidden", !admin);
+
   dom.settingDefaultPreparedBy.value = settings.defaultPreparedBy;
   dom.settingDefaultContact.value = settings.defaultContactPerson;
   dom.settingDefaultPhone.value = settings.defaultPhone;

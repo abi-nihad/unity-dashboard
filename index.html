@@ -554,7 +554,7 @@
           <button class="icon-button" id="closeSettingsButton" type="button" aria-label="Close settings">X</button>
         </div>
         <form class="settings-form" id="settingsForm">
-          <section class="settings-section">
+          <section class="settings-section" id="settingsSectionApp">
             <h3>App</h3>
             <div class="settings-grid">
 
@@ -578,14 +578,14 @@
                 <span>Currency Symbol</span>
                 <input id="settingCurrencySymbol" type="text" maxlength="4">
               </label>
-              <label>
+              <label id="settingNextDocumentNumberGroup">
                 <span>Next Document No</span>
                 <input id="settingNextDocumentNumber" type="text" inputmode="numeric">
               </label>
             </div>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section" id="settingsSectionCompany">
             <h3>Company</h3>
             <div class="settings-grid">
               <label class="wide-field">
@@ -603,7 +603,7 @@
             </div>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section" id="settingsSectionDocuments">
             <h3>Documents</h3>
             <div class="settings-grid">
               <label class="wide-field">
@@ -625,7 +625,7 @@
             </div>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section" id="settingsSectionAppearance">
             <h3>Appearance</h3>
             <div class="settings-grid">
               <label class="checkbox-row">
@@ -635,7 +635,7 @@
             </div>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section" id="settingsSectionSavePaths">
             <h3>Save Paths</h3>
             <div class="settings-grid">
               <label class="wide-field">
@@ -649,7 +649,7 @@
             </div>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section" id="settingsSectionPortability">
             <h3>Profile Portability</h3>
             <p class="settings-hint">Move your custom preview template and data to another browser or device.</p>
             <div class="settings-row">
@@ -659,7 +659,7 @@
             </div>
           </section>
             
-            <div class="settings-actions inline-settings-actions">
+            <div class="settings-actions inline-settings-actions" id="settingsSectionPreviewActions">
               <button class="secondary-button" id="settingsEditPreviewButton" type="button">Edit Preview</button>
               <button class="ghost-button" id="settingsCancelPreviewButton" type="button" hidden>Cancel Edit</button>
               <button class="primary-button" id="settingsSavePreviewButton" type="button" hidden>Save Preview</button>
@@ -667,7 +667,7 @@
 
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section" id="settingsSectionLabels">
             <h3>Labels</h3>
             <div class="settings-grid">
               <label>
