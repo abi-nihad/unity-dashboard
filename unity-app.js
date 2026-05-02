@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.74";
+const APP_VERSION = "v21.75";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3744,7 +3744,7 @@ function placeTotalsAfterFilledRows(pages, metrics) {
 function reindexPreviewPages(pages) {
   let nextIndex = 0;
   return pages.map((page) => {
-    const reindexed = { rows: page.rows, heights: page.heights, startIndex: nextIndex };
+    const reindexed = { ...page, startIndex: nextIndex };
     nextIndex += page.rows.length;
     return reindexed;
   });
