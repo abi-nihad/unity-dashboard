@@ -1111,7 +1111,7 @@ td {
   /* Always white paper — never affected by dark mode */
   background: #ffffff;
   color: #111111;
-  box-shadow: 0 12px 30px rgba(22, 32, 42, 0.08);
+  box-shadow: none;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -1425,7 +1425,7 @@ td {
 
 /* Last row of each page table gets a solid single bottom border */
 .preview-items tbody tr:last-child td {
-  border-bottom: 1.5px solid #000 !important;
+  border-bottom: none !important;
 }
 
 /* All table text/cells stay dark on white paper regardless of theme */
@@ -1532,7 +1532,7 @@ td {
   align-items: center;
   gap: 24px;
   padding: 6px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: none;
   background: transparent;
   width: 100%;
 }
