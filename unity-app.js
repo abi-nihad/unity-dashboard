@@ -676,10 +676,7 @@ function cacheDom() {
     "documentNumber",
     "documentDateMode",
     "documentDate",
-    "preparedBy",
     "clientSelect",
-    "contactPerson",
-    "phone",
     "poNumberField",
     "poNumber",
     "clientAddress",
@@ -1307,9 +1304,6 @@ function bindEvents() {
   [
     ["documentType", "type"],
     ["documentNumber", "number"],
-    ["preparedBy", "preparedBy"],
-    ["contactPerson", "contactPerson"],
-    ["phone", "phone"],
     ["poNumber", "poNumber"],
     ["invoiceClaimNumber", "invoiceClaimNumber", "integer"],
     ["invoiceClaimLabelInput", "invoiceClaimLabelText"],
@@ -1964,10 +1958,8 @@ function syncDocumentFields() {
   dom.documentNumber.value = doc.number;
   dom.documentDateMode.value = doc.dateMode || inferDateMode(doc.date);
   dom.documentDate.value = doc.date;
-  dom.preparedBy.value = doc.preparedBy;
   dom.clientSelect.value = doc.clientName;
-  dom.contactPerson.value = doc.contactPerson;
-  dom.phone.value = doc.phone;
+  dom.clientAddress.value = doc.clientAddress;
   dom.poNumber.value = doc.poNumber;
   dom.invoiceClaimNumber.value = doc.invoiceClaimNumber || 1;
   dom.invoiceClaimLabelInput.value = invoiceClaimLabel(doc);
