@@ -2049,7 +2049,6 @@ function renderItems() {
         </select>
       </td>
       <td><input class="amount-input" data-field="rate" data-index="${index}" type="text" inputmode="decimal" value="${escapeAttr(item.rate)}" aria-label="Item ${index + 1} rate"></td>
-      <td class="amount-cell">${formatMoney(itemAmount(item))}</td>
       <td>
         <div class="row-actions">
           <button class="insert-row-button" data-index="${index}" type="button" aria-label="Insert row after item ${index + 1}">+</button>
