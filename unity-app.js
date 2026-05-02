@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.63";
+const APP_VERSION = "v21.64";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -476,6 +476,10 @@ function isInvoiceDocument(type = appState.document.type) {
 
 function isQuotationDocument(type = appState.document.type) {
   return normalize(type) === "quotation";
+}
+
+function isChangeNoteDocument(type = appState.document.type) {
+  return normalize(type) === "change note";
 }
 
 function shouldShowAmountWords(document = appState.document) {
@@ -3477,8 +3481,32 @@ function renderPreview(totals) {
   dom.previewPhone.textContent = doc.phone || "";
   dom.previewPageNoLabel.textContent = labelEdgeText(labels.pageNo);
   const isInvoice = isInvoiceDocument();
+  const isChangeNote = isChangeNoteDocument();
   const claimNo = Number(doc.invoiceClaimNumber || 1);
   const isClaimOne = isInvoice && claimNo <= 1;
+
+  // Update Table Headers dynamically for Change Notes
+  const theadRow = dom.previewItemsTable.querySelector("thead tr");
+  if (isChangeNote) {
+    theadRow.innerHTML = `
+      <th style="width: 44px">S/N</th>
+      <th>Description of Variation</th>
+      <th style="width: 50px">Qty</th>
+      <th style="width: 50px">UOM</th>
+      <th style="width: 75px">Rate</th>
+      <th style="width: 75px">Addition</th>
+      <th style="width: 75px">Omission</th>
+    `;
+  } else {
+    theadRow.innerHTML = `
+      <th id="previewSnHeader" style="width: 44px">S/N</th>
+      <th id="previewDescriptionHeader">Description</th>
+      <th id="previewQtyHeader" style="width: 62px">Qty</th>
+      <th id="previewUomHeader" style="width: 62px">UOM</th>
+      <th id="previewRateHeader" style="width: 82px">U/Rate</th>
+      <th id="previewAmountHeader" style="width: 82px">Amount</th>
+    `;
+  }
   
   dom.previewInvoiceNote.textContent = isInvoice ? invoiceNoteText(totals) : "";
   dom.previewInvoiceNote.hidden = !isInvoice;
@@ -3492,7 +3520,7 @@ function renderPreview(totals) {
   dom.previewRemainingLabel.textContent = "Remaining Balance";
   dom.previewRemaining.textContent = formatMoney(totals.remainingBalance || 0);
   
-  dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : labels.total;
+  dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "NET TOTAL VARIATION" : labels.total);
   dom.previewTotal.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : totals.total);
   
   const hideAdjustmentTotals = (!isInvoice && appState.document.adjustmentType === "NONE") || (isInvoice && isClaimOne);
@@ -3812,6 +3840,24 @@ function renderPreviewRows(target, rows, startIndex, options = {}) {
 
 function previewItemRowHtml(item, index) {
   const serial = itemSerialText(item, index);
+  const isChangeNote = isChangeNoteDocument();
+  
+  if (isChangeNote) {
+    const amount = Number(item.amount || 0);
+    const addition = amount >= 0 ? formatMoney(amount) : "";
+    const omission = amount < 0 ? formatMoney(Math.abs(amount)) : "";
+    
+    return `
+      <td data-preview-item-field="serial" data-preview-index="${index}" style="text-align: center">${escapeHtml(serial)}</td>
+      <td class="preview-description" data-preview-item-field="description" data-preview-index="${index}" style="text-align: left">${descriptionPreviewHtml(item)}</td>
+      <td data-preview-item-field="qty" data-preview-index="${index}" style="text-align: center">${item.qty || ""}</td>
+      <td data-preview-item-field="uom" data-preview-index="${index}" style="text-align: center">${item.uom || ""}</td>
+      <td data-preview-item-field="rate" data-preview-index="${index}" style="text-align: right">${Number(item.rate || 0) ? formatNumber(item.rate) : ""}</td>
+      <td data-preview-item-field="addition" data-preview-index="${index}" style="text-align: right">${addition}</td>
+      <td data-preview-item-field="omission" data-preview-index="${index}" style="text-align: right">${omission}</td>
+    `;
+  }
+
   return `
     <td data-preview-item-field="serial" data-preview-index="${index}">${escapeHtml(serial)}</td>
     <td class="preview-description" data-preview-item-field="description" data-preview-index="${index}">${descriptionPreviewHtml(item)}</td>
