@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.31";
+const APP_VERSION = "v21.32";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -851,6 +851,10 @@ function cacheDom() {
     "settingLogoUrl",
     "settingBizsafeUrl",
     "settingStampUrl",
+    "settingPersonalUsername",
+    "settingPersonalNickname",
+    "settingPersonalPassword",
+    "updateProfileButton",
     "themeToggleButton",
     "recordStats",
     "toast",
@@ -1324,6 +1328,10 @@ function bindEvents() {
     }
   });
 
+  if (dom.updateProfileButton) {
+    dom.updateProfileButton.addEventListener("click", handleUpdateProfile);
+  }
+
   [
     ["documentType", "type"],
     ["documentNumber", "number"],
@@ -1795,6 +1803,48 @@ function getSessionNickname() {
   const accounts = getAccountsLocal();
   const user = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
   return user ? user.nickname : null;
+}
+
+async function handleUpdateProfile() {
+  const currentUsername = localStorage.getItem(AUTH_USER_KEY);
+  if (!currentUsername) return;
+  
+  const newUsername = dom.settingPersonalUsername.value.trim().toLowerCase();
+  const newNickname = dom.settingPersonalNickname.value.trim();
+  const newPassword = dom.settingPersonalPassword.value.trim();
+  
+  if (!newUsername || !newNickname || !newPassword) {
+    showToast("All personal info fields are required.");
+    return;
+  }
+  
+  if (!unityDb) {
+    showToast("Database not initialized. Profile update failed.");
+    return;
+  }
+
+  try {
+    const { error } = await unityDb
+      .from('profiles')
+      .update({
+        username: newUsername,
+        nickname: newNickname,
+        password: newPassword
+      })
+      .eq('username', currentUsername);
+      
+    if (error) throw error;
+    
+    localStorage.setItem(AUTH_USER_KEY, newUsername);
+    await getAccounts(); // Refresh cache
+    
+    showToast("Profile updated successfully!");
+    renderLoginState();
+    refreshAll();
+  } catch (err) {
+    console.error("Profile update error:", err);
+    showToast("Error updating profile: " + err.message);
+  }
 }
 
 async function handleCreateAccount(event) {
@@ -4388,6 +4438,22 @@ function syncSettingsFields() {
   if (dom.settingsSectionPreviewActions) dom.settingsSectionPreviewActions.classList.toggle("hidden", !admin);
   if (dom.settingsSectionLabels) dom.settingsSectionLabels.classList.toggle("hidden", !admin);
   if (dom.settingNextDocumentNumberGroup) dom.settingNextDocumentNumberGroup.classList.toggle("hidden", !admin);
+
+  // Personal Info
+  const currentUsername = localStorage.getItem(AUTH_USER_KEY);
+  if (currentUsername) {
+    const accounts = getAccountsLocal();
+    const user = accounts.find(a => a.username.toLowerCase() === currentUsername.toLowerCase());
+    if (user) {
+      dom.settingPersonalUsername.value = user.username;
+      dom.settingPersonalNickname.value = user.nickname || "";
+      dom.settingPersonalPassword.value = user.password;
+    } else if (currentUsername === MASTER_ADMIN.toLowerCase()) {
+      dom.settingPersonalUsername.value = MASTER_ADMIN;
+      dom.settingPersonalNickname.value = "Admin";
+      dom.settingPersonalPassword.value = LOGIN_PASSWORD;
+    }
+  }
 
   dom.settingDefaultPreparedBy.value = settings.defaultPreparedBy;
   dom.settingDefaultContact.value = settings.defaultContactPerson;

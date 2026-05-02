@@ -553,6 +553,27 @@
           <button class="icon-button" id="closeSettingsButton" type="button" aria-label="Close settings">X</button>
         </div>
         <form class="settings-form" id="settingsForm">
+          <section class="settings-section" id="settingsSectionPersonal">
+            <h3>Personal Info</h3>
+            <div class="settings-grid">
+              <label>
+                <span>Username</span>
+                <input id="settingPersonalUsername" type="text">
+              </label>
+              <label>
+                <span>Nickname</span>
+                <input id="settingPersonalNickname" type="text">
+              </label>
+              <label>
+                <span>Password</span>
+                <input id="settingPersonalPassword" type="text">
+              </label>
+            </div>
+            <div style="margin-top: 12px;">
+              <button class="secondary-button small-button" id="updateProfileButton" type="button">Update Profile</button>
+            </div>
+          </section>
+
           <section class="settings-section" id="settingsSectionApp">
             <h3>App</h3>
             <div class="settings-grid">
