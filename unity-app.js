@@ -1,7 +1,7 @@
 var STORAGE_KEY = "unity-dashboard-app-v2";
 var GLOBAL_TEMPLATE_KEY = "unity-global-template-v1";
 var SUPABASE_URL = "https://ujhljzsbslqszwewkdtf.supabase.co";
-var SUPABASE_KEY = "sb_secret_KYEaEqZYtp0P6IeKIc4LQg_j_SAncWM";
+var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqaGxqenNic2xxc3p3ZXdrZHRmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzY1NjAzOCwiZXhwIjoyMDkzMjMyMDM4fQ.rY2hMKSBGnYITWHguTlHSom0vSbGRlOfI1t8mYpSyLE";
 
 console.log("UNITY Dashboard App v21.0 - Initializing...");
 
