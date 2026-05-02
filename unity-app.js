@@ -1312,11 +1312,13 @@ function bindEvents() {
   [
     "settingPageSize",
     "settingPageOrientation",
-    "settingCompressToFitPage"
+    "settingCompressToFitPage",
+    "settingDarkMode"
   ].forEach(id => {
     if (dom[id]) {
       dom[id].addEventListener("change", () => {
         saveSettings();
+        if (id === "settingDarkMode") loadTheme();
         refreshCalculationsAndPreview();
       });
     }
@@ -4426,7 +4428,7 @@ function syncSettingsFields() {
 }
 
 function saveSettings(event) {
-  event.preventDefault();
+  if (event) event.preventDefault();
   const previousPdfSavePath = appState.settings.pdfSavePath;
   const previousExcelSavePath = appState.settings.excelSavePath;
   const settings = normalizeSettings({
