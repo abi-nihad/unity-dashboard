@@ -8,6 +8,7 @@ console.log("UNITY Dashboard App v21.0 - Initializing...");
 var unityDb = null;
 try {
   if (window.supabase && typeof window.supabase.createClient === "function") {
+    console.log("Initializing Supabase with URL:", SUPABASE_URL);
     unityDb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log("Supabase (unityDb) initialized.");
   }
@@ -1535,9 +1536,11 @@ async function handleLogin(event) {
 }
 
 function handleLogoutAction() {
+  console.log("Logout button clicked");
   if (confirm("Are you sure you want to logout? Any unsaved changes will be lost.")) {
     localStorage.removeItem(AUTH_KEY);
     localStorage.removeItem(AUTH_USER_KEY);
+    console.log("Auth keys removed, reloading...");
     location.reload(); 
   }
 }
