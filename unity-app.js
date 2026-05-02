@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.30";
+const APP_VERSION = "v21.31";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2730,22 +2730,22 @@ function applyPreviewStyleToElement(element, style = {}) {
   element.style.height = pixelStyle(style.height);
   element.style.maxWidth = style.width ? "none" : "";
   element.style.maxHeight = style.height ? "none" : "";
-  const side = style.borderSide || "all";
-  const bWidth = pixelStyle(style.borderWidth);
-  const bColor = style.borderColor || "";
-  const bStyle = style.borderStyle || (bWidth ? "solid" : "none");
+  if (style.borderWidth !== undefined && style.borderWidth !== "") {
+    const side = style.borderSide || "all";
+    const bWidth = pixelStyle(style.borderWidth);
+    const bColor = style.borderColor || "#111";
+    const bStyle = style.borderStyle || (bWidth ? "solid" : "none");
 
-  if (side === "all") {
-    element.style.borderWidth = bWidth;
-    element.style.borderColor = bColor;
-    element.style.borderStyle = bStyle;
-  } else {
-    // Clear all and set one
-    element.style.border = "";
-    const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
-    element.style[`border${sideProp}Width`] = bWidth;
-    element.style[`border${sideProp}Color`] = bColor;
-    element.style[`border${sideProp}Style`] = bStyle;
+    if (side === "all") {
+      element.style.borderWidth = bWidth;
+      element.style.borderColor = bColor;
+      element.style.borderStyle = bStyle;
+    } else {
+      const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
+      element.style[`border${sideProp}Width`] = bWidth;
+      element.style[`border${sideProp}Color`] = bColor;
+      element.style[`border${sideProp}Style`] = bStyle;
+    }
   }
 }
 
