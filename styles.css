@@ -1680,6 +1680,8 @@ td {
 }
 
 .settings-form {
+  flex: 1;
+  overflow-y: auto;
   display: grid;
   gap: 14px;
   padding: 16px 18px 20px;
