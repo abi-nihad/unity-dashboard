@@ -874,11 +874,14 @@ async function loadState() {
         .from('global_config')
         .select('data')
         .eq('key', 'app_state')
-        .single();
+        .maybeSingle();
       
-      if (data && data.data) {
+      if (error && error.code !== 'PGRST116') {
+        console.error("Cloud state load failed:", error);
+      } else if (data && data.data) {
         // Merge cloud state (mostly for templates/settings)
         appState = normalizeState({ ...appState, ...data.data });
+        console.log("Cloud state loaded successfully.");
       }
     }
 
@@ -1737,7 +1740,11 @@ async function getAccounts() {
     if (error) {
       console.error("Supabase getAccounts error:", error);
     } else if (data) {
-       console.log(`Successfully fetched ${data.length} accounts.`);
+       if (data.length === 0) {
+         console.log("No users found in cloud yet. This is normal for a new setup.");
+       } else {
+         console.log(`Successfully synced ${data.length} accounts from cloud.`);
+       }
        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(data));
        return data;
     }
