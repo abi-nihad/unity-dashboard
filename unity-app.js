@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.78";
+const APP_VERSION = "v21.79";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2279,7 +2279,7 @@ function syncDocumentFields() {
   dom.contractValue.value = doc.contractValue || "";
   dom.previouslyPaid.value = doc.previouslyPaid || "";
   dom.clientAddress.value = doc.clientAddress;
-  dom.clientContactPrefix.value = doc.clientContactPrefix || appState.settings.emailPrefix || "eMail :";
+  dom.clientContactPrefix.value = doc.clientContactPrefix || appState.settings.emailPrefix || "Email :";
   dom.clientEmail.value = doc.clientEmail;
   dom.referenceText.value = uppercaseText(doc.re || "");
   dom.adjustmentType.value = doc.adjustmentType;
