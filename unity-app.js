@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.58";
+const APP_VERSION = "v21.59";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -525,7 +525,8 @@ function invoiceRemainingBalance(document = appState.document) {
 }
 
 function invoiceNoteText(totals, document = appState.document) {
-  return "";
+  const claimNo = Number(document.invoiceClaimNumber || 1);
+  return `PROGRESS CLAIM NO. ${claimNo}`;
 }
 
 function promptInvoiceClaimNumber() {
@@ -992,6 +993,16 @@ async function loadState() {
     if (!appState) appState = createDefaultState();
   }
   appState = normalizeState(appState);
+  
+  // Migration: Delete all previous records for everyone (one-time reset)
+  const MIGRATION_CLEANUP_KEY = "unity_records_reset_v21_59";
+  if (!localStorage.getItem(MIGRATION_CLEANUP_KEY)) {
+    console.warn("MIGRATION: Clearing all document records for fresh start...");
+    appState.records = [];
+    saveState({ skipHistory: true });
+    localStorage.setItem(MIGRATION_CLEANUP_KEY, "done");
+  }
+
   appState.locked = true;
   lastDocumentSnapshot = JSON.stringify(appState.document);
 }
@@ -3458,23 +3469,35 @@ function renderPreview(totals) {
   dom.previewPhone.textContent = doc.phone || "";
   dom.previewPageNoLabel.textContent = labelEdgeText(labels.pageNo);
   const isInvoice = isInvoiceDocument();
+  const claimNo = Number(doc.invoiceClaimNumber || 1);
+  const isClaimOne = isInvoice && claimNo <= 1;
+  
   dom.previewInvoiceNote.textContent = isInvoice ? invoiceNoteText(totals) : "";
   dom.previewInvoiceNote.hidden = !isInvoice;
+  
   dom.previewSubtotalLabel.textContent = isInvoice ? "Contract Value" : labels.subtotal;
   dom.previewSubtotal.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
+  
   dom.previewAdjustmentLabel.textContent = isInvoice ? "Previously Paid" : adjustmentLabel();
   dom.previewAdjustment.textContent = formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment);
+  
   dom.previewRemainingLabel.textContent = "Remaining Balance";
   dom.previewRemaining.textContent = formatMoney(totals.remainingBalance || 0);
+  
   dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : labels.total;
   dom.previewTotal.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : totals.total);
-  const hideAdjustmentTotals = !isInvoice && appState.document.adjustmentType === "NONE";
+  
+  const hideAdjustmentTotals = (!isInvoice && appState.document.adjustmentType === "NONE") || (isInvoice && isClaimOne);
   const showAmountWords = shouldShowAmountWords(doc);
   const singleTotalLayout = hideAdjustmentTotals && !showAmountWords;
+  
   dom.previewSubtotalRow.style.display = hideAdjustmentTotals ? "none" : "grid";
   dom.previewAdjustmentRow.style.display = hideAdjustmentTotals ? "none" : "grid";
-  dom.previewRemainingRow.hidden = !isInvoice;
-  dom.previewRemainingRow.style.display = isInvoice ? "grid" : "none";
+  
+  const showRemaining = isInvoice && !isClaimOne;
+  dom.previewRemainingRow.hidden = !showRemaining;
+  dom.previewRemainingRow.style.display = showRemaining ? "grid" : "none";
+  
   dom.previewTotalNotes.hidden = !isInvoice && !showAmountWords;
   dom.previewTotalsBlock.classList.toggle("single-total", singleTotalLayout);
   dom.bankDetails.style.display = doc.type === "INVOICE" ? "grid" : "none";
