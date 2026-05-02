@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.33";
+const APP_VERSION = "v21.34";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2822,11 +2822,11 @@ function setSelectedPreviewStyle(nextStyle) {
     } else {
       delete styles[moveId];
     }
-    const element = findPreviewMoveElement(moveId);
-    if (element) {
+    const elements = findAllPreviewMoveElements(moveId);
+    elements.forEach((element) => {
       applyPreviewStyleToElement(element, merged);
       element.classList.add("preview-selected");
-    }
+    });
   });
   saveState();
   syncPreviewFormatControls();
@@ -2847,11 +2847,11 @@ function setSelectedPreviewPosition(axis, value) {
     } else {
       delete layout[moveId];
     }
-    const element = findPreviewMoveElement(moveId);
-    if (element) {
+    const elements = findAllPreviewMoveElements(moveId);
+    elements.forEach((element) => {
       applyPreviewPosition(element, next);
       element.classList.add("preview-selected");
-    }
+    });
   });
   saveState();
   syncPreviewFormatControls();
@@ -2998,10 +2998,12 @@ function previewFormatControls() {
 }
 
 function findPreviewMoveElement(moveId) {
-  if (!moveId) return null;
-  return Array.from(dom.printArea.querySelectorAll("[data-preview-move-id]")).find((element) => {
-    return element.dataset.previewMoveId === moveId;
-  });
+  return findAllPreviewMoveElements(moveId)[0] || null;
+}
+
+function findAllPreviewMoveElements(moveId) {
+  if (!moveId) return [];
+  return Array.from(dom.printArea.querySelectorAll(`[data-preview-move-id="${moveId}"]`));
 }
 
 function readNumberControl(control, min, max) {
