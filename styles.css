@@ -1531,19 +1531,19 @@ td {
   margin: 0;
 }
 
-/* Only the TOTAL AMOUNT row gets solid borders */
+/* Only the TOTAL AMOUNT row gets accounting borders */
 .paper-totals .grand-total {
-  border-top: 1.5px solid #000;
-  border-bottom: 1.5px solid #000;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  border-top: 1px solid #000;
+  border-bottom: 3.5px double #000;
+  padding-top: 5px;
+  padding-bottom: 5px;
   margin-top: 4px;
 }
 
 .paper-totals .grand-total dt {
   color: #000;
-  font-weight: 800;
-  font-size: 11px;
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .paper-totals .grand-total dd {
