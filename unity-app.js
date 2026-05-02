@@ -804,8 +804,6 @@ function cacheDom() {
     "unlockCancelButton",
     "settingsOverlay",
     "settingsForm",
-    "settingAppName",
-    "settingAppSubtitle",
     "settingDefaultPreparedBy",
     "settingDefaultContact",
     "settingDefaultPhone",
@@ -4305,7 +4303,7 @@ function openSettings() {
   syncSettingsFields();
   dom.settingsOverlay.classList.add("open");
   dom.settingsOverlay.setAttribute("aria-hidden", "false");
-  dom.settingAppName.focus();
+  if (dom.settingDefaultPreparedBy) dom.settingDefaultPreparedBy.focus();
 }
 
 function openAdminPanel() {
@@ -4349,8 +4347,6 @@ function renderPoDocumentTypeSettingOptions(settings) {
 function syncSettingsFields() {
   const settings = appState.settings;
   const labels = settings.labels;
-  dom.settingAppName.value = settings.appName;
-  dom.settingAppSubtitle.value = settings.appSubtitle;
   dom.settingDefaultPreparedBy.value = settings.defaultPreparedBy;
   dom.settingDefaultContact.value = settings.defaultContactPerson;
   dom.settingDefaultPhone.value = settings.defaultPhone;
@@ -4394,8 +4390,6 @@ function saveSettings(event) {
   const previousPdfSavePath = appState.settings.pdfSavePath;
   const previousExcelSavePath = appState.settings.excelSavePath;
   const settings = normalizeSettings({
-    appName: dom.settingAppName.value.trim() || defaultSettings.appName,
-    appSubtitle: dom.settingAppSubtitle.value.trim(),
     defaultPreparedBy: dom.settingDefaultPreparedBy.value.trim(),
     defaultContactPerson: dom.settingDefaultContact.value.trim(),
     defaultPhone: dom.settingDefaultPhone.value.trim(),
