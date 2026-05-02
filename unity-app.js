@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.44";
+const APP_VERSION = "v21.45";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -4215,7 +4215,7 @@ function deleteRecord(record) {
   const ok = window.confirm(`Delete record "${record.documentNumber}"?`);
   if (!ok) return;
   appState.records = appState.records.filter((item) => item.documentNumber !== record.documentNumber);
-  saveState();
+  saveState({ force: true });
   renderRecords();
   showToast("Record deleted.");
 }
