@@ -1406,6 +1406,8 @@ td {
 
 .paper-page .preview-items th {
   background: #ffffff;
+  border-top: 1.5px solid #000;
+  border-bottom: 1.5px solid #000;
 }
 
 .paper.preview-editing [contenteditable="true"] {
