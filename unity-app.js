@@ -46,8 +46,9 @@ const LOGIN_USERNAME = "abi.nihad";
 const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
-const ACCOUNTS_KEY = "unity-dashboard-accounts";
-const UNLOCK_PASSWORD = "64423";
+const ACCOUNTS_KEY = "unity_accounts";
+const APP_VERSION = "v21.17";
+const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
 const emailPrefixOptions = ["eMail :", "Tel :", "Fax :"];
@@ -1475,7 +1476,7 @@ function renderLoginState() {
     const admin = isAdmin();
     if (dom.appVersion) {
       dom.appVersion.classList.toggle("hidden", !admin);
-      dom.appVersion.textContent = "v21.11";
+      dom.appVersion.textContent = APP_VERSION;
     }
     dom.adminPanelButton.classList.toggle("hidden", !admin);
     dom.editPreviewButton.classList.toggle("hidden", !admin);
