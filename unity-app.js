@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.73";
+const APP_VERSION = "v21.74";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -559,6 +559,7 @@ function init() {
     bindEvents();
     loadTheme();
     renderLoginState();
+    setupAssetUploads();
     
     loadState().then(() => {
       // Force clear records migration (v21.60 reset)
@@ -595,6 +596,35 @@ function init() {
     console.error("Critical Init Error:", err);
     alert("Critical Init Error: " + err.message);
   }
+}
+
+function setupAssetUploads() {
+  const handleFile = (input, settingKey) => {
+    if (!input) return;
+    input.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 2 * 1024 * 1024) {
+        showToast("Error: Image must be less than 2MB", true);
+        input.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        appState.settings[settingKey] = event.target.result;
+        saveState();
+        refreshAll();
+        showToast("Branding asset updated successfully");
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  
+  handleFile(dom.settingUploadLogo, "logoUrl");
+  handleFile(dom.settingUploadBizsafe, "bizsafeUrl");
+  handleFile(dom.settingUploadStamp, "stampUrl");
 }
 
 function setupCloudRealtime() {
@@ -694,6 +724,10 @@ function cacheDom() {
     "settingsEditPreviewButton",
     "settingsCancelPreviewButton",
     "settingsSavePreviewButton",
+    "settingsSectionAssets",
+    "settingUploadLogo",
+    "settingUploadBizsafe",
+    "settingUploadStamp",
     "boxSpacingInput",
     "letterSpacingInput",
     "previewHint",
@@ -1650,6 +1684,7 @@ function renderLoginState() {
       "settingsSectionPortability",
       "settingsSectionPreviewActions",
       "settingsSectionLabels",
+      "settingsSectionAssets",
       "settingNextDocumentNumberGroup"
     ];
     
