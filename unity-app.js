@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.53";
+const APP_VERSION = "v21.54";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1614,27 +1614,28 @@ function renderLoginState() {
       dom.appVersion.classList.toggle("hidden", !admin);
       dom.appVersion.textContent = APP_VERSION;
     }
-    const adminDisplay = admin ? "" : "none";
-    if (dom.adminPanelButton) dom.adminPanelButton.style.display = admin ? "inline-flex" : "none";
-    if (dom.editPreviewButton) dom.editPreviewButton.style.display = admin ? "inline-flex" : "none";
+
+    // Toggle visibility for all administrative elements
+    const adminElements = [
+      dom.adminPanelButton,
+      dom.editPreviewButton,
+      dom.settingsEditPreviewButton,
+      dom.settingsSectionCompany,
+      dom.settingsSectionDocuments,
+      dom.settingsSectionAppearance,
+      dom.settingsSectionSavePaths,
+      dom.settingsSectionPortability,
+      dom.settingsSectionPreviewActions,
+      dom.settingsSectionLabels,
+      dom.settingNextDocumentNumberGroup
+    ];
     
-    // Hard-hide or show administrative sections in settings
-    [
-      "settingsSectionCompany",
-      "settingsSectionDocuments",
-      "settingsSectionAppearance",
-      "settingsSectionSavePaths",
-      "settingsSectionPortability",
-      "settingsSectionPreviewActions",
-      "settingsSectionLabels",
-      "settingNextDocumentNumberGroup"
-    ].forEach(id => {
-      if (dom[id]) dom[id].style.display = adminDisplay;
+    adminElements.forEach(el => {
+      if (el) el.classList.toggle("hidden", !admin);
     });
-    
-    if (dom.settingsEditPreviewButton) dom.settingsEditPreviewButton.style.display = adminDisplay;
+
     document.querySelectorAll(".set-default-btn").forEach(btn => {
-      btn.style.display = adminDisplay;
+      btn.classList.toggle("hidden", !admin);
     });
   }
 }
