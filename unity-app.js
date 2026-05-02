@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.46";
+const APP_VERSION = "v21.47";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -4104,13 +4104,13 @@ function recordCardElement(record) {
     <span><span class="badge ${recordGroupKey(record)}">${escapeHtml(recordDocumentType(record))}</span> ${formatDisplayDate(record.date)} | Saved ${formatDateTime(record.savedAt)}</span>
     <span class="record-meta"><span class="badge" title="${escapeAttr(pdfPath)}">${escapeHtml(pdfFileName)}</span><span class="badge" title="${escapeAttr(excelPath)}">${escapeHtml(excelFileName)}</span></span>
     <div class="card-actions">
-      <button class="secondary-button small-button" data-action="open" type="button">Edit</button>
-      ${isInvoice ? "" : '<button class="secondary-button small-button" data-action="create-invoice" type="button">Create Invoice</button>'}
-      <button class="secondary-button small-button" data-action="print" type="button">Print</button>
-      <button class="secondary-button small-button" data-action="clone" type="button">Clone</button>
+      <button class="secondary-button icon-btn small-button" data-action="open" type="button" aria-label="Edit"><span class="material-symbols-rounded">edit</span></button>
+      ${isInvoice ? "" : '<button class="secondary-button icon-btn small-button" data-action="create-invoice" type="button" aria-label="Create Invoice"><span class="material-symbols-rounded">receipt</span></button>'}
+      <button class="secondary-button icon-btn small-button" data-action="print" type="button" aria-label="Print"><span class="material-symbols-rounded">print</span></button>
+      <button class="secondary-button icon-btn small-button" data-action="clone" type="button" aria-label="Clone"><span class="material-symbols-rounded">content_copy</span></button>
       ${recordFileControlHtml(record, "pdf")}
       ${recordFileControlHtml(record, "excel")}
-      <button class="ghost-button small-button" data-action="delete" type="button">Delete</button>
+      <button class="ghost-button icon-btn small-button delete-btn" data-action="delete" type="button" aria-label="Delete"><span class="material-symbols-rounded">delete</span></button>
     </div>
   `;
   card.querySelector('[data-action="open"]').addEventListener("click", () => loadRecord(record));
@@ -4130,10 +4130,11 @@ function recordCardElement(record) {
 function recordFileControlHtml(record, fileType) {
   const href = recordFileHref(record, fileType);
   const label = fileType === "pdf" ? "PDF" : "Excel";
+  const icon = fileType === "pdf" ? "picture_as_pdf" : "table_view";
   if (href) {
-    return `<a class="secondary-button small-button file-action-link" data-action="${fileType}" href="${escapeAttr(href)}" target="_blank" rel="noopener" title="Open saved ${escapeAttr(label)}">Open ${escapeHtml(label)}</a>`;
+    return `<a class="secondary-button icon-btn small-button file-action-link" data-action="${fileType}" href="${escapeAttr(href)}" target="_blank" rel="noopener" title="Open saved ${escapeAttr(label)}" aria-label="Open ${label}"><span class="material-symbols-rounded">${icon}</span></a>`;
   }
-  return `<button class="secondary-button small-button" data-action="${fileType}" type="button" title="No saved file path yet">${escapeHtml(label)}</button>`;
+  return `<button class="secondary-button icon-btn small-button" data-action="${fileType}" type="button" title="No saved file path yet" aria-label="${label}"><span class="material-symbols-rounded">${icon}</span></button>`;
 }
 
 function documentFromRecord(record = {}) {

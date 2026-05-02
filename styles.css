@@ -2330,3 +2330,46 @@ function updateRecordStats(records) {
   content: "👤";
   font-size: 14px;
 }
+
+.icon-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  width: 40px;
+  height: 40px;
+  min-width: 40px !important;
+  border-radius: 50% !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-btn.small-button {
+  width: 32px;
+  height: 32px;
+  min-width: 32px !important;
+}
+
+.icon-btn .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.icon-btn.small-button .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.icon-btn:active {
+  transform: translateY(0);
+}
+
+.delete-btn {
+  color: #d32f2f !important;
+}
+
+.delete-btn:hover {
+  background: #ffebee !important;
+}
