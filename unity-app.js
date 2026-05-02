@@ -595,6 +595,8 @@ function setupCloudRealtime() {
 function cacheDom() {
   [
     "settingsButton",
+    "adminPanelOverlay",
+    "closeAdminPanelButton",
     "adminPanelButton",
     "openToolsButton",
     "closeToolsButton",
@@ -1187,11 +1189,10 @@ function cleanList(value, fallback) {
 
 function bindEvents() {
   dom.settingsButton.addEventListener("click", openSettings);
-  dom.adminPanelButton.addEventListener("click", () => {
-    openSettings();
-    setTimeout(() => {
-      dom.adminUserManagement.scrollIntoView({ behavior: 'smooth' });
-    }, 300);
+  dom.adminPanelButton.addEventListener("click", openAdminPanel);
+  dom.closeAdminPanelButton.addEventListener("click", closeAdminPanel);
+  dom.adminPanelOverlay.addEventListener("click", (event) => {
+    if (event.target === dom.adminPanelOverlay) closeAdminPanel();
   });
   dom.openToolsButton.addEventListener("click", () => openToolsPanel("records"));
   dom.closeToolsButton.addEventListener("click", closeToolsPanel);
@@ -1415,6 +1416,8 @@ function bindEvents() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && dom.unlockOverlay.classList.contains("open")) {
       closeUnlockDialog();
+    } else if (event.key === "Escape" && dom.adminPanelOverlay.classList.contains("open")) {
+      closeAdminPanel();
     } else if (event.key === "Escape" && dom.settingsOverlay.classList.contains("open")) {
       closeSettings();
     } else if (event.key === "Escape" && dom.toolsPanel.classList.contains("open")) {
@@ -4283,14 +4286,6 @@ function openSettings() {
   syncSettingsFields();
   dom.settingsOverlay.classList.add("open");
   dom.settingsOverlay.setAttribute("aria-hidden", "false");
-  
-  if (isAdmin()) {
-    if (dom.adminUserManagement) dom.adminUserManagement.hidden = false;
-    renderAdminUsers();
-  } else {
-    if (dom.adminUserManagement) dom.adminUserManagement.hidden = true;
-  }
-  
   dom.settingAppName.focus();
 }
 
@@ -4298,6 +4293,20 @@ function closeSettings() {
   dom.settingsOverlay.classList.remove("open");
   dom.settingsOverlay.setAttribute("aria-hidden", "true");
 }
+
+function openAdminPanel() {
+  if (!isAdmin()) return;
+  dom.adminPanelOverlay.classList.add("open");
+  dom.adminPanelOverlay.setAttribute("aria-hidden", "false");
+  renderAdminUsers();
+}
+
+function closeAdminPanel() {
+  dom.adminPanelOverlay.classList.remove("open");
+  dom.adminPanelOverlay.setAttribute("aria-hidden", "true");
+}
+
+
 
 function renderPoDocumentTypeSettingOptions(settings) {
   const selected = settings.poDocumentTypes[0] || "";

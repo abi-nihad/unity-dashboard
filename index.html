@@ -518,8 +518,25 @@
       </form>
     </div>
 
-    <div class="settings-overlay" id="settingsOverlay" aria-hidden="true">
-      <aside class="settings-drawer" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-overlay" id="adminPanelOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+      <aside class="settings-drawer admin-drawer">
+        <header class="settings-header">
+          <h2>Admin Panel</h2>
+          <button class="icon-button" id="closeAdminPanelButton" type="button" aria-label="Close admin panel">X</button>
+        </header>
+        <div class="settings-content">
+          <section class="settings-section" id="adminUserManagement">
+            <h3>User Management</h3>
+            <p class="settings-hint">Manage user accounts, roles, and security.</p>
+            <div class="admin-user-list" id="adminUserList">
+              <!-- User rows will be injected here -->
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <div class="settings-overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="settings-header">
           <div>
             <h2 id="settingsTitle">Settings</h2>
@@ -671,14 +688,7 @@
               <button class="ghost-button" id="settingsCancelPreviewButton" type="button" hidden>Cancel Edit</button>
               <button class="primary-button" id="settingsSavePreviewButton" type="button" hidden>Save Preview</button>
             </div>
-            
-            <section class="settings-section" id="adminUserManagement" hidden>
-              <h3>User Management (Admin)</h3>
-              <p class="settings-hint">Manage user accounts and reset passwords.</p>
-              <div class="admin-user-list" id="adminUserList">
-                <!-- User rows will be injected here -->
-              </div>
-            </section>
+
           </section>
 
           <section class="settings-section">
