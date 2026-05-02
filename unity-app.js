@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.76";
+const APP_VERSION = "v21.77";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3539,12 +3539,13 @@ function renderPreview(totals) {
   dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "NET TOTAL VARIATION" : labels.total);
   dom.previewTotal.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : totals.total);
   
-  const hideAdjustmentTotals = (!isInvoice && appState.document.adjustmentType === "NONE") || (isInvoice && isClaimOne);
+  const hideSubtotal = (!isInvoice && doc.adjustmentType === "NONE");
+  const hideAdjustment = (!isInvoice && doc.adjustmentType === "NONE") || (isInvoice && isClaimOne);
   const showAmountWords = shouldShowAmountWords(doc);
-  const singleTotalLayout = hideAdjustmentTotals && !showAmountWords;
+  const singleTotalLayout = hideSubtotal && hideAdjustment && !showAmountWords;
   
-  dom.previewSubtotalRow.style.display = hideAdjustmentTotals ? "none" : "grid";
-  dom.previewAdjustmentRow.style.display = hideAdjustmentTotals ? "none" : "grid";
+  dom.previewSubtotalRow.style.display = hideSubtotal ? "none" : "grid";
+  dom.previewAdjustmentRow.style.display = hideAdjustment ? "none" : "grid";
   
   const showRemaining = isInvoice && !isClaimOne;
   dom.previewRemainingRow.hidden = !showRemaining;
