@@ -1777,6 +1777,16 @@ function getAccountsLocal() {
   }
 }
 
+function getSessionNickname() {
+  const username = localStorage.getItem(AUTH_USER_KEY);
+  if (!username) return null;
+  if (username.toLowerCase() === MASTER_ADMIN.toLowerCase()) return "Admin";
+  
+  const accounts = getAccountsLocal();
+  const user = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
+  return user ? user.nickname : null;
+}
+
 async function handleCreateAccount(event) {
   event.preventDefault();
   const username = dom.createUsername.value.trim();
@@ -4184,7 +4194,7 @@ function newDocument(options = {}) {
     number: String(nextDocumentNumber()),
     dateMode: "tomorrow",
     date: tomorrowInput(),
-    preparedBy: settings.defaultPreparedBy || appState.document.preparedBy || "Nihad",
+    preparedBy: getSessionNickname() || settings.defaultPreparedBy || "Nihad",
     clientName: "",
     clientAddress: "",
     clientContactPrefix: "",
