@@ -102,13 +102,6 @@
           <button class="secondary-button hidden" id="adminPanelButton" type="button">Admin</button>
           <button class="secondary-button" id="settingsButton" type="button">Settings</button>
           <button class="secondary-button" id="openToolsButton" type="button">Clients/Records</button>
-          <button class="secondary-button" id="newDocumentButton" type="button">New</button>
-          <button class="primary-button" id="saveDocumentButton" type="button">Save</button>
-          <button class="secondary-button" id="printButton" type="button" hidden>Print/PDF</button>
-          <button class="secondary-button" id="exportButton" type="button" hidden>Excel</button>
-          <button class="secondary-button" id="editPreviewButton" type="button">Edit Preview</button>
-          <button class="ghost-button" id="cancelPreviewButton" type="button" hidden>Cancel Edit</button>
-          <button class="primary-button" id="savePreviewButton" type="button" hidden>Save Preview</button>
           <button class="ghost-button" id="logoutButton" type="button">Logout</button>
         </div>
       </header>
@@ -295,9 +288,16 @@
                  <input id="settingCompressToFitPage" type="checkbox">
                  <span>Fit</span>
                </label>
+               <div class="preview-actions-group">
+                 <button class="secondary-button small-button" id="newDocumentButton" type="button">New</button>
+                 <button class="primary-button small-button" id="saveDocumentButton" type="button">Save</button>
+                 <button class="secondary-button small-button" id="editPreviewButton" type="button">Edit Preview</button>
+                 <button class="ghost-button small-button" id="cancelPreviewButton" type="button" hidden>Cancel Edit</button>
+                 <button class="primary-button small-button" id="savePreviewButton" type="button" hidden>Save Preview</button>
+                 <button class="secondary-button small-button" id="printButton" type="button" aria-label="Print or Export PDF">Print</button>
+               </div>
             </div>
             <div>
-              <h2 hidden>Preview</h2>
               <p id="previewHint">A4 view</p>
             </div>
           </div>
@@ -370,6 +370,9 @@
               <input id="boxXInput" type="number" min="-1200" max="1200" step="1" title="Box horizontal position" placeholder="X">
               <input id="boxYInput" type="number" min="-1200" max="1200" step="1" title="Box vertical position" placeholder="Y">
               <button class="secondary-button small-button" id="resetSelectedStyleButton" type="button">Reset</button>
+            </div>
+            <div class="format-group hidden" id="previewAdminGroup">
+              <button class="primary-button small-button" id="setGlobalDefaultButton" type="button" title="Push this layout to ALL users immediately">Make Default for All</button>
             </div>
           </div>
           <article class="paper" id="printArea">

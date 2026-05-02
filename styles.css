@@ -181,6 +181,33 @@ html.is-authenticated .app-shell {
   gap: 2px;
 }
 
+.quick-settings-bar .checkbox-field {
+  white-space: nowrap;
+}
+
+.preview-actions-group {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.preview-actions-group .small-button {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.preview-toolbar h2 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.user-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .user-info strong {
   font-size: 14px;
 }

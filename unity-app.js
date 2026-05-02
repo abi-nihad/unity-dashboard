@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.36";
+const APP_VERSION = "v21.38";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -855,6 +855,8 @@ function cacheDom() {
     "settingPersonalNickname",
     "settingPersonalPassword",
     "updateProfileButton",
+    "previewAdminGroup",
+    "setGlobalDefaultButton",
     "themeToggleButton",
     "recordStats",
     "toast",
@@ -1330,6 +1332,13 @@ function bindEvents() {
 
   if (dom.updateProfileButton) {
     dom.updateProfileButton.addEventListener("click", handleUpdateProfile);
+  }
+
+  if (dom.setGlobalDefaultButton) {
+    dom.setGlobalDefaultButton.addEventListener("click", () => {
+      savePreviewEdits(); // savePreviewEdits already handles isAdmin() global sync
+      showToast("Template has been set as global default for everyone.");
+    });
   }
 
   [
@@ -2533,6 +2542,9 @@ function renderPreviewEditState() {
   dom.settingsSavePreviewButton.hidden = !editable;
   dom.settingsCancelPreviewButton.hidden = !editable;
   dom.previewFormatbar.hidden = !editable;
+  
+  const admin = isAdmin();
+  if (dom.previewAdminGroup) dom.previewAdminGroup.classList.toggle("hidden", !admin || !editable);
 
   document.querySelectorAll("[data-preview-id], [data-preview-item-field]").forEach((element) => {
     element.contentEditable = "true";
