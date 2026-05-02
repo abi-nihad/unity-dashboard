@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.47";
+const APP_VERSION = "v21.48";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3274,18 +3274,30 @@ function refreshCalculationsAndPreview() {
   const totals = calculateTotals();
   const isInvoice = isInvoiceDocument();
   const hideAdjustmentTotals = !isInvoice && appState.document.adjustmentType === "NONE";
+  const isClaimOne = isInvoice && Number(appState.document.invoiceClaimNumber || 1) <= 1;
   dom.summaryStrip.classList.toggle("invoice-summary", isInvoice);
-  dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals);
+  dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals || (isInvoice && isClaimOne));
   dom.summarySubtotalCard.style.display = hideAdjustmentTotals ? "none" : "grid";
-  dom.summaryAdjustmentCard.style.display = hideAdjustmentTotals ? "none" : "grid";
-  dom.summaryRemainingCard.hidden = !isInvoice;
-  dom.summaryRemainingCard.style.display = isInvoice ? "grid" : "none";
+  dom.summaryAdjustmentCard.style.display = (hideAdjustmentTotals || (isInvoice && isClaimOne)) ? "none" : "grid";
+  dom.summaryRemainingCard.hidden = !isInvoice || isClaimOne;
+  dom.summaryRemainingCard.style.display = (isInvoice && !isClaimOne) ? "grid" : "none";
   dom.summarySubtotalLabel.textContent = isInvoice ? "Contract Value" : "Sub-total";
   dom.subtotalValue.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
   dom.adjustmentLabel.textContent = isInvoice ? "Previously Paid" : adjustmentLabel();
   dom.adjustmentValue.textContent = formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment);
   dom.summaryRemainingValue.textContent = formatMoney(totals.remainingBalance || 0);
   dom.remainingBalanceValue.textContent = formatMoney(totals.remainingBalance || 0);
+
+  // Conditional visibility for input fields
+  if (dom.previouslyPaid) {
+    const prevPaidLabel = dom.previouslyPaid.closest('label');
+    if (prevPaidLabel) prevPaidLabel.hidden = isInvoice && isClaimOne;
+  }
+  if (dom.remainingBalanceValue) {
+    const remBalCard = dom.remainingBalanceValue.closest('.invoice-balance-card');
+    if (remBalCard) remBalCard.hidden = isInvoice && isClaimOne;
+  }
+
   if (isInvoice) {
     dom.invoiceClaimAmount.value = String(totals.currentClaimAmount ? roundCurrency(totals.currentClaimAmount) : 0);
     dom.contractValue.value = totals.contractValue ? String(roundCurrency(totals.contractValue)) : "";
@@ -5162,12 +5174,15 @@ function buildPdfBlob() {
   if (pageNumber === pageCount) {
     const totalsY = Math.max(95, y - (28 * scale));
     if (isInvoiceDocument(doc.type)) {
-      text(tableRight - 143, totalsY + (46 * scale), "Contract Value", 8, true);
-      text(tableRight - 48, totalsY + (46 * scale), formatMoney(totals.contractValue), 8, true);
-      text(tableRight - 143, totalsY + (32 * scale), "Previously Paid", 8, true);
-      text(tableRight - 48, totalsY + (32 * scale), formatMoney(totals.previouslyPaid), 8, true);
-      text(tableRight - 143, totalsY + (18 * scale), "Remaining Balance", 8, true);
-      text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.remainingBalance), 8, true);
+      const isClaimOne = Number(doc.invoiceClaimNumber || 1) <= 1;
+      text(tableRight - 143, totalsY + (isClaimOne ? 18 : 46) * scale, "Contract Value", 8, true);
+      text(tableRight - 48, totalsY + (isClaimOne ? 18 : 46) * scale, formatMoney(totals.contractValue), 8, true);
+      if (!isClaimOne) {
+        text(tableRight - 143, totalsY + (32 * scale), "Previously Paid", 8, true);
+        text(tableRight - 48, totalsY + (32 * scale), formatMoney(totals.previouslyPaid), 8, true);
+        text(tableRight - 143, totalsY + (18 * scale), "Remaining Balance", 8, true);
+        text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.remainingBalance), 8, true);
+      }
     } else if (doc.adjustmentType !== "NONE") {
       text(tableRight - 143, totalsY + (32 * scale), labels.subtotal, 8, true);
       text(tableRight - 48, totalsY + (32 * scale), formatMoney(totals.subtotal), 8, true);
@@ -5310,9 +5325,12 @@ function previewWorkbookData() {
   });
   add([]);
   if (isInvoiceDocument(doc.type)) {
+    const isClaimOne = Number(doc.invoiceClaimNumber || 1) <= 1;
     add(["", "", "", "", xlsxText("Contract Value", 8), xlsxNumber(totals.contractValue, 9)]);
-    add(["", "", "", "", xlsxText("Previously Paid", 8), xlsxNumber(totals.previouslyPaid, 9)]);
-    add(["", "", "", "", xlsxText("Remaining Balance", 8), xlsxNumber(totals.remainingBalance, 9)]);
+    if (!isClaimOne) {
+      add(["", "", "", "", xlsxText("Previously Paid", 8), xlsxNumber(totals.previouslyPaid, 9)]);
+      add(["", "", "", "", xlsxText("Remaining Balance", 8), xlsxNumber(totals.remainingBalance, 9)]);
+    }
   } else if (doc.adjustmentType !== "NONE") {
     add(["", "", "", "", xlsxText(labels.subtotal, 8), xlsxNumber(totals.subtotal, 9)]);
     add(["", "", "", "", xlsxText(adjustmentLabel(), 8), xlsxNumber(totals.adjustment, 9)]);
