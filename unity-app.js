@@ -47,11 +47,11 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.68";
+const APP_VERSION = "v21.69";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
-const emailPrefixOptions = ["eMail :", "Tel :", "Fax :"];
+const emailPrefixOptions = ["Email :", "Tel :", "Fax :"];
 const FILE_HANDLE_DB_NAME = "unity-dashboard-file-handles";
 const FILE_HANDLE_STORE_NAME = "handles";
 const HEADER_LOCKED_FIELD_IDS = [
@@ -115,7 +115,7 @@ const defaultSettings = {
     pageNo: "Page No",
     poNo: "PO No",
     re: "RE",
-    emailPrefix: "eMail :",
+    emailPrefix: "Email :",
     subtotal: "SUB-TOTAL",
     total: "TOTAL AMOUNT",
     footerGreeting: "Sincerely Yours,",
