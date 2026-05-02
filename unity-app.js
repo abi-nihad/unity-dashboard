@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.54";
+const APP_VERSION = "v21.55";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1568,6 +1568,7 @@ function applyTheme() {
 }
 
 function refreshAll() {
+  renderLoginState();
   renderAppChrome();
   renderDocumentTypeOptions();
   renderAdjustmentTypeOptions();
@@ -1615,22 +1616,23 @@ function renderLoginState() {
       dom.appVersion.textContent = APP_VERSION;
     }
 
-    // Toggle visibility for all administrative elements
-    const adminElements = [
-      dom.adminPanelButton,
-      dom.editPreviewButton,
-      dom.settingsEditPreviewButton,
-      dom.settingsSectionCompany,
-      dom.settingsSectionDocuments,
-      dom.settingsSectionAppearance,
-      dom.settingsSectionSavePaths,
-      dom.settingsSectionPortability,
-      dom.settingsSectionPreviewActions,
-      dom.settingsSectionLabels,
-      dom.settingNextDocumentNumberGroup
+    // Toggle visibility for all administrative elements using direct lookups for safety
+    const adminIds = [
+      "adminPanelButton",
+      "editPreviewButton",
+      "settingsEditPreviewButton",
+      "settingsSectionCompany",
+      "settingsSectionDocuments",
+      "settingsSectionAppearance",
+      "settingsSectionSavePaths",
+      "settingsSectionPortability",
+      "settingsSectionPreviewActions",
+      "settingsSectionLabels",
+      "settingNextDocumentNumberGroup"
     ];
     
-    adminElements.forEach(el => {
+    adminIds.forEach(id => {
+      const el = document.getElementById(id);
       if (el) el.classList.toggle("hidden", !admin);
     });
 
