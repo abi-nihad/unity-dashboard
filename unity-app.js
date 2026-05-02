@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.59";
+const APP_VERSION = "v21.60";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -557,6 +557,15 @@ function init() {
     renderLoginState();
     
     loadState().then(() => {
+      // Force clear records migration (v21.60 reset)
+      const RESET_KEY = "unity_hard_reset_v21_60";
+      if (!localStorage.getItem(RESET_KEY)) {
+        console.warn("MIGRATION: Force clearing all records...");
+        appState.records = [];
+        saveState({ skipHistory: true });
+        localStorage.setItem(RESET_KEY, "done");
+      }
+
       // Sync accounts in background to ensure isAdmin() is accurate
       getAccounts().then(() => {
         renderLoginState();
@@ -1717,13 +1726,12 @@ async function handleLogin(event) {
 }
 
 function handleLogoutAction() {
-  console.log("Logout button clicked");
-  if (confirm("Are you sure you want to logout? Any unsaved changes will be lost.")) {
-    localStorage.removeItem(AUTH_KEY);
-    localStorage.removeItem(AUTH_USER_KEY);
-    console.log("Auth keys removed, reloading...");
-    location.reload(); 
-  }
+  console.log("Logging out...");
+  localStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
+  // Clear memory state to prevent any leaks before reload
+  appState = createDefaultState();
+  location.reload(); 
 }
 
 function toggleTheme() {
