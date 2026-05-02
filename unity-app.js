@@ -889,9 +889,17 @@ async function loadState() {
       if (error && error.code !== 'PGRST116') {
         console.error("Cloud state load failed:", error);
       } else if (data && data.data) {
+        // Update local global template for persistence
+        const cloudTemplate = {
+          previewLayout: data.data.previewLayout,
+          previewStyles: data.data.previewStyles,
+          previewOverrides: data.data.previewOverrides
+        };
+        localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(cloudTemplate));
+        
         // Merge cloud state (mostly for templates/settings)
         appState = normalizeState({ ...appState, ...data.data });
-        console.log("Cloud state loaded successfully.");
+        console.log("Cloud state loaded and persisted successfully.");
       }
     }
 
@@ -2197,9 +2205,9 @@ function savePreviewEdits() {
     localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
   }
   
-  saveState({ skipHistory: true });
+  saveState({ skipHistory: true, force: true });
   renderPreviewEditState();
-  showToast(isAdmin() ? "Preview template saved as default for all users." : "Preview template saved.");
+  showToast(isAdmin() ? "Preview template saved globally for all users." : "Preview template saved.");
 }
 
 function cancelPreviewEdits() {
