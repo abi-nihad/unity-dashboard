@@ -2209,6 +2209,11 @@ function updateRecordStats(records) {
     box-sizing: border-box;
     overflow: hidden !important;
     box-shadow: none !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  .paper-page:not(:last-child) {
     break-after: page !important;
     page-break-after: always !important;
   }
