@@ -1388,14 +1388,14 @@ td {
   text-align: center;
 }
 
-/* Every table row gets a bottom border */
+/* Every table row gets a subtle bottom border */
 .preview-items tbody tr td {
-  border-bottom: 1px solid #ccc;
+  border-bottom: 0.5px solid #ddd;
 }
 
-/* Last row of each page table gets a double bottom border */
+/* Last row of each page table gets a solid bottom border */
 .preview-items tbody tr:last-child td {
-  border-bottom: 3px double #111;
+  border-bottom: 1.5px solid #000;
 }
 
 /* All table text/cells stay dark on white paper regardless of theme */
