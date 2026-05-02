@@ -161,8 +161,15 @@
               <textarea id="clientAddress" rows="2"></textarea>
             </label>
             <label class="wide-field">
-              <span>Email / Tel / Fax</span>
-              <input id="clientEmail" type="text">
+              <span>Contact Method</span>
+              <div style="display: flex; gap: 8px;">
+                <select id="clientContactPrefix" style="width: 85px;">
+                  <option value="eMail :">eMail</option>
+                  <option value="Tel :">Tel</option>
+                  <option value="Fax :">Fax</option>
+                </select>
+                <input id="clientEmail" type="text" style="flex: 1;" placeholder="Enter details...">
+              </div>
             </label>
             <label class="wide-field">
               <span>RE</span>

@@ -330,6 +330,7 @@ function createDefaultState() {
       preparedBy: settings.defaultPreparedBy,
       clientName: "",
       clientAddress: "",
+      clientContactPrefix: "",
       clientEmail: "",
       re: "",
       contactPerson: settings.defaultContactPerson,
@@ -680,6 +681,7 @@ function cacheDom() {
     "poNumberField",
     "poNumber",
     "clientAddress",
+    "clientContactPrefix",
     "clientEmail",
     "referenceText",
     "descriptionBoldButton",
@@ -1314,6 +1316,7 @@ function bindEvents() {
     ["contractValue", "contractValue"],
     ["previouslyPaid", "previouslyPaid"],
     ["clientAddress", "clientAddress"],
+    ["clientContactPrefix", "clientContactPrefix"],
     ["clientEmail", "clientEmail"],
     ["referenceText", "re", "uppercase"],
     ["adjustmentType", "adjustmentType"],
@@ -1988,6 +1991,7 @@ function syncDocumentFields() {
   dom.contractValue.value = doc.contractValue || "";
   dom.previouslyPaid.value = doc.previouslyPaid || "";
   dom.clientAddress.value = doc.clientAddress;
+  dom.clientContactPrefix.value = doc.clientContactPrefix || appState.settings.emailPrefix || "eMail :";
   dom.clientEmail.value = doc.clientEmail;
   dom.referenceText.value = uppercaseText(doc.re || "");
   dom.adjustmentType.value = doc.adjustmentType;
@@ -3198,7 +3202,8 @@ function renderPreview(totals) {
   if (dom.previewPoPlaceholder) dom.previewPoPlaceholder.classList.toggle("is-hidden", showPoNo);
   dom.previewClientName.textContent = clientNameText(doc.clientName || "");
   dom.previewClientAddress.textContent = doc.clientAddress || "";
-  dom.previewClientEmail.textContent = joinPrefix(labels.emailPrefix, doc.clientEmail);
+  const contactPrefix = doc.clientContactPrefix || labels.emailPrefix;
+  dom.previewClientEmail.textContent = joinPrefix(contactPrefix, doc.clientEmail);
   dom.previewReLabel.textContent = labelEdgeText(labels.re);
   dom.previewRe.textContent = uppercaseText(doc.re || "");
   dom.previewContactLabel.textContent = labelEdgeText(labels.contact);
@@ -3590,7 +3595,7 @@ function continuationPageHtml(pageNumber, pageCount, rows, startIndex, totals) {
             <div data-preview-move-id="previewClientBlock">
               <strong data-preview-move-id="previewClientName">${escapeHtml(clientNameText(doc.clientName || ""))}</strong>
               <span data-preview-move-id="previewClientAddress">${escapeHtml(doc.clientAddress || "")}</span>
-              <span data-preview-move-id="previewClientEmail">${escapeHtml(joinPrefix(labels.emailPrefix, doc.clientEmail))}</span>
+              <span data-preview-move-id="previewClientEmail">${escapeHtml(joinPrefix(doc.clientContactPrefix || labels.emailPrefix, doc.clientEmail))}</span>
               <span class="preview-re-line" data-preview-move-id="previewReLine">
                 <span class="edge-colon-label preview-re-label" data-preview-move-id="previewReLabel">${escapeHtml(labelEdgeText(labels.re))}</span>
                 <span class="preview-re-value" data-preview-move-id="previewRe">${escapeHtml(uppercaseText(doc.re || ""))}</span>
@@ -4172,6 +4177,7 @@ function newDocument(options = {}) {
     preparedBy: settings.defaultPreparedBy || appState.document.preparedBy || "Nihad",
     clientName: "",
     clientAddress: "",
+    clientContactPrefix: "",
     clientEmail: "",
     re: "",
     contactPerson: settings.defaultContactPerson,
@@ -4515,6 +4521,7 @@ function resetData() {
     preparedBy: appState.document.preparedBy || settings.defaultPreparedBy || "",
     clientName: "",
     clientAddress: "",
+    clientContactPrefix: "",
     clientEmail: "",
     re: "",
     contactPerson: settings.defaultContactPerson,
@@ -4883,7 +4890,7 @@ function buildPdfBlob() {
     text(42, clientY, lineText, 8);
   });
   clientY -= (13 * scale);
-  text(42, clientY, joinPrefix(labels.emailPrefix, doc.clientEmail), 8);
+  text(42, clientY, joinPrefix(doc.clientContactPrefix || labels.emailPrefix, doc.clientEmail), 8);
   clientY -= (15 * scale);
   text(42, clientY, `${labelWithColon(labels.re)} ${uppercaseText(doc.re || "")}`, 8, true);
   
@@ -5060,7 +5067,7 @@ function previewWorkbookData() {
   }
   add([xlsxText("Client", 2), xlsxText(clientNameText(doc.clientName)), "", xlsxText(labelWithColon(labels.documentDate), 2), xlsxText(formatDisplayDate(doc.date))]);
   add([xlsxText("Address", 2), xlsxText(doc.clientAddress, 7), "", xlsxText(labelWithColon(labels.preparedBy), 2), xlsxText(doc.preparedBy)]);
-  add([xlsxText(labelWithColon(labels.emailPrefix), 2), xlsxText(doc.clientEmail, 7), "", xlsxText(labelWithColon(labels.contact), 2), xlsxText(doc.contactPerson)]);
+  add([xlsxText(labelWithColon(doc.clientContactPrefix || labels.emailPrefix), 2), xlsxText(doc.clientEmail, 7), "", xlsxText(labelWithColon(labels.contact), 2), xlsxText(doc.contactPerson)]);
   add([xlsxText(labelWithColon(labels.re), 2), xlsxText(uppercaseText(doc.re || ""), 10), "", xlsxText(labelWithColon(labels.phone), 2), xlsxText(doc.phone)]);
   add([]);
   add(["S/N", "DESCRIPTION", "QTY", "UOM", "U/RATE", "AMOUNT"].map((value) => xlsxText(value, 3)));
@@ -5505,7 +5512,7 @@ function buildExcelXml() {
     ...(shouldDisplayPoNo(doc) ? [["", "", "", labelWithColon(labels.poNo), doc.poNumber]] : []),
     ["Client", clientNameText(doc.clientName), "", documentDateLabel, formatDisplayDate(doc.date)],
     ["Address", doc.clientAddress, "", preparedByLabel, doc.preparedBy],
-    [labels.emailPrefix, doc.clientEmail, "", contactLabel, doc.contactPerson],
+    [doc.clientContactPrefix || labels.emailPrefix, doc.clientEmail, "", contactLabel, doc.contactPerson],
     [reLabel, uppercaseText(doc.re || "")],
     [phoneLabel, doc.phone],
     [],
