@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.35";
+const APP_VERSION = "v21.36";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2828,7 +2828,7 @@ function setSelectedPreviewStyle(nextStyle) {
       element.classList.add("preview-selected");
     });
   });
-  saveState();
+  saveState({ force: true });
   syncPreviewFormatControls();
 }
 
@@ -2853,7 +2853,7 @@ function setSelectedPreviewPosition(axis, value) {
       element.classList.add("preview-selected");
     });
   });
-  saveState();
+  saveState({ force: true });
   syncPreviewFormatControls();
 }
 
