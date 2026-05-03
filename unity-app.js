@@ -1789,16 +1789,7 @@ function bindEvents() {
     }
   });
   
-  dom.settingDarkMode.addEventListener("change", (e) => {
-    appState.settings.darkMode = e.target.checked;
-    saveState();
-    applyTheme();
-  });
-}
 
-function applyTheme() {
-  document.body.classList.toggle("dark-mode", appState.settings.darkMode);
-}
 
 function refreshAll() {
   renderLoginState();
@@ -1814,7 +1805,7 @@ function refreshAll() {
   renderLockedState();
   refreshCalculationsAndPreview();
   renderPreviewEditState();
-  applyTheme();
+  loadTheme();
 }
 
 function renderLoginState() {
@@ -2487,7 +2478,6 @@ function syncDocumentFields() {
   dom.gstRate.value = doc.gstRate;
   dom.adjustmentAmount.value = doc.adjustmentAmount;
   if (dom.lockToggle) dom.lockToggle.checked = appState.locked;
-  dom.settingDarkMode.checked = appState.settings.darkMode;
   renderPoNumberState();
   renderLockedState();
 }
@@ -5059,7 +5049,7 @@ async function saveSettings(event) {
     logoUrl: appState.settings.logoUrl,
     bizsafeUrl: appState.settings.bizsafeUrl,
     stampUrl: appState.settings.stampUrl,
-    darkMode: dom.settingDarkMode.checked,
+    darkMode: appState.settings.darkMode,
   });
   if (previousPdfSavePath !== settings.pdfSavePath) {
     forgetStoredDirectoryHandle("pdf");
