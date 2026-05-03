@@ -1169,7 +1169,8 @@ function saveState(options = {}) {
           previewLayout: appState.previewLayout,
           previewStyles: appState.previewStyles,
           previewOverrides: appState.previewOverrides,
-          settings: appState.settings
+          settings: appState.settings,
+          clients: appState.clients // Synchronize clients list for the whole team
         };
 
         unityDb.from('global_config').upsert({
@@ -1180,7 +1181,7 @@ function saveState(options = {}) {
           if (error) {
             console.error("Cloud state save failed:", error);
           } else {
-            console.log("Cloud sync: Global configuration pushed to Supabase.");
+            console.log("Cloud sync: Global configuration and clients pushed to Supabase.");
             // Broadcast the change for instant sync on other browsers (Excluding document data)
             unityDb.channel('unity_realtime_sync').send({
               type: 'broadcast',
@@ -2472,7 +2473,7 @@ function renderItems() {
   appState.document.items.forEach((item, index) => {
     const units = getUomOptions(item.uom);
     const row = document.createElement("tr");
-    console.log(`Rendering items (Build: 2024-05-20). Session authenticated: ${!!localStorage.getItem("auth_token")}`);
+    console.log(`Rendering items (Build: 2024-05-20). Session authenticated: ${!!localStorage.getItem(AUTH_KEY)}`);
     const isCN = isChangeNoteDocument();
     row.innerHTML = `
       <td><input data-field="serial" data-index="${index}" type="text" value="${escapeAttr(item.serial)}" placeholder="${plainDescriptionText(item).trim() ? (itemLogicalIndex(index) || index + 1) : ""}" aria-label="Item ${index + 1} serial number"></td>
@@ -4743,11 +4744,11 @@ function nextDocumentNumber() {
   const manualNext = Number(appState.settings.nextDocumentNumber);
   
   if (manualNext && String(manualNext).startsWith(currentYearStr)) {
-    return manualNext;
+    return String(manualNext);
   }
   
   // Fallback to year + 0001
-  return Number(`${currentYearStr}0001`);
+  return `${currentYearStr}0001`;
 }
 
 function persistDocumentDefaults() {
