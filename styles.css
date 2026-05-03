@@ -933,13 +933,54 @@ td {
 
 .item-table td.omission-cell {
   text-align: center !important;
-  width: 60px !important;
+  width: 80px !important;
   vertical-align: middle;
 }
 
-.item-table th.omission-header {
-  text-align: center !important;
-  width: 60px !important;
+/* Premium Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--line-strong);
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--danger);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
 }
 
 .summary-strip div {
@@ -1561,6 +1602,7 @@ td {
 .paper-totals .grand-total {
   border-top: 1.5px solid #000;
   margin-top: 2px;
+  width: 100%;
 }
 
 .paper.type-change-note .paper-totals .grand-total {

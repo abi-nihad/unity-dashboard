@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.15";
+const APP_VERSION = "v22.20";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2535,7 +2535,10 @@ function renderItems() {
       </td>
       <td><input class="amount-input" data-field="rate" data-index="${index}" type="text" inputmode="decimal" value="${escapeAttr(item.rate)}" aria-label="Item ${index + 1} rate"></td>
       <td class="omission-cell" ${!isCN ? "hidden" : ""}>
-        <input type="checkbox" data-field="isOmission" data-index="${index}" ${item.isOmission ? "checked" : ""}>
+        <label class="toggle-switch">
+          <input type="checkbox" data-field="isOmission" data-index="${index}" ${item.isOmission ? "checked" : ""}>
+          <span class="toggle-slider"></span>
+        </label>
       </td>
       <td>
         <div class="row-actions">
@@ -3600,8 +3603,8 @@ function refreshCalculationsAndPreview() {
   const totals = calculateTotals();
   const isInvoice = isInvoiceDocument();
   const isCN = isChangeNoteDocument();
-  const hideAdjustmentTotals = (!isInvoice && !isCN && appState.document.adjustmentType === "NONE") || isCN;
   const isClaimOne = isInvoice && Number(appState.document.invoiceClaimNumber || 1) <= 1;
+  const hideAdjustmentTotals = !isInvoice && !isCN && appState.document.adjustmentType === "NONE";
   
   dom.summaryStrip.classList.toggle("invoice-summary", isInvoice);
   dom.summaryStrip.classList.toggle("change-note-summary", isCN);
