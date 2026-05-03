@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.12";
+const APP_VERSION = "v22.15";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3579,15 +3579,21 @@ function getUomOptions(currentValue = "") {
 
 function renderAdjustmentControls() {
   const isInvoice = isInvoiceDocument();
+  const isCN = isChangeNoteDocument();
   const type = appState.document.adjustmentType;
-  dom.adjustmentTypeGroup.style.display = isInvoice ? "none" : "grid";
-  dom.gstRateGroup.style.display = !isInvoice && type === "GST" ? "grid" : "none";
-  dom.adjustmentAmountGroup.style.display = !isInvoice && type && type !== "NONE" && type !== "GST" ? "grid" : "none";
+
+  // Adjustment dropdown is hidden for Invoices AND Change Notes
+  dom.adjustmentTypeGroup.style.display = (isInvoice || isCN) ? "none" : "grid";
+  
+  dom.gstRateGroup.style.display = !isInvoice && !isCN && type === "GST" ? "grid" : "none";
+  dom.adjustmentAmountGroup.style.display = !isInvoice && !isCN && type && type !== "NONE" && type !== "GST" ? "grid" : "none";
+  
   dom.invoiceClaimPanel.hidden = !isInvoice;
   dom.invoiceClaimPanel.style.display = isInvoice ? "grid" : "none";
-  dom.summaryRemainingCard.hidden = !isInvoice;
-  dom.summaryRemainingCard.style.display = isInvoice ? "grid" : "none";
-  dom.contractValue.readOnly = true;
+  
+  // Contract Value is editable for Change Notes, Read-only for Invoices
+  dom.contractValueGroup.style.display = (isInvoice || isCN) ? "grid" : "none";
+  dom.contractValue.readOnly = isInvoice;
 }
 
 function refreshCalculationsAndPreview() {
