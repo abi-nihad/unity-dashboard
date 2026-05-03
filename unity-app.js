@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.91";
+const APP_VERSION = "v21.92";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -520,11 +520,11 @@ function invoiceClaimLabel(document = appState.document) {
   return String(document.invoiceClaimLabelText || "").trim() || automaticInvoiceClaimLabel(document);
 }
 
-function syncInvoiceClaimLabel(previousClaimNumber) {
+function syncInvoiceClaimLabel(prevNum, prevFinal) {
   const currentLabel = String(appState.document.invoiceClaimLabelText || "").trim();
   const previousAuto = automaticInvoiceClaimLabel({ 
-    invoiceClaimNumber: previousClaimNumber || 1,
-    isFinalClaim: appState.document.isFinalClaim 
+    invoiceClaimNumber: prevNum ?? appState.document.invoiceClaimNumber,
+    isFinalClaim: prevFinal ?? appState.document.isFinalClaim 
   });
   if (!currentLabel || normalize(currentLabel) === normalize(previousAuto)) {
     appState.document.invoiceClaimLabelText = automaticInvoiceClaimLabel(appState.document);
@@ -564,7 +564,7 @@ function promptInvoiceClaimNumber() {
   appState.document.isFinalClaim = isFinal;
   if (dom.isFinalClaim) dom.isFinalClaim.checked = isFinal;
   
-  syncInvoiceClaimLabel(current);
+  syncInvoiceClaimLabel(current, !isFinal); // Assuming it was NOT final before if we are prompting
   if (dom.invoiceClaimNumber) dom.invoiceClaimNumber.value = next;
   return next;
 }
@@ -1630,7 +1630,10 @@ function bindEvents() {
       appState.document[key] = value;
 
       if (key === "invoiceClaimNumber" || key === "isFinalClaim") {
-        syncInvoiceClaimLabel(key === "invoiceClaimNumber" ? previousValue : appState.document.invoiceClaimNumber);
+        syncInvoiceClaimLabel(
+          key === "invoiceClaimNumber" ? previousValue : appState.document.invoiceClaimNumber,
+          key === "isFinalClaim" ? previousValue : appState.document.isFinalClaim
+        );
       }
 
       saveState();
