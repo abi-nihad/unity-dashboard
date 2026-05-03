@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.85";
+const APP_VERSION = "v21.86";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -555,6 +555,12 @@ function promptInvoiceClaimNumber() {
   if (answer === null) return current;
   const next = Math.max(1, Math.floor(Number(answer || current)));
   appState.document.invoiceClaimNumber = next;
+  
+  // Also ask if it's the final claim
+  const isFinal = window.confirm("Is this the FINAL claim / FINAL invoice?");
+  appState.document.isFinalClaim = isFinal;
+  if (dom.isFinalClaim) dom.isFinalClaim.checked = isFinal;
+  
   syncInvoiceClaimLabel(current);
   if (dom.invoiceClaimNumber) dom.invoiceClaimNumber.value = next;
   return next;
