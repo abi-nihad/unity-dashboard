@@ -922,12 +922,24 @@ td {
   gap: 10px;
 }
 
-.summary-strip.invoice-summary {
+.summary-strip.invoice-summary,
+.summary-strip.change-note-summary {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .summary-strip.single-total {
   grid-template-columns: 1fr;
+}
+
+.item-table td.omission-cell {
+  text-align: center !important;
+  width: 60px !important;
+  vertical-align: middle;
+}
+
+.item-table th.omission-header {
+  text-align: center !important;
+  width: 60px !important;
 }
 
 .summary-strip div {

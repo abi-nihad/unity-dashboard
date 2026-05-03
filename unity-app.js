@@ -886,6 +886,7 @@ function cacheDom() {
     "invoiceClaimLabelInput",
     "invoiceClaimAmount",
     "contractValue",
+    "contractValueGroup",
     "previouslyPaid",
     "remainingBalanceValue",
     "summaryStrip",
@@ -3627,9 +3628,12 @@ function refreshCalculationsAndPreview() {
   }
 
   // Conditional visibility for input fields
+  const showContractValue = isInvoice || isCN;
+  if (dom.contractValueGroup) dom.contractValueGroup.hidden = !showContractValue;
+  if (dom.contractValue) dom.contractValue.readOnly = isInvoice; // Read-only for Invoices (calculated), Editable for Change Notes
+  
   if (dom.adjustmentTypeGroup) dom.adjustmentTypeGroup.hidden = isCN;
   if (dom.adjustmentAmountGroup) dom.adjustmentAmountGroup.hidden = isCN;
-  if (dom.contractValue) dom.contractValue.readOnly = !isCN && !isInvoice;
 
   if (dom.previouslyPaid) {
     const prevPaidLabel = dom.previouslyPaid.closest('label');
