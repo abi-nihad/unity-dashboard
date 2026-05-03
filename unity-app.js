@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.94";
+const APP_VERSION = "v21.95";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1295,7 +1295,14 @@ function normalizeDocument(document = {}, fallbackDocument = createDefaultState(
   normalized.phone = String(normalized.phone || "");
   normalized.poNumber = String(normalized.poNumber || "");
   normalized.invoiceClaimNumber = Math.max(1, Math.floor(Number(normalized.invoiceClaimNumber || 1)));
-  normalized.invoiceClaimLabelText = String(normalized.invoiceClaimLabelText || "").trim() || automaticInvoiceClaimLabel(normalized);
+  normalized.invoiceClaimLabelText = String(normalized.invoiceClaimLabelText || "").trim();
+  // Migration: Remove legacy " amount" suffix if present
+  if (normalized.invoiceClaimLabelText.toLowerCase().endsWith(" amount")) {
+    normalized.invoiceClaimLabelText = normalized.invoiceClaimLabelText.slice(0, -7).trim();
+  }
+  if (!normalized.invoiceClaimLabelText) {
+    normalized.invoiceClaimLabelText = automaticInvoiceClaimLabel(normalized);
+  }
   normalized.invoiceClaimAmount = Number(normalized.invoiceClaimAmount || 0);
   normalized.contractValue = Number(normalized.contractValue || 0);
   normalized.previouslyPaid = Number(normalized.previouslyPaid || 0);
