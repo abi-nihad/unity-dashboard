@@ -1568,17 +1568,18 @@ input:checked + .toggle-slider:before {
   flex-direction: column;
   align-items: flex-end;
   margin-top: 15px;
+  width: 100%;
 }
 
 .paper-totals dl {
   margin: 0;
-  width: 100%;
+  width: 280px; /* Fixed width for the totals block */
 }
 
 .paper-totals dl div {
   display: grid;
-  grid-template-columns: 1fr 140px; /* Fixed width for values to ensure alignment */
-  gap: 20px;
+  grid-template-columns: 1fr 100px; /* Label flexible, Value fixed */
+  gap: 15px;
   padding: 4px 0;
   align-items: center;
 }
@@ -1597,14 +1598,14 @@ input:checked + .toggle-slider:before {
   font-weight: 700;
   color: #000;
   margin: 0;
-  min-width: 110px;
+  width: 100px;
 }
 
-/* Grand total now matches other rows exactly */
+/* Grand total matches the 280px width */
 .paper-totals .grand-total {
   border-top: 1.5px solid #000;
   margin-top: 2px;
-  width: 100%;
+  width: 100%; /* Spans the full 280px of the dl */
 }
 
 .paper.type-change-note .paper-totals .grand-total {
