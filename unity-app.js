@@ -3601,9 +3601,11 @@ function refreshCalculationsAndPreview() {
   dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals || (isInvoice && isClaimOne));
 
   if (isCN) {
+    dom.summarySubtotalCard.style.display = "grid";
+    dom.summaryAdjustmentCard.style.display = "grid";
     dom.summarySubtotalLabel.textContent = "Addition";
     dom.subtotalValue.textContent = formatMoney(totals.additions);
-    dom.summaryAdjustmentLabel.textContent = "Omission";
+    dom.adjustmentLabel.textContent = "Omission";
     dom.adjustmentValue.textContent = formatMoney(totals.omissions);
     dom.summaryRemainingLabel.textContent = "Net Variation";
     dom.summaryRemainingValue.textContent = formatMoney(totals.netVariation);
@@ -3788,7 +3790,7 @@ function renderPreview(totals) {
   dom.previewAdjustmentLabel.textContent = isInvoice ? labels.previouslyPaid : (isChangeNote ? "OMISSION" : adjustmentLabel());
   dom.previewAdjustment.textContent = formatMoney(isInvoice ? totals.previouslyPaid : (isChangeNote ? totals.omissions : totals.adjustment));
   
-  dom.previewRemainingLabel.textContent = isChangeNote ? "NET TOTAL VARIATION" : labels.remainingBalance;
+  dom.previewRemainingLabel.textContent = isChangeNote ? "NET VARIATION" : labels.remainingBalance;
   dom.previewRemaining.textContent = formatMoney(isChangeNote ? totals.netVariation : (totals.remainingBalance || 0));
   
   dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "REVISED CONTRACT VALUE" : labels.total);
