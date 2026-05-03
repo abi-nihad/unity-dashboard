@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.87";
+const APP_VERSION = "v21.88";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -503,7 +503,7 @@ function ordinalNumber(value) {
 
 function automaticInvoiceClaimLabel(document = appState.document) {
   if (document.isFinalClaim) return "Final Claim";
-  const n = Number(document.invoiceClaimNumber) || 1;
+  const n = Number(document.invoiceClaimNumber || 1);
   const suffix = (n) => {
     if (n >= 11 && n <= 13) return "th";
     switch (n % 10) {
@@ -537,6 +537,7 @@ function invoiceRemainingBalance(document = appState.document) {
 }
 
 function invoiceNoteText(totals, document = appState.document) {
+  if (document.isFinalClaim) return "FINAL PROGRESS CLAIM";
   const claimNo = Number(document.invoiceClaimNumber || 1);
   return `PROGRESS CLAIM NO. ${claimNo}`;
 }
@@ -4609,7 +4610,8 @@ function newDocument(options = {}) {
     phone: settings.defaultPhone,
     poNumber: "",
     invoiceClaimNumber: 1,
-    invoiceClaimLabelText: automaticInvoiceClaimLabel({ invoiceClaimNumber: 1 }),
+    isFinalClaim: false,
+    invoiceClaimLabelText: automaticInvoiceClaimLabel({ invoiceClaimNumber: 1, isFinalClaim: false }),
     invoiceClaimAmount: 0,
     contractValue: 0,
     previouslyPaid: 0,
