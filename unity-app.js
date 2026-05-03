@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.33";
+const APP_VERSION = "v22.34";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1164,26 +1164,32 @@ function saveState(options = {}) {
       localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
 
       if (unityDb) {
-        const syncData = {
-          previewLayout: appState.previewLayout,
-          previewStyles: appState.previewStyles,
-          previewOverrides: appState.previewOverrides,
-          settings: appState.settings,
-          clients: appState.clients 
-        };
+        // Run cloud sync in the background so it doesn't block local state saving
+        (async () => {
+          try {
+            const syncData = {
+              previewLayout: appState.previewLayout,
+              previewStyles: appState.previewStyles,
+              previewOverrides: appState.previewOverrides,
+              settings: appState.settings
+              // Removed 'clients' from every save to prevent payload size issues
+            };
 
-        unityDb.from('global_config').upsert({
-          key: 'app_state',
-          data: syncData,
-          updated_at: new Date().toISOString()
-        });
+            await unityDb.from('global_config').upsert({
+              key: 'app_state',
+              data: syncData,
+              updated_at: new Date().toISOString()
+            });
 
-        // Also push to dedicated sequence key for all-user sync
-        unityDb.from('global_config').upsert({
-          key: 'document_sequence',
-          data: { nextDocumentNumber: appState.settings.nextDocumentNumber },
-          updated_at: new Date().toISOString()
-        });
+            await unityDb.from('global_config').upsert({
+              key: 'document_sequence',
+              data: { nextDocumentNumber: appState.settings.nextDocumentNumber },
+              updated_at: new Date().toISOString()
+            });
+          } catch (cloudErr) {
+            console.error("Cloud Sync failed (non-blocking):", cloudErr);
+          }
+        })();
 
         // Broadcast the change for instant sync on other browsers
         unityDb.channel('unity_realtime_sync').send({
