@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.89";
+const APP_VERSION = "v21.90";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -670,19 +670,62 @@ function setupCloudRealtime() {
   });
 
   // 2. Faster Broadcast sync (Direct Browser-to-Browser)
-  channel.on('broadcast', { event: 'admin_template_update' }, (payload) => {
-    console.log("Realtime Broadcast Received:", payload);
+  channel.on('broadcast', { event: 'state_sync' }, (payload) => {
+    console.log("Realtime State Broadcast Received:", payload);
     if (payload.payload?.data) {
-      applyRemoteTemplate(payload.payload.data);
-    } else {
-      // Fallback: full refetch if no data in payload
-      loadState().then(() => refreshAll());
+      applyRemoteState(payload.payload.data);
+    }
+  });
+
+  channel.on('broadcast', { event: 'document_update' }, (payload) => {
+    console.log("Realtime Document Broadcast Received:", payload);
+    if (payload.payload?.document) {
+      applyRemoteDocument(payload.payload.document);
     }
   });
 
   channel.subscribe((status) => {
     console.log("Realtime Subscription Status:", status);
   });
+}
+
+function applyRemoteState(data) {
+  if (!data) return;
+  console.log("Applying remote state changes...");
+  if (data.previewLayout) appState.previewLayout = data.previewLayout;
+  if (data.previewStyles) appState.previewStyles = data.previewStyles;
+  if (data.previewOverrides) appState.previewOverrides = data.previewOverrides;
+  if (data.settings) appState.settings = { ...appState.settings, ...data.settings };
+  
+  if (data.document) {
+    applyRemoteDocument(data.document);
+  } else {
+    localStorage.setItem(getStorageKey(), JSON.stringify(appState));
+    refreshAll();
+  }
+}
+
+function applyRemoteDocument(documentData) {
+  if (!documentData) return;
+  console.log("Applying remote document update...");
+  
+  // Merge but respect local edits in progress (simple version: overwrite if no focus)
+  const isEditing = !!document.activeElement && 
+    (document.activeElement.tagName === "INPUT" || 
+     document.activeElement.tagName === "SELECT" || 
+     document.activeElement.classList.contains("description-editor"));
+  
+  appState.document = { ...appState.document, ...documentData };
+  localStorage.setItem(getStorageKey(), JSON.stringify(appState));
+  
+  // Always update preview
+  refreshCalculationsAndPreview();
+  
+  // Only update fields if not currently editing to avoid cursor jumping
+  if (!isEditing) {
+    syncDocumentFields();
+    renderItems();
+  }
 }
 
 function applyRemoteTemplate(data) {
@@ -1107,8 +1150,8 @@ function saveState(options = {}) {
              previewLayout: appState.previewLayout,
              previewStyles: appState.previewStyles,
              previewOverrides: appState.previewOverrides,
-             settings: appState.settings
-             // records: appState.records // Removed global records sync
+             settings: appState.settings,
+             document: appState.document
           },
           updated_at: new Date().toISOString()
         }).then(() => {
@@ -1117,18 +1160,29 @@ function saveState(options = {}) {
            if (unityDb) {
              unityDb.channel('unity_realtime_sync').send({
                type: 'broadcast',
-               event: 'admin_template_update',
+               event: 'state_sync',
                payload: { 
                  data: {
                    previewLayout: appState.previewLayout,
                    previewStyles: appState.previewStyles,
                    previewOverrides: appState.previewOverrides,
-                   settings: appState.settings
-                   // records: appState.records // Removed global records broadcast
+                   settings: appState.settings,
+                   document: appState.document
                  }
                }
              });
            }
+        });
+      }
+    } else {
+      // If NOT admin, still broadcast the document for real-time collaboration
+      if (unityDb) {
+        unityDb.channel('unity_realtime_sync').send({
+          type: 'broadcast',
+          event: 'document_update',
+          payload: { 
+            document: appState.document
+          }
         });
       }
     }
