@@ -1576,7 +1576,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   flex-direction: column;
   margin: 0;
-  width: 280px;
+  width: 290px;
   border: none;
   gap: 0;
 }
@@ -1585,11 +1585,10 @@ input:checked + .toggle-slider:before {
   display: grid;
   grid-template-columns: 1fr 100px;
   gap: 15px;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background: #fcfcfc;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
   align-items: center;
   width: 100%;
   box-sizing: border-box;
@@ -1599,7 +1598,7 @@ input:checked + .toggle-slider:before {
   text-align: right;
   font-size: 11px;
   font-weight: 700;
-  color: #333;
+  color: #444;
   text-transform: uppercase;
 }
 
@@ -1607,22 +1606,22 @@ input:checked + .toggle-slider:before {
   text-align: right;
   font-size: 11px;
   font-weight: 700;
-  color: #000;
+  color: #111;
   margin: 0;
 }
 
 /* Specific styling for the grand total / revised contract value box */
 .paper-totals .grand-total {
-  border: 1.5px solid #000 !important;
+  border: 1px solid #000 !important;
   border-bottom: 4px double #000 !important; /* Double line for final total */
-  margin-top: 8px;
-  background: #f9f9f9;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-top: 6px;
+  background: #fff;
+  padding: 8px 10px;
 }
 
 .paper-totals .grand-total dt,
 .paper-totals .grand-total dd {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   color: #000;
 }
