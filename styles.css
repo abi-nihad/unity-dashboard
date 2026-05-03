@@ -200,11 +200,7 @@ html.is-authenticated .app-shell {
   font-size: 11px;
 }
 
-.preview-toolbar h2 {
-  margin: 0;
-  font-size: 14px;
-  color: var(--muted);
-}
+
 
 .user-row-actions {
   display: flex;
@@ -218,11 +214,6 @@ html.is-authenticated .app-shell {
 .user-info span {
   font-size: 12px;
   color: var(--muted);
-}
-
-.user-row-actions {
-  display: flex;
-  gap: 8px;
 }
 
 .login-card {
@@ -529,7 +520,9 @@ a.secondary-button.small-button:hover {
 
 .panel-heading h2,
 .preview-toolbar h2 {
+  margin: 0;
   font-size: 18px;
+  color: var(--muted);
 }
 
 .lock-toggle {

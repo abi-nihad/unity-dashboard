@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.82";
+const APP_VERSION = "v21.83";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -118,6 +118,9 @@ const defaultSettings = {
     emailPrefix: "Email :",
     subtotal: "SUB-TOTAL",
     total: "TOTAL AMOUNT",
+    contractValue: "Contract Value",
+    previouslyPaid: "Previously Paid",
+    remainingBalance: "Remaining Balance",
     footerGreeting: "Sincerely Yours,",
   },
   bank: {
@@ -3554,13 +3557,13 @@ function renderPreview(totals) {
   dom.previewInvoiceNote.textContent = isInvoice ? invoiceNoteText(totals) : "";
   dom.previewInvoiceNote.hidden = !isInvoice;
   
-  dom.previewSubtotalLabel.textContent = isInvoice ? "Contract Value" : labels.subtotal;
+  dom.previewSubtotalLabel.textContent = isInvoice ? labels.contractValue : labels.subtotal;
   dom.previewSubtotal.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
   
-  dom.previewAdjustmentLabel.textContent = isInvoice ? "Previously Paid" : adjustmentLabel();
+  dom.previewAdjustmentLabel.textContent = isInvoice ? labels.previouslyPaid : adjustmentLabel();
   dom.previewAdjustment.textContent = formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment);
   
-  dom.previewRemainingLabel.textContent = "Remaining Balance";
+  dom.previewRemainingLabel.textContent = labels.remainingBalance;
   dom.previewRemaining.textContent = formatMoney(totals.remainingBalance || 0);
   
   dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "NET TOTAL VARIATION" : labels.total);
@@ -4032,15 +4035,15 @@ function continuationTotalsHtml(totals) {
       </div>
       <dl>
         <div data-preview-move-id="previewSubtotalRow"${hideAdjustmentTotals ? ' class="is-hidden"' : ""}>
-          <dt data-preview-id="previewSubtotalLabel" data-preview-move-id="previewSubtotalLabel">${escapeHtml(isInvoice ? "Contract Value" : labels.subtotal)}</dt>
+          <dt data-preview-id="previewSubtotalLabel" data-preview-move-id="previewSubtotalLabel">${escapeHtml(isInvoice ? labels.contractValue : labels.subtotal)}</dt>
           <dd data-preview-id="previewSubtotal" data-preview-move-id="previewSubtotal">${escapeHtml(formatMoney(isInvoice ? totals.contractValue : totals.subtotal))}</dd>
         </div>
         <div data-preview-move-id="previewAdjustmentRow"${(hideAdjustmentTotals || (isInvoice && isClaimOne)) ? ' class="is-hidden"' : ""}>
-          <dt data-preview-id="previewAdjustmentLabel" data-preview-move-id="previewAdjustmentLabel">${escapeHtml(isInvoice ? "Previously Paid" : adjustmentLabel())}</dt>
+          <dt data-preview-id="previewAdjustmentLabel" data-preview-move-id="previewAdjustmentLabel">${escapeHtml(isInvoice ? labels.previouslyPaid : adjustmentLabel())}</dt>
           <dd data-preview-id="previewAdjustment" data-preview-move-id="previewAdjustment">${escapeHtml(formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment))}</dd>
         </div>
         <div data-preview-move-id="previewRemainingRow"${(isInvoice && !isClaimOne) ? "" : ' class="is-hidden"'}>
-          <dt data-preview-id="previewRemainingLabel" data-preview-move-id="previewRemainingLabel">Remaining Balance</dt>
+          <dt data-preview-id="previewRemainingLabel" data-preview-move-id="previewRemainingLabel">${escapeHtml(labels.remainingBalance)}</dt>
           <dd data-preview-id="previewRemaining" data-preview-move-id="previewRemaining">${escapeHtml(formatMoney(totals.remainingBalance || 0))}</dd>
         </div>
         <div class="grand-total" data-preview-move-id="previewTotalRow">
@@ -4791,6 +4794,9 @@ function syncSettingsFields() {
   dom.settingEmailPrefix.value = normalizeEmailPrefix(labels.emailPrefix);
   dom.settingSubtotalLabel.value = labels.subtotal;
   dom.settingTotalLabel.value = labels.total;
+  dom.settingContractValueLabel.value = labels.contractValue;
+  dom.settingPreviouslyPaidLabel.value = labels.previouslyPaid;
+  dom.settingRemainingBalanceLabel.value = labels.remainingBalance;
   dom.settingFooterGreeting.value = labels.footerGreeting;
   dom.settingBankHeading.value = settings.bank.heading;
   dom.settingBankLineOne.value = settings.bank.lineOne;
@@ -4841,6 +4847,9 @@ async function saveSettings(event) {
       emailPrefix: normalizeEmailPrefix(dom.settingEmailPrefix.value),
       subtotal: dom.settingSubtotalLabel.value.trim() || defaultSettings.labels.subtotal,
       total: dom.settingTotalLabel.value.trim() || defaultSettings.labels.total,
+      contractValue: dom.settingContractValueLabel.value.trim() || defaultSettings.labels.contractValue,
+      previouslyPaid: dom.settingPreviouslyPaidLabel.value.trim() || defaultSettings.labels.previouslyPaid,
+      remainingBalance: dom.settingRemainingBalanceLabel.value.trim() || defaultSettings.labels.remainingBalance,
       footerGreeting: dom.settingFooterGreeting.value.trim(),
     },
     bank: {
