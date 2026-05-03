@@ -944,6 +944,9 @@ function cacheDom() {
     "previewInvoiceNote",
     "previewTotalNotes",
     "amountWords",
+    "previewContractValueRow",
+    "previewContractValueLabel",
+    "previewContractValue",
     "previewSubtotalRow",
     "previewSubtotalLabel",
     "previewSubtotal",
@@ -3589,29 +3592,50 @@ function renderAdjustmentControls() {
 function refreshCalculationsAndPreview() {
   const totals = calculateTotals();
   const isInvoice = isInvoiceDocument();
-  const hideAdjustmentTotals = !isInvoice && appState.document.adjustmentType === "NONE";
+  const isCN = isChangeNoteDocument();
+  const hideAdjustmentTotals = (!isInvoice && !isCN && appState.document.adjustmentType === "NONE") || isCN;
   const isClaimOne = isInvoice && Number(appState.document.invoiceClaimNumber || 1) <= 1;
+  
   dom.summaryStrip.classList.toggle("invoice-summary", isInvoice);
+  dom.summaryStrip.classList.toggle("change-note-summary", isCN);
   dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals || (isInvoice && isClaimOne));
-  dom.summarySubtotalCard.style.display = hideAdjustmentTotals ? "none" : "grid";
-  dom.summaryAdjustmentCard.style.display = (hideAdjustmentTotals || (isInvoice && isClaimOne)) ? "none" : "grid";
-  dom.summaryRemainingCard.hidden = !isInvoice || isClaimOne;
-  dom.summaryRemainingCard.style.display = (isInvoice && !isClaimOne) ? "grid" : "none";
-  dom.summarySubtotalLabel.textContent = isInvoice ? "Contract Value" : "Sub-total";
-  dom.subtotalValue.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
-  dom.adjustmentLabel.textContent = isInvoice ? "Previously Paid" : adjustmentLabel();
-  dom.adjustmentValue.textContent = formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment);
-  dom.summaryRemainingValue.textContent = formatMoney(totals.remainingBalance || 0);
-  dom.remainingBalanceValue.textContent = formatMoney(totals.remainingBalance || 0);
+
+  if (isCN) {
+    dom.summarySubtotalLabel.textContent = "Addition";
+    dom.subtotalValue.textContent = formatMoney(totals.additions);
+    dom.summaryAdjustmentLabel.textContent = "Omission";
+    dom.adjustmentValue.textContent = formatMoney(totals.omissions);
+    dom.summaryRemainingLabel.textContent = "Net Variation";
+    dom.summaryRemainingValue.textContent = formatMoney(totals.netVariation);
+    dom.summaryRemainingCard.style.display = "grid";
+    dom.summaryRemainingCard.hidden = false;
+    dom.summaryTotalLabel.textContent = "Revised Contract Value";
+    dom.totalValue.textContent = formatMoney(totals.revisedContractValue);
+  } else {
+    dom.summarySubtotalCard.style.display = hideAdjustmentTotals ? "none" : "grid";
+    dom.summaryAdjustmentCard.style.display = (hideAdjustmentTotals || (isInvoice && isClaimOne)) ? "none" : "grid";
+    dom.summaryRemainingCard.hidden = !isInvoice || isClaimOne;
+    dom.summaryRemainingCard.style.display = (isInvoice && !isClaimOne) ? "grid" : "none";
+    dom.summarySubtotalLabel.textContent = isInvoice ? "Contract Value" : "Sub-total";
+    dom.subtotalValue.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
+    dom.adjustmentLabel.textContent = isInvoice ? "Previously Paid" : adjustmentLabel();
+    dom.adjustmentValue.textContent = formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment);
+    dom.summaryRemainingValue.textContent = formatMoney(totals.remainingBalance || 0);
+    dom.remainingBalanceValue.textContent = formatMoney(totals.remainingBalance || 0);
+  }
 
   // Conditional visibility for input fields
+  if (dom.adjustmentTypeGroup) dom.adjustmentTypeGroup.hidden = isCN;
+  if (dom.adjustmentAmountGroup) dom.adjustmentAmountGroup.hidden = isCN;
+  if (dom.contractValue) dom.contractValue.readOnly = !isCN && !isInvoice;
+
   if (dom.previouslyPaid) {
     const prevPaidLabel = dom.previouslyPaid.closest('label');
-    if (prevPaidLabel) prevPaidLabel.hidden = isInvoice && isClaimOne;
+    if (prevPaidLabel) prevPaidLabel.hidden = (isInvoice && isClaimOne) || isCN;
   }
   if (dom.remainingBalanceValue) {
     const remBalCard = dom.remainingBalanceValue.closest('.invoice-balance-card');
-    if (remBalCard) remBalCard.hidden = isInvoice && isClaimOne;
+    if (remBalCard) remBalCard.hidden = (isInvoice && isClaimOne) || isCN;
   }
 
   if (isInvoice) {
@@ -3619,14 +3643,41 @@ function refreshCalculationsAndPreview() {
     dom.contractValue.value = totals.contractValue ? String(roundCurrency(totals.contractValue)) : "";
     dom.invoiceClaimLabelInput.value = invoiceClaimLabel();
   }
-  dom.summaryTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : "Total";
-  dom.totalValue.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : totals.total);
+  
+  if (!isCN) {
+    dom.summaryTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : "Total";
+    dom.totalValue.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : totals.total);
+  }
   renderPreview(totals);
   dom.documentStatus.textContent = `${appState.document.type} ${appState.document.number || ""}`.trim();
 }
 
 function calculateTotals() {
+  const isCN = isChangeNoteDocument();
   const subtotal = appState.document.items.reduce((sum, item) => sum + itemAmount(item), 0);
+  
+  if (isChangeNoteDocument()) {
+    const additions = appState.document.items
+      .filter(item => !item.isOmission)
+      .reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.rate || 0)), 0);
+    const omissions = appState.document.items
+      .filter(item => item.isOmission)
+      .reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.rate || 0)), 0);
+    const netVariation = additions - omissions;
+    const contractValue = Number(appState.document.contractValue || 0);
+    const revisedContractValue = contractValue + netVariation;
+
+    return {
+      subtotal,
+      additions,
+      omissions,
+      netVariation,
+      contractValue,
+      revisedContractValue,
+      total: revisedContractValue
+    };
+  }
+
   if (isInvoiceDocument()) {
     const contractValue = roundCurrency(subtotal);
     appState.document.contractValue = contractValue;
@@ -3731,29 +3782,41 @@ function renderPreview(totals) {
   dom.previewInvoiceNote.textContent = isInvoice ? invoiceNoteText(totals) : "";
   dom.previewInvoiceNote.hidden = !isInvoice;
   
-  dom.previewSubtotalLabel.textContent = isInvoice ? labels.contractValue : labels.subtotal;
-  dom.previewSubtotal.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
+  dom.previewSubtotalLabel.textContent = isInvoice ? labels.contractValue : (isChangeNote ? "ADDITION" : labels.subtotal);
+  dom.previewSubtotal.textContent = formatMoney(isInvoice ? totals.contractValue : (isChangeNote ? totals.additions : totals.subtotal));
   
-  dom.previewAdjustmentLabel.textContent = isInvoice ? labels.previouslyPaid : adjustmentLabel();
-  dom.previewAdjustment.textContent = formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment);
+  dom.previewAdjustmentLabel.textContent = isInvoice ? labels.previouslyPaid : (isChangeNote ? "OMISSION" : adjustmentLabel());
+  dom.previewAdjustment.textContent = formatMoney(isInvoice ? totals.previouslyPaid : (isChangeNote ? totals.omissions : totals.adjustment));
   
-  dom.previewRemainingLabel.textContent = labels.remainingBalance;
-  dom.previewRemaining.textContent = formatMoney(totals.remainingBalance || 0);
+  dom.previewRemainingLabel.textContent = isChangeNote ? "NET TOTAL VARIATION" : labels.remainingBalance;
+  dom.previewRemaining.textContent = formatMoney(isChangeNote ? totals.netVariation : (totals.remainingBalance || 0));
   
-  dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "NET TOTAL VARIATION" : labels.total);
-  dom.previewTotal.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : totals.total);
+  dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "REVISED CONTRACT VALUE" : labels.total);
+  dom.previewTotal.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : (isChangeNote ? totals.revisedContractValue : totals.total));
   
-  const hideSubtotal = (!isInvoice && doc.adjustmentType === "NONE");
-  const hideAdjustment = (!isInvoice && doc.adjustmentType === "NONE") || (isInvoice && isClaimOne);
+  const hideSubtotal = (!isInvoice && !isChangeNote && doc.adjustmentType === "NONE");
+  const hideAdjustment = (!isInvoice && !isChangeNote && doc.adjustmentType === "NONE") || (isInvoice && isClaimOne);
   const showAmountWords = shouldShowAmountWords(doc);
-  const singleTotalLayout = hideSubtotal && hideAdjustment && !showAmountWords;
   
-  dom.previewSubtotalRow.style.display = hideSubtotal ? "none" : "grid";
-  dom.previewAdjustmentRow.style.display = hideAdjustment ? "none" : "grid";
+  // For Change Note, we show Addition, Omission, and Net Variation
+  dom.previewSubtotalRow.style.display = (hideSubtotal && !isChangeNote) ? "none" : "grid";
+  dom.previewAdjustmentRow.style.display = (hideAdjustment && !isChangeNote) ? "none" : "grid";
   
-  const showRemaining = isInvoice && !isClaimOne;
+  // For Change Note, show the original Contract Value at the top of the totals
+  if (isChangeNote) {
+    dom.previewContractValueRow.style.display = "grid";
+    dom.previewContractValueRow.hidden = false;
+    dom.previewContractValue.textContent = formatMoney(totals.contractValue);
+  } else {
+    dom.previewContractValueRow.style.display = "none";
+    dom.previewContractValueRow.hidden = true;
+  }
+
+  const showRemaining = (isInvoice && !isClaimOne) || isChangeNote;
   dom.previewRemainingRow.hidden = !showRemaining;
   dom.previewRemainingRow.style.display = showRemaining ? "grid" : "none";
+  
+  const singleTotalLayout = hideSubtotal && hideAdjustment && !showAmountWords && !isChangeNote;
   
   dom.previewTotalNotes.hidden = !isInvoice && !showAmountWords;
   dom.previewTotalsBlock.classList.toggle("single-total", singleTotalLayout);
