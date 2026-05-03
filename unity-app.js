@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.45";
+const APP_VERSION = "v22.46";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2912,9 +2912,11 @@ function renderPreviewEditState() {
   dom.editPreviewButton.hidden = editable;
   dom.savePreviewButton.hidden = !editable;
   dom.cancelPreviewButton.hidden = !editable;
-  dom.settingsEditPreviewButton.hidden = editable;
-  dom.settingsSavePreviewButton.hidden = !editable;
-  dom.settingsCancelPreviewButton.hidden = !editable;
+  if (dom.settingsEditPreviewButton) {
+    dom.settingsEditPreviewButton.hidden = editable;
+    dom.settingsSavePreviewButton.hidden = !editable;
+    dom.settingsCancelPreviewButton.hidden = !editable;
+  }
   dom.previewFormatbar.hidden = !editable;
   
   
@@ -2923,7 +2925,9 @@ function renderPreviewEditState() {
     element.contentEditable = editable ? "true" : "false";
   });
   
-  dom.settingsSavePreviewButton.disabled = false;
+  if (dom.settingsSavePreviewButton) {
+    dom.settingsSavePreviewButton.disabled = false;
+  }
   
   dom.previewHint.textContent = editable ? "Command-click selects many boxes" : pageHintText();
   movablePreviewBlockIds.forEach((id) => {
