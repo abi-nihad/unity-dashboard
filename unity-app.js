@@ -272,33 +272,7 @@ const defaultClients = [
   },
 ];
 
-const defaultRecords = [
-  ["2026-04-05T21:53:59", "20260090", "SENG SOON ELECTRICAL ENGINEERING PTE LTD", "2026-04-06"],
-  ["2026-04-05T23:48:57", "20260091", "SENG SOON ELECTRICAL ENGINEERING PTE LTD", "2026-04-06"],
-  ["2026-04-06T23:45:52", "20260092", "DEZIGN FORMAT PTE LTD", "2026-04-07"],
-  ["2026-04-10T21:24:58", "20260093", "KWANG FONG CONTRACTOR PTE LTD", "2026-04-11"],
-  ["2026-04-10T21:43:53", "20260094", "KWANG FONG CONTRACTOR PTE LTD", "2026-04-11"],
-  ["2026-04-12T10:38:36", "20260095", "SENG SOON ELECTRICAL ENGINEERING PTE LTD", "2026-04-12"],
-  ["2026-04-12T12:03:06", "20260096", "MUSA 24 HOURS PRINTING PTE LTD", "2026-04-12"],
-  ["2026-04-12T19:01:49", "20260097", "DEZIGN FORMAT PTE LTD", "2026-04-13"],
-  ["2026-04-12T20:35:23", "20260098", "DEZIGN FORMAT PTE LTD", "2026-04-13"],
-  ["2026-04-13T07:42:17", "20260099", "DEZIGN FORMAT PTE LTD", "2026-04-13"],
-  ["2026-04-13T22:16:52", "20260100", "DEZIGN FORMAT PTE LTD", "2026-04-13"],
-  ["2026-04-13T23:07:31", "20260101", "SUNBEAM M&E PTE LTD", "2026-04-13"],
-  ["2026-04-15T22:21:31", "20260102", "EngMech (Singapore) Private Limited", "2026-04-15"],
-  ["2026-04-20T20:38:42", "20260103", "AMPERE ENGINEERING PTE LTD", "2026-04-21"],
-  ["2026-04-23T22:16:32", "20260104", "DEZIGN FORMAT PTE LTD", "2026-04-24"],
-  ["2026-04-27T20:13:10", "20260105", "DEZIGN FORMAT PTE LTD", "2026-04-28"],
-  ["2026-04-27T23:32:01", "20260106", "DEZIGN FORMAT PTE LTD", "2026-04-28"],
-  ["2026-04-28T12:08:23", "20260107", "Client", "2026-04-29"],
-].map(([savedAt, documentNumber, company, date]) => ({
-  savedAt,
-  documentNumber,
-  company,
-  date,
-  pdf: "PDF",
-  excel: "Excel",
-}));
+const defaultRecords = [];
 
 const dom = {};
 let appState = createDefaultState();
@@ -585,8 +559,8 @@ function init() {
     setupAssetUploads();
     
     loadState().then(() => {
-      // Force clear records migration (v21.60 reset)
-      const RESET_KEY = "unity_hard_reset_v21_60";
+      // Force clear records migration (v21.99 reset)
+      const RESET_KEY = "unity_hard_reset_v21_99";
       if (!localStorage.getItem(RESET_KEY)) {
         console.warn("MIGRATION: Force clearing all records...");
         appState.records = [];
@@ -719,7 +693,6 @@ function applyRemoteState(data) {
     localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
     localStorage.setItem(getStorageKey(), JSON.stringify(appState));
     refreshAll();
-  }
 }
 
 function applyRemoteDocument(documentData) {
@@ -752,6 +725,7 @@ function applyRemoteTemplate(data) {
   appState.previewStyles = data.previewStyles || appState.previewStyles;
   appState.previewOverrides = data.previewOverrides || appState.previewOverrides;
   appState.settings = { ...appState.settings, ...(data.settings || {}) };
+  if (data.clients) appState.clients = data.clients; // Added client sync
   
   // Records are now PRIVATE per user device, so we don't sync them globally anymore
   
@@ -1662,7 +1636,8 @@ function bindEvents() {
     ["gstRate", "gstRate"],
     ["adjustmentAmount", "adjustmentAmount"],
   ].forEach(([id, key, format]) => {
-    dom[id].addEventListener("input", () => {
+    if (dom[id]) {
+      dom[id].addEventListener("input", () => {
       const previousValue = appState.document[key];
       let value = dom[id].type === "number" ? Number(dom[id].value || 0) : (dom[id].type === "checkbox" ? dom[id].checked : dom[id].value);
       
@@ -1702,6 +1677,7 @@ function bindEvents() {
         refreshCalculationsAndPreview();
       }
     });
+  }
   });
 
   dom.documentDateMode.addEventListener("change", () => {
@@ -1826,7 +1802,7 @@ function renderLoginState() {
   } else {
     const admin = isAdmin();
     if (dom.appVersion) {
-      dom.appVersion.classList.toggle("hidden", !admin);
+      dom.appVersion.classList.remove("hidden");
       dom.appVersion.textContent = APP_VERSION;
     }
 
@@ -2488,7 +2464,6 @@ function renderItems() {
   appState.document.items.forEach((item, index) => {
     const units = getUomOptions(item.uom);
     const row = document.createElement("tr");
-    console.log(`Rendering items (Build: 2024-05-20). Session authenticated: ${!!localStorage.getItem(AUTH_KEY)}`);
     const isCN = isChangeNoteDocument();
     row.innerHTML = `
       <td><input data-field="serial" data-index="${index}" type="text" value="${escapeAttr(item.serial)}" placeholder="${plainDescriptionText(item).trim() ? (itemLogicalIndex(index) || index + 1) : ""}" aria-label="Item ${index + 1} serial number"></td>
@@ -4578,9 +4553,10 @@ function createInvoiceFromRecord(record) {
 }
 
 function deleteRecord(record) {
-  const ok = window.confirm(`Delete record "${record.documentNumber}"?`);
+  const type = recordDocumentType(record);
+  const ok = window.confirm(`Delete ${type} "${record.documentNumber}"?`);
   if (!ok) return;
-  appState.records = appState.records.filter((item) => item.documentNumber !== record.documentNumber);
+  appState.records = appState.records.filter((item) => !(item.documentNumber === record.documentNumber && recordDocumentType(item) === type));
   saveState({ force: true });
   renderRecords();
   showToast("Record deleted.");
@@ -4658,7 +4634,7 @@ async function saveDocumentRecord() {
     persistDocumentDefaults();
     calculateTotals();
 
-    const existing = appState.records.find((record) => record.documentNumber === doc.number.trim());
+    const existing = appState.records.find((record) => record.documentNumber === doc.number.trim() && record.documentType === doc.type);
     const fileBaseName = documentFileBaseName();
     const nextRecord = {
       savedAt: new Date().toISOString(),
@@ -4699,9 +4675,10 @@ async function saveDocumentRecord() {
       return;
     }
     
-    // Increment global next document number based on what was JUST saved
+    // Increment global next document number only if we are saving a newer document
     const savedNum = Number(doc.number);
-    if (!isNaN(savedNum)) {
+    const currentNext = Number(appState.settings.nextDocumentNumber);
+    if (!isNaN(savedNum) && savedNum >= currentNext) {
       appState.settings.nextDocumentNumber = String(savedNum + 1);
       saveState({ force: true });
     }
@@ -4747,7 +4724,7 @@ function newDocument(options = {}) {
     items: [emptyItem()],
   };
   appState.settings.nextDocumentNumber = String(Number(appState.document.number || 0) + 1 || HIDDEN_NEXT_DOCUMENT);
-  appState.locked = true;
+  appState.locked = false;
   saveState();
   closeToolsPanel();
   refreshAll();
@@ -4775,7 +4752,14 @@ function persistDocumentDefaults() {
 function renderLockedState() {
   if (dom.lockToggle) dom.lockToggle.checked = appState.locked;
   HEADER_LOCKED_FIELD_IDS.forEach((id) => {
-    if (dom[id]) dom[id].disabled = appState.locked;
+    if (dom[id]) {
+      // Document Number is ALWAYS locked as requested, others follow appState.locked
+      if (id === "documentNumber") {
+        dom[id].disabled = true;
+      } else {
+        dom[id].disabled = appState.locked;
+      }
+    }
   });
   dom.documentDate.disabled = dom.documentDateMode.value !== "other";
   dom.documentType.disabled = false;

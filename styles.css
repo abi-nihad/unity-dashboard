@@ -38,19 +38,8 @@
   --primary-strong: #67e8f9;
 }
 
-body {
-  background: var(--surface-muted);
-  color: var(--ink);
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
 * {
   box-sizing: border-box;
-}
-
-html {
-  background: var(--surface-muted);
-  color: var(--ink);
 }
 
 body {
@@ -1807,18 +1796,6 @@ td {
   background: var(--surface-muted);
 }
 
-function updateRecordStats(records) {
-  if (!dom.recordStats) return;
-  const totalRecords = records.length;
-  const totalInvoices = records.filter(r => recordGroupKey(r) === "invoice").length;
-  const totalQuotations = records.filter(r => recordGroupKey(r) === "quotation").length;
-  
-  dom.recordStats.innerHTML = `
-    <div class="stat-item"><span>Total:</span> <strong>${totalRecords}</strong></div>
-    <div class="stat-item"><span>Invoices:</span> <strong>${totalInvoices}</strong></div>
-    <div class="stat-item"><span>Quotations:</span> <strong>${totalQuotations}</strong></div>
-  `;
-}
 
 .record-group-header {
   display: flex;
@@ -1963,17 +1940,6 @@ function updateRecordStats(records) {
   font-size: 12px;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 22px;
-  padding: 0 7px;
-  border-radius: 6px;
-  background: #f1f5ec;
-  color: var(--success);
-  font-size: 11px;
-  font-weight: 800;
-}
 
 .side-form {
   display: grid;
@@ -2267,9 +2233,12 @@ function updateRecordStats(records) {
     margin-bottom: 0 !important;
   }
 
-  .preview-items thead {
-    display: table-row-group;
+  .preview-items tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
+}
+
 .app-version-tag {
   font-size: 8px;
   font-weight: 500;
@@ -2279,12 +2248,6 @@ function updateRecordStats(records) {
   margin-bottom: 4px;
   letter-spacing: 0.5px;
   white-space: nowrap;
-}
-  .preview-items tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
 }
 
 .quick-settings-bar {
