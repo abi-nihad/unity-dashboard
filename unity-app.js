@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.31";
+const APP_VERSION = "v22.32";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1607,14 +1607,21 @@ function bindEvents() {
   bindDescriptionFormatControls();
   bindPreviewFormatControls();
   
-  if (dom.documentNumber) dom.documentNumber.addEventListener("change", () => {
-    const val = dom.documentNumber.value.trim();
-    const num = Number(val);
-    if (!isNaN(num) && val !== "") {
-      appState.settings.nextDocumentNumber = String(num + 1);
-      saveState({ force: true });
-    }
-  });
+  if (dom.documentNumber) {
+    dom.documentNumber.addEventListener("input", () => {
+      appState.document.number = dom.documentNumber.value.trim();
+      saveState();
+      refreshCalculationsAndPreview();
+    });
+    dom.documentNumber.addEventListener("change", () => {
+      const val = dom.documentNumber.value.trim();
+      const num = Number(val);
+      if (!isNaN(num) && val !== "") {
+        appState.settings.nextDocumentNumber = String(num + 1);
+        saveState({ force: true });
+      }
+    });
+  }
   
   window.addEventListener("keydown", (event) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
