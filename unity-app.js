@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.86";
+const APP_VERSION = "v21.87";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -545,19 +545,21 @@ function promptInvoiceClaimNumber() {
   const current = Math.max(1, Math.floor(Number(appState.document.invoiceClaimNumber || 1)));
   let answer = null;
   try {
-    answer = window.prompt("Which number invoice is this? Use 1, 2, 3, 4, 5...", String(current));
+    answer = window.prompt("Which number invoice is this?\n(Enter a number or type 'F' for Final Claim)", appState.document.isFinalClaim ? "F" : String(current));
   } catch (error) {
     renderAdjustmentControls();
     dom.invoiceClaimNumber?.focus();
     showToast("Set the invoice number in the invoice section.");
     return current;
   }
-  if (answer === null) return current;
-  const next = Math.max(1, Math.floor(Number(answer || current)));
-  appState.document.invoiceClaimNumber = next;
   
-  // Also ask if it's the final claim
-  const isFinal = window.confirm("Is this the FINAL claim / FINAL invoice?");
+  if (answer === null) return current;
+  
+  const trimmed = answer.trim().toUpperCase();
+  const isFinal = trimmed === "F" || trimmed === "FINAL" || trimmed === "FINAL CLAIM";
+  const next = isFinal ? current : Math.max(1, Math.floor(Number(trimmed || current)));
+  
+  appState.document.invoiceClaimNumber = next;
   appState.document.isFinalClaim = isFinal;
   if (dom.isFinalClaim) dom.isFinalClaim.checked = isFinal;
   
