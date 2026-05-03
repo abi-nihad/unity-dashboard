@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.26";
+const APP_VERSION = "v22.27";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -4258,14 +4258,14 @@ function continuationPageHtml(pageNumber, pageCount, rows, startIndex, totals) {
 function previewTableHeaderHtml() {
   if (isChangeNoteDocument()) {
     return `
-      <tr>
-        <th style="width: 44px">S/N</th>
-        <th>Description of Variation</th>
-        <th style="width: 50px">Qty</th>
-        <th style="width: 50px">UOM</th>
-        <th style="width: 75px">Rate</th>
-        <th style="width: 75px">Addition</th>
-        <th style="width: 75px">Omission</th>
+      <tr class="header-row">
+        <th id="previewSnHeader" contenteditable="true" data-preview-id="previewSnHeader" style="width: 44px">S/N</th>
+        <th id="previewDescriptionHeader" contenteditable="true" data-preview-id="previewDescriptionHeader">Description of Variation</th>
+        <th id="previewQtyHeader" contenteditable="true" data-preview-id="previewQtyHeader" style="width: 50px">Qty</th>
+        <th id="previewUomHeader" contenteditable="true" data-preview-id="previewUomHeader" style="width: 50px">UOM</th>
+        <th id="previewRateHeader" contenteditable="true" data-preview-id="previewRateHeader" style="width: 75px">Rate</th>
+        <th id="previewAdditionHeader" contenteditable="true" data-preview-id="previewAdditionHeader" style="width: 75px">Addition</th>
+        <th id="previewOmissionHeader" contenteditable="true" data-preview-id="previewOmissionHeader" style="width: 75px">Omission</th>
       </tr>
     `;
   }
