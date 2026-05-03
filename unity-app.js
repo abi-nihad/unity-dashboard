@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.34";
+const APP_VERSION = "v22.44";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1551,26 +1551,8 @@ function bindEvents() {
   });
   if (dom.profileImportInput) dom.profileImportInput.addEventListener("change", importUserProfile);
   
-  document.querySelectorAll(".set-default-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const settingKey = btn.dataset.setting;
-      const inputId = btn.dataset.input;
-      if (dom[inputId]) {
-        const value = dom[inputId].value.trim();
-        if (value) {
-          appState.settings[settingKey] = value;
-          saveState();
-          showToast(`Default ${settingKey.replace("default", "")} saved!`);
-          btn.classList.add("active");
-          setTimeout(() => btn.classList.remove("active"), 1000);
-        }
-      }
-    });
-  });
   
-  if (dom.settingsEditPreviewButton) dom.settingsEditPreviewButton.addEventListener("click", togglePreviewEditMode);
-  if (dom.settingsCancelPreviewButton) dom.settingsCancelPreviewButton.addEventListener("click", cancelPreviewEdits);
-  if (dom.settingsSavePreviewButton) dom.settingsSavePreviewButton.addEventListener("click", savePreviewEdits);
+  
   if (dom.printArea) dom.printArea.addEventListener("input", handlePreviewInput);
   if (dom.printArea) dom.printArea.addEventListener("blur", handlePreviewBlur, true);
   if (dom.printArea) dom.printArea.addEventListener("focusin", handlePreviewFocusIn);
@@ -1653,16 +1635,7 @@ function bindEvents() {
     }
   });
 
-  if (dom.updateProfileButton) {
-    dom.updateProfileButton.addEventListener("click", handleUpdateProfile);
-  }
-
-  if (dom.setGlobalDefaultButton) {
-    dom.setGlobalDefaultButton.addEventListener("click", () => {
-      savePreviewEdits(); // savePreviewEdits already handles isAdmin() global sync
-      showToast("Template has been set as global default for everyone.");
-    });
-  }
+  
 
   [
     ["documentType", "type"],
@@ -1845,19 +1818,9 @@ function renderLoginState() {
 
     // Toggle visibility for all administrative elements using direct lookups for safety
     const adminIds = [
-      "adminPanelButton",
       "editPreviewButton",
       "cancelPreviewButton",
-      "savePreviewButton",
-      "settingsEditPreviewButton",
-      "settingsSavePreviewButton",
-      "settingsCancelPreviewButton",
-      "settingsSectionSavePaths",
-      "settingsSectionPortability",
-      "settingsSectionPreviewActions",
-      "settingsSectionLabels",
-      "settingsSectionAssets",
-      "settingNextDocumentNumberGroup"
+      "savePreviewButton"
     ];
     
     adminIds.forEach(id => {
@@ -1868,12 +1831,13 @@ function renderLoginState() {
         else el.style.removeProperty("display");
       }
     });
-
-    document.querySelectorAll(".set-default-btn").forEach(btn => {
-      btn.classList.toggle("hidden", !admin);
-      if (!admin) btn.style.setProperty("display", "none", "important");
-      else btn.style.removeProperty("display");
-    });
+    
+    // Admin Panel Button specifically needs special treatment if not in adminIds
+    if (dom.adminPanelButton) {
+      dom.adminPanelButton.classList.toggle("hidden", !admin);
+      if (!admin) dom.adminPanelButton.style.setProperty("display", "none", "important");
+      else dom.adminPanelButton.style.removeProperty("display");
+    }
   }
 }
 
@@ -2406,6 +2370,7 @@ function applyPageSetup() {
   root.style.setProperty("--paper-print-margin-side", `${PAGE_MARGINS.sideMm}mm`);
   root.style.setProperty("--paper-print-margin-bottom", `${PAGE_MARGINS.bottomMm}mm`);
   dom.printArea?.classList.toggle("compress-to-fit", page.compressToFit);
+  dom.printArea?.classList.toggle("landscape", page.orientation === "landscape");
   ensureDynamicPrintPageStyle(spec, page);
 }
 
@@ -2952,11 +2917,10 @@ function renderPreviewEditState() {
   dom.settingsCancelPreviewButton.hidden = !editable;
   dom.previewFormatbar.hidden = !editable;
   
-  const admin = isAdmin();
-  if (dom.previewAdminGroup) dom.previewAdminGroup.classList.toggle("hidden", !admin || !editable);
+  
 
   document.querySelectorAll("[data-preview-id], [data-preview-item-field]").forEach((element) => {
-    element.contentEditable = "true";
+    element.contentEditable = editable ? "true" : "false";
   });
   
   dom.settingsSavePreviewButton.disabled = false;
@@ -5014,8 +4978,9 @@ function syncSettingsFields() {
   if (dom.settingsSectionCompany) dom.settingsSectionCompany.classList.toggle("hidden", !admin);
   if (dom.settingsSectionDocuments) dom.settingsSectionDocuments.classList.toggle("hidden", !admin);
   if (dom.settingsSectionPortability) dom.settingsSectionPortability.classList.toggle("hidden", !admin);
-  if (dom.settingsSectionPreviewActions) dom.settingsSectionPreviewActions.classList.toggle("hidden", !admin);
   if (dom.settingsSectionLabels) dom.settingsSectionLabels.classList.toggle("hidden", !admin);
+  if (dom.settingsSectionAssets) dom.settingsSectionAssets.classList.toggle("hidden", !admin);
+  if (dom.settingsSectionSavePaths) dom.settingsSectionSavePaths.classList.toggle("hidden", false); // Visible to all
   if (dom.settingNextDocumentNumberGroup) dom.settingNextDocumentNumberGroup.classList.toggle("hidden", !admin);
 
   // Personal Info
@@ -5664,6 +5629,15 @@ function buildPdfBlob() {
         text(tableRight - 143, totalsY + (18 * scale), "Remaining Balance", 8, true);
         text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.remainingBalance), 8, true);
       }
+    } else if (isChangeNoteDocument()) {
+      text(tableRight - 143, totalsY + (46 * scale), "Original Contract Value", 8, true);
+      text(tableRight - 48, totalsY + (46 * scale), formatMoney(totals.contractValue), 8, true);
+      text(tableRight - 143, totalsY + (32 * scale), "Addition", 8, true);
+      text(tableRight - 48, totalsY + (32 * scale), formatMoney(totals.additions), 8, true);
+      text(tableRight - 143, totalsY + (18 * scale), "Omission", 8, true);
+      text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.omissions), 8, true);
+      text(tableRight - 143, totalsY + (4 * scale), "Net Variation", 8, true);
+      text(tableRight - 48, totalsY + (4 * scale), formatMoney(totals.netVariation), 8, true);
     } else if (doc.adjustmentType !== "NONE") {
       text(tableRight - 143, totalsY + (32 * scale), labels.subtotal, 8, true);
       text(tableRight - 48, totalsY + (32 * scale), formatMoney(totals.subtotal), 8, true);
@@ -5671,8 +5645,12 @@ function buildPdfBlob() {
       text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.adjustment), 8, true);
     }
     const payableAmount = payableTotal(totals, doc);
-    text(tableRight - 143, totalsY, isInvoiceDocument(doc.type) ? invoiceClaimLabel(doc) : labels.total, 9, true);
-    text(tableRight - 48, totalsY, formatMoney(payableAmount), 9, true);
+    const totalLabel = isInvoiceDocument(doc.type) ? invoiceClaimLabel(doc) : (isChangeNoteDocument() ? "REVISED CONTRACT VALUE" : labels.total);
+    text(tableRight - 143, totalsY - (10 * scale), totalLabel, 9, true);
+    text(tableRight - 48, totalsY - (10 * scale), formatMoney(payableAmount), 9, true);
+    // Draw double line for total
+    line(tableRight - 143, totalsY - (14 * scale), tableRight - 42, totalsY - (14 * scale));
+    line(tableRight - 143, totalsY - (16 * scale), tableRight - 42, totalsY - (16 * scale));
     
     const noteLines = isInvoiceDocument(doc.type) ? pdfWrapText(invoiceNoteText(totals, doc), Math.floor(66 / scale)) : [];
     noteLines.slice(0, 3).forEach((lineText, lineIndex) => {
@@ -5812,6 +5790,11 @@ function previewWorkbookData() {
       add(["", "", "", "", xlsxText("Previously Paid", 8), xlsxNumber(totals.previouslyPaid, 9)]);
       add(["", "", "", "", xlsxText("Remaining Balance", 8), xlsxNumber(totals.remainingBalance, 9)]);
     }
+  } else if (isChangeNoteDocument()) {
+    add(["", "", "", "", xlsxText("Original Contract Value", 8), xlsxNumber(totals.contractValue, 9)]);
+    add(["", "", "", "", xlsxText("Addition", 8), xlsxNumber(totals.additions, 9)]);
+    add(["", "", "", "", xlsxText("Omission", 8), xlsxNumber(totals.omissions, 9)]);
+    add(["", "", "", "", xlsxText("Net Variation", 8), xlsxNumber(totals.netVariation, 9)]);
   } else if (doc.adjustmentType !== "NONE") {
     add(["", "", "", "", xlsxText(labels.subtotal, 8), xlsxNumber(totals.subtotal, 9)]);
     add(["", "", "", "", xlsxText(adjustmentLabel(), 8), xlsxNumber(totals.adjustment, 9)]);
@@ -5906,11 +5889,11 @@ function xlsxSheetXml(workbook) {
   <sheetFormatPr defaultRowHeight="15" customHeight="1"/>
   <cols>
     <col min="1" max="1" width="6" customWidth="1"/>
-    <col min="2" max="2" width="50" customWidth="1"/>
-    <col min="3" max="3" width="8" customWidth="1"/>
-    <col min="4" max="4" width="8" customWidth="1"/>
-    <col min="5" max="5" width="12" customWidth="1"/>
-    <col min="6" max="6" width="14" customWidth="1"/>
+    <col min="2" max="2" width="${page.orientation === "landscape" ? "80" : "50"}" customWidth="1"/>
+    <col min="3" max="3" width="${page.orientation === "landscape" ? "12" : "8"}" customWidth="1"/>
+    <col min="4" max="4" width="${page.orientation === "landscape" ? "12" : "8"}" customWidth="1"/>
+    <col min="5" max="5" width="${page.orientation === "landscape" ? "18" : "12"}" customWidth="1"/>
+    <col min="6" max="6" width="${page.orientation === "landscape" ? "20" : "14"}" customWidth="1"/>
   </cols>
   <sheetData>${rowXml}</sheetData>
   ${merges}

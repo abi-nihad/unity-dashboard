@@ -1,6 +1,6 @@
 {
   "name": "unity-dashboard-app",
-  "version": "1.0.0",
+  "version": "22.44.0",
   "description": "Unity Dashboard Application",
   "main": "main.js",
   "scripts": {

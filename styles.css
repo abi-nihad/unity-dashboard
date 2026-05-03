@@ -1460,6 +1460,22 @@ input:checked + .toggle-slider:before {
   border-bottom: none;
 }
 
+/* Landscape adjustments for better fit */
+.paper.landscape .preview-items th[id$="SnHeader"],
+.paper.landscape .preview-items td[data-preview-item-field="serial"] { width: 55px !important; }
+.paper.landscape .preview-items th[id$="QtyHeader"],
+.paper.landscape .preview-items td[data-preview-item-field="qty"] { width: 70px !important; }
+.paper.landscape .preview-items th[id$="UomHeader"],
+.paper.landscape .preview-items td[data-preview-item-field="uom"] { width: 70px !important; }
+.paper.landscape .preview-items th[id$="RateHeader"],
+.paper.landscape .preview-items td[data-preview-item-field="rate"] { width: 100px !important; }
+.paper.landscape .preview-items th[id$="AmountHeader"],
+.paper.landscape .preview-items td[data-preview-item-field="amount"] { width: 110px !important; }
+.paper.landscape .preview-items th[id$="AdditionHeader"],
+.paper.landscape .preview-items td[data-preview-item-field="addition"] { width: 100px !important; }
+.paper.landscape .preview-items th[id$="OmissionHeader"],
+.paper.landscape .preview-items td[data-preview-item-field="omission"] { width: 100px !important; }
+
 /* Last row of each page table gets a solid single bottom border for closure */
 .preview-items tbody tr:last-child td {
   border-bottom: 1px solid #000 !important;
@@ -1578,10 +1594,16 @@ input:checked + .toggle-slider:before {
 
 .paper-totals dl div {
   display: grid;
-  grid-template-columns: 1fr 100px; /* Label flexible, Value fixed */
+  grid-template-columns: 1fr 100px;
   gap: 15px;
-  padding: 4px 0;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fcfcfc;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .paper-totals dt {
@@ -1598,24 +1620,22 @@ input:checked + .toggle-slider:before {
   font-weight: 700;
   color: #000;
   margin: 0;
-  width: 100px;
 }
 
-/* Grand total matches the 280px width */
+/* Specific styling for the grand total / revised contract value box */
 .paper-totals .grand-total {
-  border-top: 1.5px solid #000;
-  margin-top: 2px;
-  width: 100%; /* Spans the full 280px of the dl */
-}
-
-.paper.type-change-note .paper-totals .grand-total {
-  border-top: none !important;
+  border: 1.5px solid #000 !important;
+  border-bottom: 4px double #000 !important; /* Double line for final total */
+  margin-top: 8px;
+  background: #f9f9f9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .paper-totals .grand-total dt,
 .paper-totals .grand-total dd {
   font-size: 11px;
   font-weight: 800;
+  color: #000;
 }
 
 
@@ -2204,8 +2224,10 @@ input:checked + .toggle-slider:before {
     overflow: visible !important;
     box-shadow: none !important;
     background: #fff !important;
-    font-size: 0 !important; /* Eliminate whitespace between pages */
+    font-size: 0 !important;
     line-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
   }
 
   .paper-page {
@@ -2220,16 +2242,18 @@ input:checked + .toggle-slider:before {
     box-sizing: border-box;
     overflow: hidden !important;
     box-shadow: none !important;
-    font-size: 12px !important; /* Restore font size inside page */
+    font-size: 12px !important;
     line-height: 1.4 !important;
-    break-after: avoid !important;
-    page-break-after: avoid !important;
+    break-after: page !important;
+    page-break-after: page !important;
+  }
+  
+  .paper-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
   }
 
-  .paper-page:not(:last-child) {
-    break-after: page !important;
-    page-break-after: always !important;
-  }
+  /* Page breaks handled above */
 
   .paper.compress-to-fit .paper-page {
     min-height: var(--paper-print-height) !important;
@@ -2242,6 +2266,17 @@ input:checked + .toggle-slider:before {
     max-width: none !important;
     transform: scale(var(--preview-compress-scale)) !important;
     transform-origin: top left !important;
+  }
+
+  /* Ensure boxed totals print correctly */
+  .paper-totals dl div {
+    border: 1px solid #000 !important;
+    background: #f9f9f9 !important;
+    -webkit-print-color-adjust: exact;
+  }
+  .paper-totals .grand-total {
+    border: 1.5px solid #000 !important;
+    border-bottom: 4px double #000 !important;
   }
 
   .paper.compress-to-fit .preview-continuation-pages {
