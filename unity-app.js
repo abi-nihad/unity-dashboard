@@ -1810,7 +1810,11 @@ function renderLoginState() {
     const adminIds = [
       "adminPanelButton",
       "editPreviewButton",
+      "cancelPreviewButton",
+      "savePreviewButton",
       "settingsEditPreviewButton",
+      "settingsSavePreviewButton",
+      "settingsCancelPreviewButton",
       "settingsSectionAppearance",
       "settingsSectionSavePaths",
       "settingsSectionPortability",
