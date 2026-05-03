@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.32";
+const APP_VERSION = "v22.33";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -1527,20 +1527,6 @@ function bindEvents() {
       showToast(appState.settings.darkMode ? "Dark mode enabled" : "Light mode enabled");
     });
   }
-  if (dom.setGlobalDocNumberButton) dom.setGlobalDocNumberButton.addEventListener("click", () => {
-    if (!isAdmin()) {
-      showToast("Only admins can set the global sequence.");
-      return;
-    }
-    const val = dom.settingNextDocumentNumber.value.trim();
-    if (!val || isNaN(Number(val))) {
-      showToast("Please enter a valid numeric starting number.");
-      return;
-    }
-    appState.settings.nextDocumentNumber = val;
-    saveState({ force: true });
-    showToast(`Global document sequence started at ${val}`);
-  });
   if (dom.setSaveFolderButton) dom.setSaveFolderButton.addEventListener("click", authorizeSaveFolder);
   if (dom.togglePasswordChange) dom.togglePasswordChange.addEventListener("click", () => {
     const isHidden = dom.passwordFields.hidden;
