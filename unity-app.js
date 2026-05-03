@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.90";
+const APP_VERSION = "v21.91";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -117,7 +117,7 @@ const defaultSettings = {
     re: "RE",
     emailPrefix: "Email :",
     subtotal: "SUB-TOTAL",
-    total: "TOTAL AMOUNT",
+    total: "TOTAL",
     contractValue: "Contract Value",
     previouslyPaid: "Previously Paid",
     remainingBalance: "Remaining Balance",
@@ -1617,7 +1617,8 @@ function bindEvents() {
   ].forEach(([id, key, format]) => {
     dom[id].addEventListener("input", () => {
       const previousValue = appState.document[key];
-      let value = dom[id].type === "number" ? Number(dom[id].value || 0) : dom[id].value;
+      let value = dom[id].type === "number" ? Number(dom[id].value || 0) : (dom[id].type === "checkbox" ? dom[id].checked : dom[id].value);
+      
       if (format === "uppercase") {
         value = uppercaseText(value);
         dom[id].value = value;
@@ -1625,30 +1626,32 @@ function bindEvents() {
         value = Math.max(1, Math.floor(Number(value || 1)));
         dom[id].value = value;
       }
+      
       appState.document[key] = value;
-      if (id === "invoiceClaimNumber") {
-        syncInvoiceClaimLabel(previousValue);
+
+      if (key === "invoiceClaimNumber" || key === "isFinalClaim") {
+        syncInvoiceClaimLabel(key === "invoiceClaimNumber" ? previousValue : appState.document.invoiceClaimNumber);
       }
+
       saveState();
+
       if (id === "documentType") {
         if (isInvoiceDocument(value)) {
           promptInvoiceClaimNumber();
-          saveState();
+        } else {
+          appState.document.isFinalClaim = false;
+          if (dom.isFinalClaim) dom.isFinalClaim.checked = false;
         }
         renderPoNumberState();
         renderAdjustmentControls();
-      }
-      refreshCalculationsAndPreview();
-      if (id === "adjustmentType") {
-        renderAdjustmentControls();
+        refreshAll();
+      } else {
+        if (id === "adjustmentType") {
+          renderAdjustmentControls();
+        }
+        refreshCalculationsAndPreview();
       }
     });
-  });
-
-  dom.documentType.addEventListener("change", () => {
-    appState.document.type = dom.documentType.value;
-    saveState();
-    refreshAll();
   });
 
   dom.documentDateMode.addEventListener("change", () => {
