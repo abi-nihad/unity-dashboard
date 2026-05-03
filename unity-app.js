@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.92";
+const APP_VERSION = "v21.93";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -526,9 +526,13 @@ function syncInvoiceClaimLabel(prevNum, prevFinal) {
     invoiceClaimNumber: prevNum ?? appState.document.invoiceClaimNumber,
     isFinalClaim: prevFinal ?? appState.document.isFinalClaim 
   });
-  if (!currentLabel || normalize(currentLabel) === normalize(previousAuto)) {
-    appState.document.invoiceClaimLabelText = automaticInvoiceClaimLabel(appState.document);
-    if (dom.invoiceClaimLabelInput) dom.invoiceClaimLabelInput.value = appState.document.invoiceClaimLabelText;
+  
+  const norm = (s) => String(s || "").toLowerCase().trim().replace(/\s+/g, " ");
+  
+  if (!currentLabel || norm(currentLabel) === norm(previousAuto)) {
+    const newLabel = automaticInvoiceClaimLabel(appState.document);
+    appState.document.invoiceClaimLabelText = newLabel;
+    if (dom.invoiceClaimLabelInput) dom.invoiceClaimLabelInput.value = newLabel;
   }
 }
 
@@ -544,9 +548,10 @@ function invoiceNoteText(totals, document = appState.document) {
 
 function promptInvoiceClaimNumber() {
   const current = Math.max(1, Math.floor(Number(appState.document.invoiceClaimNumber || 1)));
+  const currentFinal = !!appState.document.isFinalClaim;
   let answer = null;
   try {
-    answer = window.prompt("Which number invoice is this?\n(Enter a number or type 'F' for Final Claim)", appState.document.isFinalClaim ? "F" : String(current));
+    answer = window.prompt("Which number invoice is this?\n(Enter a number or type 'F' for Final Claim)", currentFinal ? "F" : String(current));
   } catch (error) {
     renderAdjustmentControls();
     dom.invoiceClaimNumber?.focus();
@@ -564,7 +569,7 @@ function promptInvoiceClaimNumber() {
   appState.document.isFinalClaim = isFinal;
   if (dom.isFinalClaim) dom.isFinalClaim.checked = isFinal;
   
-  syncInvoiceClaimLabel(current, !isFinal); // Assuming it was NOT final before if we are prompting
+  syncInvoiceClaimLabel(current, currentFinal);
   if (dom.invoiceClaimNumber) dom.invoiceClaimNumber.value = next;
   return next;
 }
