@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.30";
+const APP_VERSION = "v22.31";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2968,9 +2968,8 @@ function renderPreviewEditState() {
     if (!element) return;
     element.dataset.previewMoveId = id;
   });
-  Object.keys(previewBindings).forEach((id) => {
-    const element = dom[id];
-    if (!element) return;
+  dom.printArea.querySelectorAll("[data-preview-id]").forEach((element) => {
+    const id = element.dataset.previewId;
     const moveId = element.dataset.previewMoveId || id;
     element.dataset.previewId = id;
     element.dataset.previewMoveId = moveId;
@@ -4259,24 +4258,24 @@ function previewTableHeaderHtml() {
   if (isChangeNoteDocument()) {
     return `
       <tr class="header-row">
-        <th id="previewSnHeader" contenteditable="true" data-preview-id="previewSnHeader" data-preview-move-id="previewSnHeader" style="width: 44px">S/N</th>
-        <th id="previewDescriptionHeader" contenteditable="true" data-preview-id="previewDescriptionHeader" data-preview-move-id="previewDescriptionHeader">Description of Variation</th>
-        <th id="previewQtyHeader" contenteditable="true" data-preview-id="previewQtyHeader" data-preview-move-id="previewQtyHeader" style="width: 50px">Qty</th>
-        <th id="previewUomHeader" contenteditable="true" data-preview-id="previewUomHeader" data-preview-move-id="previewUomHeader" style="width: 50px">UOM</th>
-        <th id="previewRateHeader" contenteditable="true" data-preview-id="previewRateHeader" data-preview-move-id="previewRateHeader" style="width: 75px">Rate</th>
-        <th id="previewAdditionHeader" contenteditable="true" data-preview-id="previewAdditionHeader" data-preview-move-id="previewAdditionHeader" style="width: 75px">Addition</th>
-        <th id="previewOmissionHeader" contenteditable="true" data-preview-id="previewOmissionHeader" data-preview-move-id="previewOmissionHeader" style="width: 75px">Omission</th>
+        <th id="previewSnHeader" data-preview-id="previewSnHeader" data-preview-move-id="previewSnHeader" style="width: 44px">S/N</th>
+        <th id="previewDescriptionHeader" data-preview-id="previewDescriptionHeader" data-preview-move-id="previewDescriptionHeader">Description of Variation</th>
+        <th id="previewQtyHeader" data-preview-id="previewQtyHeader" data-preview-move-id="previewQtyHeader" style="width: 50px">Qty</th>
+        <th id="previewUomHeader" data-preview-id="previewUomHeader" data-preview-move-id="previewUomHeader" style="width: 50px">UOM</th>
+        <th id="previewRateHeader" data-preview-id="previewRateHeader" data-preview-move-id="previewRateHeader" style="width: 75px">Rate</th>
+        <th id="previewAdditionHeader" data-preview-id="previewAdditionHeader" data-preview-move-id="previewAdditionHeader" style="width: 75px">Addition</th>
+        <th id="previewOmissionHeader" data-preview-id="previewOmissionHeader" data-preview-move-id="previewOmissionHeader" style="width: 75px">Omission</th>
       </tr>
     `;
   }
   return `
     <tr class="header-row">
-      <th id="previewSnHeader" contenteditable="true" data-preview-id="previewSnHeader" data-preview-move-id="previewSnHeader" style="width: 44px">S/N</th>
-      <th id="previewDescriptionHeader" contenteditable="true" data-preview-id="previewDescriptionHeader" data-preview-move-id="previewDescriptionHeader">Description</th>
-      <th id="previewQtyHeader" contenteditable="true" data-preview-id="previewQtyHeader" data-preview-move-id="previewQtyHeader" style="width: 50px">Qty</th>
-      <th id="previewUomHeader" contenteditable="true" data-preview-id="previewUomHeader" data-preview-move-id="previewUomHeader" style="width: 50px">UOM</th>
-      <th id="previewRateHeader" contenteditable="true" data-preview-id="previewRateHeader" data-preview-move-id="previewRateHeader" style="width: 75px">U/Rate</th>
-      <th id="previewAmountHeader" contenteditable="true" data-preview-id="previewAmountHeader" data-preview-move-id="previewAmountHeader" style="width: 75px">Amount</th>
+      <th id="previewSnHeader" data-preview-id="previewSnHeader" data-preview-move-id="previewSnHeader" style="width: 44px">S/N</th>
+      <th id="previewDescriptionHeader" data-preview-id="previewDescriptionHeader" data-preview-move-id="previewDescriptionHeader">Description</th>
+      <th id="previewQtyHeader" data-preview-id="previewQtyHeader" data-preview-move-id="previewQtyHeader" style="width: 50px">Qty</th>
+      <th id="previewUomHeader" data-preview-id="previewUomHeader" data-preview-move-id="previewUomHeader" style="width: 50px">UOM</th>
+      <th id="previewRateHeader" data-preview-id="previewRateHeader" data-preview-move-id="previewRateHeader" style="width: 75px">U/Rate</th>
+      <th id="previewAmountHeader" data-preview-id="previewAmountHeader" data-preview-move-id="previewAmountHeader" style="width: 75px">Amount</th>
     </tr>
   `;
 }
