@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.93";
+const APP_VERSION = "v21.94";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -96,7 +96,7 @@ const defaultSettings = {
   currencySymbol: "$",
   nextDocumentNumber: String(HIDDEN_NEXT_DOCUMENT),
   documentTypes: ["QUOTATION", "INVOICE", "CHANGE NOTE"],
-  poDocumentTypes: ["INVOICE"],
+  poDocumentTypes: ["INVOICE", "CHANGE NOTE"],
   adjustmentTypes: ["NONE", "+ GST", "- DISCOUNT", "- PREVIOUSLY PAID"],
   uomOptions: defaultUomOptions,
   pdfSavePath: "",
@@ -362,6 +362,7 @@ function emptyItem() {
     qty: "",
     uom: "",
     rate: "",
+    isOmission: false,
   };
 }
 
@@ -2447,6 +2448,7 @@ function renderItems() {
     const units = getUomOptions(item.uom);
     const row = document.createElement("tr");
     console.log(`Rendering items (Build: 2024-05-20). Session authenticated: ${!!localStorage.getItem("auth_token")}`);
+    const isCN = isChangeNoteDocument();
     row.innerHTML = `
       <td><input data-field="serial" data-index="${index}" type="text" value="${escapeAttr(item.serial)}" placeholder="${plainDescriptionText(item).trim() ? (itemLogicalIndex(index) || index + 1) : ""}" aria-label="Item ${index + 1} serial number"></td>
       <td class="description-cell"><div class="description-editor" data-field="description" data-index="${index}" data-placeholder="Description" contenteditable="true" role="textbox" aria-label="Item ${index + 1} description">${descriptionEditorHtml(item)}</div></td>
@@ -2457,6 +2459,9 @@ function renderItems() {
         </select>
       </td>
       <td><input class="amount-input" data-field="rate" data-index="${index}" type="text" inputmode="decimal" value="${escapeAttr(item.rate)}" aria-label="Item ${index + 1} rate"></td>
+      <td class="omission-cell" ${!isCN ? "hidden" : ""}>
+        <input type="checkbox" data-field="isOmission" data-index="${index}" ${item.isOmission ? "checked" : ""}>
+      </td>
       <td>
         <div class="row-actions">
           <button class="insert-row-button" data-index="${index}" type="button" aria-label="Insert row after item ${index + 1}">+</button>
@@ -2466,6 +2471,10 @@ function renderItems() {
     `;
     dom.itemRows.appendChild(row);
   });
+
+  const isCN = isChangeNoteDocument();
+  const omissionHeader = document.querySelector(".omission-header");
+  if (omissionHeader) omissionHeader.hidden = !isCN;
 
   dom.itemRows.querySelectorAll("input, select").forEach((field) => {
     field.disabled = false;
@@ -2481,7 +2490,11 @@ function renderItems() {
         value = value.replace(/[^0-9.\-]/g, "");
         field.value = value;
       }
-      item[field.dataset.field] = value;
+      if (field.type === "checkbox") {
+        item[field.dataset.field] = field.checked;
+      } else {
+        item[field.dataset.field] = value;
+      }
       saveState();
       refreshCalculationsAndPreview();
     });
@@ -3579,7 +3592,9 @@ function payableTotal(totals, document = appState.document) {
 }
 
 function itemAmount(item) {
-  return Number(item.qty || 0) * Number(item.rate || 0);
+  const amt = Number(item.qty || 0) * Number(item.rate || 0);
+  if (isChangeNoteDocument() && item.isOmission) return -amt;
+  return amt;
 }
 
 function itemAmountText(item) {
@@ -3978,9 +3993,9 @@ function previewItemRowHtml(item, index) {
   const isChangeNote = isChangeNoteDocument();
   
   if (isChangeNote) {
-    const amount = itemAmount(item);
-    const addition = amount > 0 ? formatMoney(amount) : "";
-    const omission = amount < 0 ? formatMoney(Math.abs(amount)) : "";
+    const rawAmt = Math.abs(Number(item.qty || 0) * Number(item.rate || 0));
+    const addition = !item.isOmission && rawAmt ? formatMoney(rawAmt) : "";
+    const omission = item.isOmission && rawAmt ? formatMoney(rawAmt) : "";
     
     return `
       <td data-preview-item-field="serial" data-preview-index="${index}" style="text-align: center">${escapeHtml(serial)}</td>
