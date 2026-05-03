@@ -1565,21 +1565,6 @@ input:checked + .toggle-slider:before {
 
 /* === TOTALS SECTION === */
 .paper-totals {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.paper-totals dl {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* Shrink-wraps the rows to the right */
-  gap: 0;
-  border: none;
-}
-
-.paper-totals {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1588,8 +1573,12 @@ input:checked + .toggle-slider:before {
 }
 
 .paper-totals dl {
+  display: flex;
+  flex-direction: column;
   margin: 0;
-  width: 280px; /* Fixed width for the totals block */
+  width: 280px;
+  border: none;
+  gap: 0;
 }
 
 .paper-totals dl div {
