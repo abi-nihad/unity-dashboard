@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build-electron": "electron-builder",
+    "build": "echo 'No build needed'"
   },
   "keywords": [],
   "author": "",
