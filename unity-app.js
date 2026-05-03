@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.83";
+const APP_VERSION = "v21.84";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -972,6 +972,12 @@ function cacheDom() {
     "settingLogoUrl",
     "settingBizsafeUrl",
     "settingStampUrl",
+    "settingUploadLogo",
+    "settingUploadBizsafe",
+    "settingUploadStamp",
+    "settingContractValueLabel",
+    "settingPreviouslyPaidLabel",
+    "settingRemainingBalanceLabel",
     "settingPersonalUsername",
     "settingPersonalNickname",
     "settingPersonalPassword",
