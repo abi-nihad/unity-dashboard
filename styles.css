@@ -1587,8 +1587,8 @@ input:checked + .toggle-slider:before {
   gap: 15px;
   padding: 6px 10px;
   margin-bottom: 4px;
-  border: 1px solid #e5e5e5;
-  background: #fff;
+  border: none;
+  background: transparent;
   align-items: center;
   width: 100%;
   box-sizing: border-box;
@@ -1612,10 +1612,12 @@ input:checked + .toggle-slider:before {
 
 /* Specific styling for the grand total / revised contract value box */
 .paper-totals .grand-total {
-  border: 1px solid #000 !important;
-  border-bottom: 4px double #000 !important; /* Double line for final total */
+  border-top: 1px solid #000 !important;
+  border-bottom: 4px double #000 !important;
+  border-left: none !important;
+  border-right: none !important;
   margin-top: 6px;
-  background: #fff;
+  background: transparent;
   padding: 8px 10px;
 }
 
