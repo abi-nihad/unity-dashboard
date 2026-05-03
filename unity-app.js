@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.97";
+const APP_VERSION = "v21.98";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -704,8 +704,12 @@ function applyRemoteState(data) {
   if (data.settings) appState.settings = { ...appState.settings, ...data.settings };
   
   if (data.document) {
-    applyRemoteDocument(data.document);
-  } else {
+    // Disabled document-level sync based on user request "dont change value for every user"
+    // applyRemoteDocument(data.document); 
+    return;
+  }
+  
+  // Apply Settings and Preview Template (Global sync remains active)
     // Persist as global default too if it's a template update
     const globalTemplate = {
       previewLayout: appState.previewLayout,
@@ -1142,12 +1146,17 @@ async function loadState() {
 
 function saveState(options = {}) {
   if (!options.skipHistory) trackDocumentHistory();
-  if (appState.locked && !options.force) return;
   try {
     localStorage.setItem(getStorageKey(), JSON.stringify(appState));
     
     // If admin is saving, also force update the Global Default template
     if (isAdmin()) {
+      // Update useCount for the selected client if any
+      const client = findClient(appState.document.clientName);
+      if (client) {
+        client.useCount = (client.useCount || 0) + 1;
+      }
+
       const globalTemplate = {
         previewLayout: appState.previewLayout,
         previewStyles: appState.previewStyles,
@@ -1155,36 +1164,38 @@ function saveState(options = {}) {
       };
       localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
 
-      // 3. Push to Cloud (SupabaseClient)
       if (unityDb) {
+        const syncData = {
+          previewLayout: appState.previewLayout,
+          previewStyles: appState.previewStyles,
+          previewOverrides: appState.previewOverrides,
+          settings: appState.settings
+        };
+
         unityDb.from('global_config').upsert({
           key: 'app_state',
-          data: {
-             previewLayout: appState.previewLayout,
-             previewStyles: appState.previewStyles,
-             previewOverrides: appState.previewOverrides,
-             settings: appState.settings,
-             document: appState.document
-          },
+          data: syncData,
           updated_at: new Date().toISOString()
-        }).then(() => {
-           console.log("Cloud sync: State pushed to Supabase.");
-           // Broadcast the change for instant sync on other browsers
-           if (unityDb) {
-             unityDb.channel('unity_realtime_sync').send({
-               type: 'broadcast',
-               event: 'state_sync',
-               payload: { 
-                 data: {
-                   previewLayout: appState.previewLayout,
-                   previewStyles: appState.previewStyles,
-                   previewOverrides: appState.previewOverrides,
-                   settings: appState.settings,
-                   document: appState.document
-                 }
-               }
-             });
-           }
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Cloud state save failed:", error);
+          } else {
+            console.log("Cloud sync: Global configuration pushed to Supabase.");
+            // Broadcast the change for instant sync on other browsers (Excluding document data)
+            unityDb.channel('unity_realtime_sync').send({
+              type: 'broadcast',
+              event: 'state_sync',
+              payload: { 
+                data: {
+                  previewLayout: appState.previewLayout,
+                  previewStyles: appState.previewStyles,
+                  previewOverrides: appState.previewOverrides,
+                  settings: appState.settings
+                  // document is NOT broadcasted to maintain user privacy per request
+                }
+              }
+            });
+          }
         });
       }
     } else {
@@ -1483,7 +1494,7 @@ function bindEvents() {
   });
   if (dom.settingsForm) dom.settingsForm.addEventListener("submit", saveSettings);
   if (dom.restoreSettingsButton) dom.restoreSettingsButton.addEventListener("click", restoreSettings);
-  if (dom.newDocumentButton) dom.newDocumentButton.addEventListener("click", saveDocumentRecord);
+  if (dom.newDocumentButton) dom.newDocumentButton.addEventListener("click", () => newDocument());
   if (dom.saveDocumentButton) dom.saveDocumentButton.addEventListener("click", saveDocumentRecord);
   if (dom.printButton) dom.printButton.addEventListener("click", printPdf);
   if (dom.exportButton) dom.exportButton.addEventListener("click", exportExcel);
