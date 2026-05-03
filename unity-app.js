@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.84";
+const APP_VERSION = "v21.85";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -341,7 +341,8 @@ function createDefaultState() {
       phone: settings.defaultPhone,
       poNumber: "",
       invoiceClaimNumber: 1,
-      invoiceClaimLabelText: automaticInvoiceClaimLabel({ invoiceClaimNumber: 1 }),
+      isFinalClaim: false,
+      invoiceClaimLabelText: automaticInvoiceClaimLabel({ invoiceClaimNumber: 1, isFinalClaim: false }),
       invoiceClaimAmount: 0,
       contractValue: 0,
       previouslyPaid: 0,
@@ -501,6 +502,7 @@ function ordinalNumber(value) {
 }
 
 function automaticInvoiceClaimLabel(document = appState.document) {
+  if (document.isFinalClaim) return "Final Claim";
   const n = Number(document.invoiceClaimNumber) || 1;
   const suffix = (n) => {
     if (n >= 11 && n <= 13) return "th";
@@ -511,7 +513,7 @@ function automaticInvoiceClaimLabel(document = appState.document) {
       default: return "th";
     }
   };
-  return `${n}${suffix(n)} claim amount`;
+  return `${n}${suffix(n)} Claim`;
 }
 
 function invoiceClaimLabel(document = appState.document) {
@@ -520,7 +522,10 @@ function invoiceClaimLabel(document = appState.document) {
 
 function syncInvoiceClaimLabel(previousClaimNumber) {
   const currentLabel = String(appState.document.invoiceClaimLabelText || "").trim();
-  const previousAuto = automaticInvoiceClaimLabel({ invoiceClaimNumber: previousClaimNumber || 1 });
+  const previousAuto = automaticInvoiceClaimLabel({ 
+    invoiceClaimNumber: previousClaimNumber || 1,
+    isFinalClaim: appState.document.isFinalClaim 
+  });
   if (!currentLabel || normalize(currentLabel) === normalize(previousAuto)) {
     appState.document.invoiceClaimLabelText = automaticInvoiceClaimLabel(appState.document);
     if (dom.invoiceClaimLabelInput) dom.invoiceClaimLabelInput.value = appState.document.invoiceClaimLabelText;
@@ -799,6 +804,7 @@ function cacheDom() {
     "documentNumber",
     "documentDateMode",
     "documentDate",
+    "isFinalClaim",
     "clientSelect",
     "poNumberField",
     "poNumber",
@@ -1532,6 +1538,7 @@ function bindEvents() {
     ["documentType", "type"],
     ["documentNumber", "number"],
     ["poNumber", "poNumber"],
+    ["isFinalClaim", "isFinalClaim"],
     ["invoiceClaimNumber", "invoiceClaimNumber", "integer"],
     ["invoiceClaimLabelInput", "invoiceClaimLabelText"],
     ["invoiceClaimAmount", "invoiceClaimAmount"],
@@ -2309,6 +2316,7 @@ function syncDocumentFields() {
   dom.clientSelect.value = doc.clientName;
   dom.clientAddress.value = doc.clientAddress;
   dom.poNumber.value = doc.poNumber;
+  dom.isFinalClaim.checked = !!doc.isFinalClaim;
   dom.invoiceClaimNumber.value = doc.invoiceClaimNumber || 1;
   dom.invoiceClaimLabelInput.value = invoiceClaimLabel(doc);
   dom.invoiceClaimAmount.value = doc.invoiceClaimAmount || "";
