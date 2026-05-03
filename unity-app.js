@@ -1866,7 +1866,8 @@ async function handleLogin(event) {
     }
 
     localStorage.setItem(AUTH_KEY, "yes");
-    localStorage.setItem(AUTH_USER_KEY, username);
+    const userData = user || { username, role: "admin", nickname: "Admin" };
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userData));
     
     if (dom.rememberMe.checked) {
       localStorage.setItem(REMEMBER_KEY, username);
@@ -1874,7 +1875,7 @@ async function handleLogin(event) {
       localStorage.removeItem(REMEMBER_KEY);
     }
     
-    loadState();
+    await loadState();
     if (isMaster) {
       // Ensure master exists in cloud for management visibility
       if (unityDb && !user) {
@@ -1959,14 +1960,25 @@ function importUserProfile(event) {
 }
 
 function isAdmin() {
-  const username = localStorage.getItem(AUTH_USER_KEY);
-  if (!username) return false;
+  const auth = localStorage.getItem(AUTH_USER_KEY);
+  if (!auth) return false;
+  
+  let username = auth;
+  try {
+    const data = JSON.parse(auth);
+    if (data && data.username) {
+      if (data.isAdmin || data.role === "admin") return true;
+      username = data.username;
+    }
+  } catch (e) {
+    // legacy string format
+  }
+
   if (username.toLowerCase() === LOGIN_USERNAME.toLowerCase()) return true;
   
-  // Use local accounts cache for synchronous check
   const accounts = getAccountsLocal();
   const user = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
-  return !!(user && user.isAdmin);
+  return !!(user && (user.isAdmin || user.role === "admin"));
 }
 
 function renderAdminUsers() {
