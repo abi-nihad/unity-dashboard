@@ -649,6 +649,20 @@ function setupCloudRealtime() {
     }
   });
 
+  channel.on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'global_config', 
+    filter: 'key=eq.document_sequence' 
+  }, (payload) => {
+    const remoteData = payload.new ? payload.new.data : null;
+    if (remoteData && remoteData.nextDocumentNumber) {
+      appState.settings.nextDocumentNumber = String(remoteData.nextDocumentNumber);
+      saveState({ skipHistory: true });
+      refreshAll();
+    }
+  });
+
   // 2. Faster Broadcast sync (Direct Browser-to-Browser)
   channel.on('broadcast', { event: 'state_sync' }, (payload) => {
     console.log("Realtime State Broadcast Received:", payload);
@@ -1079,17 +1093,23 @@ async function loadState() {
       if (error && error.code !== 'PGRST116') {
         console.error("Cloud state load failed:", error);
       } else if (data && data.data) {
-        // Update local global template for persistence
         const cloudTemplate = {
           previewLayout: data.data.previewLayout,
           previewStyles: data.data.previewStyles,
           previewOverrides: data.data.previewOverrides
         };
         localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(cloudTemplate));
-        
-        // Merge cloud state (mostly for templates/settings)
         appState = normalizeState({ ...appState, ...data.data });
-        console.log("Cloud state loaded and persisted successfully.");
+      }
+
+      // Fetch latest sequence specifically
+      const { data: seqData } = await unityDb
+        .from('global_config')
+        .select('data')
+        .eq('key', 'document_sequence')
+        .maybeSingle();
+      if (seqData && seqData.data && seqData.data.nextDocumentNumber) {
+        appState.settings.nextDocumentNumber = String(seqData.data.nextDocumentNumber);
       }
     }
 
@@ -1145,36 +1165,53 @@ function saveState(options = {}) {
           previewStyles: appState.previewStyles,
           previewOverrides: appState.previewOverrides,
           settings: appState.settings,
-          clients: appState.clients // Synchronize clients list for the whole team
+          clients: appState.clients 
         };
 
         unityDb.from('global_config').upsert({
           key: 'app_state',
           data: syncData,
           updated_at: new Date().toISOString()
-        }).then(({ error }) => {
-          if (error) {
-            console.error("Cloud state save failed:", error);
-          } else {
-            console.log("Cloud sync: Global configuration and clients pushed to Supabase.");
-            // Broadcast the change for instant sync on other browsers (Excluding document data)
-            unityDb.channel('unity_realtime_sync').send({
-              type: 'broadcast',
-              event: 'state_sync',
-              payload: { 
-                data: {
-                  previewLayout: appState.previewLayout,
-                  previewStyles: appState.previewStyles,
-                  previewOverrides: appState.previewOverrides,
-                  settings: appState.settings
-                  // document is NOT broadcasted to maintain user privacy per request
-                }
-              }
-            });
+        });
+
+        // Also push to dedicated sequence key for all-user sync
+        unityDb.from('global_config').upsert({
+          key: 'document_sequence',
+          data: { nextDocumentNumber: appState.settings.nextDocumentNumber },
+          updated_at: new Date().toISOString()
+        });
+
+        // Broadcast the change for instant sync on other browsers
+        unityDb.channel('unity_realtime_sync').send({
+          type: 'broadcast',
+          event: 'state_sync',
+          payload: { 
+            data: {
+              previewLayout: appState.previewLayout,
+              previewStyles: appState.previewStyles,
+              previewOverrides: appState.previewOverrides,
+              settings: appState.settings
+            }
           }
         });
       }
     } else {
+      // Even if NOT admin, sync the document sequence globally
+      if (unityDb) {
+        unityDb.from('global_config').upsert({
+          key: 'document_sequence',
+          data: { nextDocumentNumber: appState.settings.nextDocumentNumber },
+          updated_at: new Date().toISOString()
+        });
+
+        unityDb.channel('unity_realtime_sync').send({
+          type: 'broadcast',
+          event: 'state_sync',
+          payload: { 
+            data: { settings: { nextDocumentNumber: appState.settings.nextDocumentNumber } }
+          }
+        });
+      }
       // If NOT admin, still broadcast the document for real-time collaboration
       if (unityDb) {
         unityDb.channel('unity_realtime_sync').send({
