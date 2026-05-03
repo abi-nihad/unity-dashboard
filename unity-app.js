@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.21";
+const APP_VERSION = "v22.25";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3598,7 +3598,10 @@ function renderAdjustmentControls() {
   dom.invoiceClaimPanel.style.display = isInvoice ? "grid" : "none";
   
   // Contract Value is editable for Change Notes, Read-only for Invoices
-  dom.contractValueGroup.style.display = (isInvoice || isCN) ? "grid" : "none";
+  if (dom.contractValueGroup) {
+    dom.contractValueGroup.hidden = !(isInvoice || isCN);
+    dom.contractValueGroup.style.display = (isInvoice || isCN) ? "flex" : "none";
+  }
   dom.contractValue.readOnly = isInvoice;
 }
 
