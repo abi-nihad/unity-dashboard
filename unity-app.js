@@ -1007,6 +1007,7 @@ function cacheDom() {
     "settingDefaultGstRate",
     "settingCurrencySymbol",
     "settingNextDocumentNumber",
+    "setGlobalDocNumberButton",
     "settingCompanyName",
     "settingCompanyAddress",
     "settingCompanyEmail",
@@ -1503,6 +1504,20 @@ function bindEvents() {
   if (dom.cancelPreviewButton) dom.cancelPreviewButton.addEventListener("click", cancelPreviewEdits);
   if (dom.savePreviewButton) dom.savePreviewButton.addEventListener("click", savePreviewEdits);
   if (dom.logoutButton) dom.logoutButton.addEventListener("click", handleLogoutAction);
+  if (dom.setGlobalDocNumberButton) dom.setGlobalDocNumberButton.addEventListener("click", () => {
+    if (!isAdmin()) {
+      showToast("Only admins can set the global sequence.");
+      return;
+    }
+    const val = dom.settingNextDocumentNumber.value.trim();
+    if (!val || isNaN(Number(val))) {
+      showToast("Please enter a valid numeric starting number.");
+      return;
+    }
+    appState.settings.nextDocumentNumber = val;
+    saveState({ force: true });
+    showToast(`Global document sequence started at ${val}`);
+  });
   if (dom.setSaveFolderButton) dom.setSaveFolderButton.addEventListener("click", authorizeSaveFolder);
   if (dom.togglePasswordChange) dom.togglePasswordChange.addEventListener("click", () => {
     const isHidden = dom.passwordFields.hidden;

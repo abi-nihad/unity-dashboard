@@ -629,7 +629,10 @@
               </label>
               <label id="settingNextDocumentNumberGroup">
                 <span style="display: flex; justify-content: space-between;">Next Document No <small style="color: var(--primary-color); font-weight: 600;">(Admin Sync)</small></span>
-                <input id="settingNextDocumentNumber" type="text" inputmode="numeric">
+                <div style="display: flex; gap: 8px;">
+                  <input id="settingNextDocumentNumber" type="text" inputmode="numeric" style="flex: 1;">
+                  <button type="button" class="secondary-button small-button" id="setGlobalDocNumberButton" style="white-space: nowrap;">Set Global Start</button>
+                </div>
               </label>
             </div>
           </section>
