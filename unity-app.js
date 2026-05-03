@@ -1006,9 +1006,9 @@ function cacheDom() {
     "settingPageSize",
     "settingPageOrientation",
     "settingCompressToFitPage",
-    "settingDarkMode",
     "settingPdfSavePath",
     "settingExcelSavePath",
+    "themeToggleButton",
     "settingsSectionApp",
     "settingsSectionCompany",
     "settingsSectionDocuments",
@@ -1515,6 +1515,14 @@ function bindEvents() {
   if (dom.cancelPreviewButton) dom.cancelPreviewButton.addEventListener("click", cancelPreviewEdits);
   if (dom.savePreviewButton) dom.savePreviewButton.addEventListener("click", savePreviewEdits);
   if (dom.logoutButton) dom.logoutButton.addEventListener("click", handleLogoutAction);
+  if (dom.themeToggleButton) {
+    dom.themeToggleButton.addEventListener("click", () => {
+      appState.settings.darkMode = !appState.settings.darkMode;
+      saveState();
+      loadTheme();
+      showToast(appState.settings.darkMode ? "Dark mode enabled" : "Light mode enabled");
+    });
+  }
   if (dom.setGlobalDocNumberButton) dom.setGlobalDocNumberButton.addEventListener("click", () => {
     if (!isAdmin()) {
       showToast("Only admins can set the global sequence.");
@@ -1632,13 +1640,11 @@ function bindEvents() {
   [
     "settingPageSize",
     "settingPageOrientation",
-    "settingCompressToFitPage",
-    "settingDarkMode"
+    "settingCompressToFitPage"
   ].forEach(id => {
     if (dom[id]) {
       dom[id].addEventListener("change", () => {
         saveSettings();
-        if (id === "settingDarkMode") loadTheme();
         refreshCalculationsAndPreview();
       });
     }
@@ -1852,7 +1858,6 @@ function renderLoginState() {
       "settingsEditPreviewButton",
       "settingsSavePreviewButton",
       "settingsCancelPreviewButton",
-      "settingsSectionAppearance",
       "settingsSectionSavePaths",
       "settingsSectionPortability",
       "settingsSectionPreviewActions",
@@ -1956,8 +1961,15 @@ function toggleTheme() {
 }
 
 function loadTheme() {
-  const savedTheme = localStorage.getItem("unity-theme") || "light";
-  document.documentElement.setAttribute("data-theme", savedTheme);
+  const isDark = appState.settings.darkMode;
+  document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+  
+  if (dom.themeToggleButton) {
+    const icon = dom.themeToggleButton.querySelector(".material-symbols-rounded");
+    if (icon) {
+      icon.textContent = isDark ? "light_mode" : "dark_mode";
+    }
+  }
 }
 
 function exportUserProfile() {
