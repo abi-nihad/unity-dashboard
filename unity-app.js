@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.95";
+const APP_VERSION = "v21.96";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -706,6 +706,13 @@ function applyRemoteState(data) {
   if (data.document) {
     applyRemoteDocument(data.document);
   } else {
+    // Persist as global default too if it's a template update
+    const globalTemplate = {
+      previewLayout: appState.previewLayout,
+      previewStyles: appState.previewStyles,
+      previewOverrides: appState.previewOverrides
+    };
+    localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
     localStorage.setItem(getStorageKey(), JSON.stringify(appState));
     refreshAll();
   }
