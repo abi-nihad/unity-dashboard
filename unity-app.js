@@ -47,7 +47,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v21.96";
+const APP_VERSION = "v21.97";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3772,8 +3772,13 @@ function applyPreviewFitScale() {
     const topPadding = cssPixels(pageStyle.paddingTop, PAGE_MARGINS.topPx);
     const bottomPadding = cssPixels(pageStyle.paddingBottom, PAGE_MARGINS.bottomPx);
     
+    const header = page.querySelector(".paper-header");
+    const details = page.querySelector(".preview-details-grid");
+    const h1 = header ? header.offsetHeight : 0;
+    const h2 = details ? details.offsetHeight : 0;
+
     const availableWidth = Math.max(160, spec.widthPx - leftPadding - rightPadding);
-    const availableHeight = Math.max(160, spec.heightPx - topPadding - bottomPadding);
+    const availableHeight = Math.max(160, spec.heightPx - topPadding - bottomPadding - h1 - h2 - 12); // small buffer
 
     fitContent.style.width = "auto";
     const contentWidth = fitContent.scrollWidth;
@@ -4062,44 +4067,44 @@ function continuationPageHtml(pageNumber, pageCount, rows, startIndex, totals) {
   const labels = settings.labels;
   const isLastPage = pageNumber === pageCount;
   return `
+    <header class="paper-header" data-preview-move-id="previewHeaderBlock">
+      <img class="paper-logo" data-preview-move-id="paperLogo" src="${escapeAttr(settings.logoUrl)}" alt="UNITY E&C logo">
+      <div class="document-title" data-preview-move-id="previewDocumentType">${escapeHtml(doc.type)}</div>
+      <img class="bizsafe" data-preview-move-id="bizsafeLogo" src="${escapeAttr(settings.bizsafeUrl)}" alt="bizSAFE level 3">
+    </header>
+    <section class="preview-details-grid">
+      <div class="preview-left-details">
+        <section class="company-row" data-preview-move-id="previewCompanyBlock">
+          <div>
+            <strong data-preview-move-id="previewCompanyName">${escapeHtml(settings.companyName)}</strong>
+            <span data-preview-move-id="previewCompanyAddress">${escapeHtml(settings.companyAddress)}</span>
+            <span data-preview-move-id="previewCompanyEmail">${escapeHtml(joinPrefix(labels.emailPrefix, settings.companyEmail))}</span>
+          </div>
+        </section>
+        <section class="client-row">
+          <div data-preview-move-id="previewClientBlock">
+            <strong data-preview-move-id="previewClientName">${escapeHtml(clientNameText(doc.clientName || ""))}</strong>
+            <span data-preview-move-id="previewClientAddress">${escapeHtml(doc.clientAddress || "")}</span>
+            <span data-preview-move-id="previewClientEmail">${escapeHtml(joinPrefix(doc.clientContactPrefix || labels.emailPrefix, doc.clientEmail))}</span>
+            <span class="preview-re-line" data-preview-move-id="previewReLine">
+              <span class="edge-colon-label preview-re-label" data-preview-move-id="previewReLabel">${escapeHtml(labelEdgeText(labels.re))}</span>
+              <span class="preview-re-value" data-preview-move-id="previewRe">${escapeHtml(uppercaseText(doc.re || ""))}</span>
+            </span>
+          </div>
+        </section>
+      </div>
+      <dl class="document-info-block" data-preview-move-id="previewDocumentInfoBlock">
+        <div><dt class="edge-colon-label" data-preview-move-id="previewDocNoLabel">${escapeHtml(labelEdgeText(labels.documentNo))}</dt><dd data-preview-move-id="previewDocNo">${escapeHtml(doc.number || "")}</dd></div>
+        <div class="paper-po-row${shouldDisplayPoNo(doc) ? "" : " is-hidden"}"><dt class="edge-colon-label" data-preview-move-id="previewPoLabel">${escapeHtml(labelEdgeText(labels.poNo))}</dt><dd data-preview-move-id="previewPo">${escapeHtml(doc.poNumber || "")}</dd></div>
+        <div><dt class="edge-colon-label" data-preview-move-id="previewDateLabel">${escapeHtml(labelEdgeText(labels.documentDate))}</dt><dd data-preview-move-id="previewDate">${escapeHtml(formatDisplayDate(doc.date))}</dd></div>
+        <div><dt class="edge-colon-label" data-preview-move-id="previewPreparedByLabel">${escapeHtml(labelEdgeText(labels.preparedBy))}</dt><dd data-preview-move-id="previewPreparedBy">${escapeHtml(doc.preparedBy || "")}</dd></div>
+        <div><dt class="edge-colon-label" data-preview-move-id="previewContactLabel">${escapeHtml(labelEdgeText(labels.contact))}</dt><dd data-preview-move-id="previewContact">${escapeHtml(doc.contactPerson || "")}</dd></div>
+        <div><dt class="edge-colon-label" data-preview-move-id="previewPhoneLabel">${escapeHtml(labelEdgeText(labels.phone))}</dt><dd data-preview-move-id="previewPhone">${escapeHtml(doc.phone || "")}</dd></div>
+        <div><dt class="edge-colon-label" data-preview-move-id="previewPageNoLabel">${escapeHtml(labelEdgeText(labels.pageNo))}</dt><dd data-preview-move-id="previewPageNo">${escapeHtml(pageNoText(pageNumber, pageCount))}</dd></div>
+        <div class="document-info-placeholder${shouldDisplayPoNo(doc) ? " is-hidden" : ""}" aria-hidden="true"><dt></dt><dd></dd></div>
+      </dl>
+    </section>
     <div class="paper-fit-content">
-      <header class="paper-header" data-preview-move-id="previewHeaderBlock">
-        <img class="paper-logo" data-preview-move-id="paperLogo" src="${escapeAttr(settings.logoUrl)}" alt="UNITY E&C logo">
-        <div class="document-title" data-preview-move-id="previewDocumentType">${escapeHtml(doc.type)}</div>
-        <img class="bizsafe" data-preview-move-id="bizsafeLogo" src="${escapeAttr(settings.bizsafeUrl)}" alt="bizSAFE level 3">
-      </header>
-      <section class="preview-details-grid">
-        <div class="preview-left-details">
-          <section class="company-row" data-preview-move-id="previewCompanyBlock">
-            <div>
-              <strong data-preview-move-id="previewCompanyName">${escapeHtml(settings.companyName)}</strong>
-              <span data-preview-move-id="previewCompanyAddress">${escapeHtml(settings.companyAddress)}</span>
-              <span data-preview-move-id="previewCompanyEmail">${escapeHtml(joinPrefix(labels.emailPrefix, settings.companyEmail))}</span>
-            </div>
-          </section>
-          <section class="client-row">
-            <div data-preview-move-id="previewClientBlock">
-              <strong data-preview-move-id="previewClientName">${escapeHtml(clientNameText(doc.clientName || ""))}</strong>
-              <span data-preview-move-id="previewClientAddress">${escapeHtml(doc.clientAddress || "")}</span>
-              <span data-preview-move-id="previewClientEmail">${escapeHtml(joinPrefix(doc.clientContactPrefix || labels.emailPrefix, doc.clientEmail))}</span>
-              <span class="preview-re-line" data-preview-move-id="previewReLine">
-                <span class="edge-colon-label preview-re-label" data-preview-move-id="previewReLabel">${escapeHtml(labelEdgeText(labels.re))}</span>
-                <span class="preview-re-value" data-preview-move-id="previewRe">${escapeHtml(uppercaseText(doc.re || ""))}</span>
-              </span>
-            </div>
-          </section>
-        </div>
-        <dl class="document-info-block" data-preview-move-id="previewDocumentInfoBlock">
-          <div><dt class="edge-colon-label" data-preview-move-id="previewDocNoLabel">${escapeHtml(labelEdgeText(labels.documentNo))}</dt><dd data-preview-move-id="previewDocNo">${escapeHtml(doc.number || "")}</dd></div>
-          <div class="paper-po-row${shouldDisplayPoNo(doc) ? "" : " is-hidden"}"><dt class="edge-colon-label" data-preview-move-id="previewPoLabel">${escapeHtml(labelEdgeText(labels.poNo))}</dt><dd data-preview-move-id="previewPo">${escapeHtml(doc.poNumber || "")}</dd></div>
-          <div><dt class="edge-colon-label" data-preview-move-id="previewDateLabel">${escapeHtml(labelEdgeText(labels.documentDate))}</dt><dd data-preview-move-id="previewDate">${escapeHtml(formatDisplayDate(doc.date))}</dd></div>
-          <div><dt class="edge-colon-label" data-preview-move-id="previewPreparedByLabel">${escapeHtml(labelEdgeText(labels.preparedBy))}</dt><dd data-preview-move-id="previewPreparedBy">${escapeHtml(doc.preparedBy || "")}</dd></div>
-          <div><dt class="edge-colon-label" data-preview-move-id="previewContactLabel">${escapeHtml(labelEdgeText(labels.contact))}</dt><dd data-preview-move-id="previewContact">${escapeHtml(doc.contactPerson || "")}</dd></div>
-          <div><dt class="edge-colon-label" data-preview-move-id="previewPhoneLabel">${escapeHtml(labelEdgeText(labels.phone))}</dt><dd data-preview-move-id="previewPhone">${escapeHtml(doc.phone || "")}</dd></div>
-          <div><dt class="edge-colon-label" data-preview-move-id="previewPageNoLabel">${escapeHtml(labelEdgeText(labels.pageNo))}</dt><dd data-preview-move-id="previewPageNo">${escapeHtml(pageNoText(pageNumber, pageCount))}</dd></div>
-          <div class="document-info-placeholder${shouldDisplayPoNo(doc) ? " is-hidden" : ""}" aria-hidden="true"><dt></dt><dd></dd></div>
-        </dl>
-      </section>
       <table class="preview-items" data-preview-move-id="previewItemsTable">
         <thead>${previewTableHeaderHtml()}</thead>
         <tbody></tbody>
