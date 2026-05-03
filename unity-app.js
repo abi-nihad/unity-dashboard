@@ -1788,7 +1788,7 @@ function bindEvents() {
       closeToolsPanel();
     }
   });
-  
+}
 
 
 function refreshAll() {
