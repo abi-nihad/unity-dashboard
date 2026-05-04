@@ -3181,9 +3181,73 @@ function applyPreviewStyleToElement(element, style = {}) {
   element.style.backgroundColor = style.backgroundColor || "";
   element.style.textAlign = style.textAlign || "";
   element.style.width = pixelStyle(style.width);
-  element.style.height = pixelStyle(style.height);
   element.style.maxWidth = style.width ? "none" : "";
+
+  const hPx = pixelStyle(style.height);
+  element.style.height = hPx;
   element.style.maxHeight = style.height ? "none" : "";
+  if (hPx) {
+    element.style.overflow = "hidden";
+    element.style.boxSizing = "border-box";
+    // For TR/TH: propagate height + compact padding to child cells
+    if (element.tagName === "TR") {
+      const cellH = Number(style.height);
+      Array.from(element.querySelectorAll("th, td")).forEach((cell) => {
+        cell.style.height = hPx;
+        cell.style.maxHeight = "none";
+        cell.style.overflow = "hidden";
+        cell.style.boxSizing = "border-box";
+        if (cellH < 30) cell.style.padding = "2px 4px";
+        else if (cellH < 40) cell.style.padding = "4px 6px";
+        else cell.style.padding = "";
+        cell.style.lineHeight = "1";
+      });
+    }
+    if (element.tagName === "TH") {
+      const cellH = Number(style.height);
+      element.style.boxSizing = "border-box";
+      if (cellH < 30) element.style.padding = "2px 4px";
+      else if (cellH < 40) element.style.padding = "4px 6px";
+      else element.style.padding = "";
+      element.style.lineHeight = "1";
+      // Propagate to sibling TH cells
+      if (element.closest("tr")) {
+        Array.from(element.closest("tr").querySelectorAll("th")).forEach((cell) => {
+          cell.style.height = hPx;
+          cell.style.maxHeight = "none";
+          cell.style.overflow = "hidden";
+          cell.style.boxSizing = "border-box";
+          if (cellH < 30) cell.style.padding = "2px 4px";
+          else if (cellH < 40) cell.style.padding = "4px 6px";
+          else cell.style.padding = "";
+          cell.style.lineHeight = "1";
+        });
+      }
+    }
+  } else {
+    element.style.overflow = "";
+    element.style.boxSizing = "";
+    if (element.tagName === "TR") {
+      Array.from(element.querySelectorAll("th, td")).forEach((cell) => {
+        cell.style.height = "";
+        cell.style.maxHeight = "";
+        cell.style.overflow = "";
+        cell.style.boxSizing = "";
+        cell.style.padding = "";
+        cell.style.lineHeight = "";
+      });
+    }
+    if (element.tagName === "TH" && element.closest("tr")) {
+      Array.from(element.closest("tr").querySelectorAll("th")).forEach((cell) => {
+        cell.style.height = "";
+        cell.style.maxHeight = "";
+        cell.style.overflow = "";
+        cell.style.boxSizing = "";
+        cell.style.padding = "";
+        cell.style.lineHeight = "";
+      });
+    }
+  }
   if (style.borderWidth !== undefined && style.borderWidth !== "") {
     const side = style.borderSide || "all";
     const bWidth = pixelStyle(style.borderWidth);
