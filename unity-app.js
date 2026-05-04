@@ -126,7 +126,7 @@ const defaultSettings = {
     contractValue: "Contract Value",
     previouslyPaid: "Previously Paid",
     remainingBalance: "Remaining Balance",
-    revisedContractValue: "Revised Contract Value",
+    revisedContractValue: "Revised Value",
     footerGreeting: "Sincerely Yours,",
   },
   bank: {
@@ -3870,7 +3870,7 @@ function refreshCalculationsAndPreview() {
     dom.summaryRemainingValue.textContent = formatMoney(totals.netVariation);
     dom.summaryRemainingCard.style.display = "grid";
     dom.summaryRemainingCard.hidden = false;
-    dom.summaryTotalLabel.textContent = "Revised Contract Value";
+    dom.summaryTotalLabel.textContent = "Revised Value";
     dom.totalValue.textContent = formatMoney(totals.revisedContractValue);
   } else {
     dom.summarySubtotalCard.style.display = hideAdjustmentTotals ? "none" : "grid";
@@ -4055,7 +4055,7 @@ function renderPreview(totals) {
   dom.previewRemainingLabel.textContent = isChangeNote ? "NET VARIATION" : labels.remainingBalance;
   dom.previewRemaining.textContent = formatMoney(isChangeNote ? totals.netVariation : (totals.remainingBalance || 0));
   
-  dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "REVISED CONTRACT VALUE" : labels.total);
+  dom.previewTotalLabel.textContent = isInvoice ? invoiceClaimLabel() : (isChangeNote ? "REVISED VALUE" : labels.total);
   dom.previewTotal.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : (isChangeNote ? totals.revisedContractValue : totals.total));
   
   const hideSubtotal = (!isInvoice && !isChangeNote && doc.adjustmentType === "NONE");
@@ -5926,7 +5926,7 @@ function buildPdfBlob() {
       text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.adjustment), 8, true);
     }
     const payableAmount = payableTotal(totals, doc);
-    const totalLabel = isInvoiceDocument(doc.type) ? invoiceClaimLabel(doc) : (isChangeNoteDocument() ? "REVISED CONTRACT VALUE" : labels.total);
+    const totalLabel = isInvoiceDocument(doc.type) ? invoiceClaimLabel(doc) : (isChangeNoteDocument() ? "REVISED VALUE" : labels.total);
     text(tableRight - 143, totalsY - (10 * scale), totalLabel, 9, true);
     text(tableRight - 48, totalsY - (10 * scale), formatMoney(payableAmount), 9, true);
     // Draw double line for total

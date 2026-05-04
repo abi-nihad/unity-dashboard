@@ -1612,7 +1612,7 @@ input:checked + .toggle-slider:before {
   white-space: nowrap;
 }
 
-/* Specific styling for the grand total / revised contract value box */
+/* Specific styling for the grand total / revised value box */
 .paper-totals .grand-total {
   border-top: 1.5px solid #000;
   border-bottom: 4.5px double #000;
