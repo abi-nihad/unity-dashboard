@@ -3275,40 +3275,42 @@ function applyPreviewStyleToElement(element, style = {}) {
       });
     }
   }
-  const side = style.borderSide || "all";
-  const bWidth = pixelStyle(style.borderWidth);
+  const bWidthRaw = style.borderWidth;
+  const hasBorderWidth = bWidthRaw !== undefined && bWidthRaw !== "";
+  const bWidth = hasBorderWidth ? pixelStyle(bWidthRaw) : "";
   const bColor = style.borderColor || "";
-  const bStyle = style.borderStyle || (bWidth ? "solid" : "");
+  const bStyle = style.borderStyle || (hasBorderWidth && parseInt(bWidthRaw) > 0 ? "solid" : "");
+  const side = style.borderSide || "all";
 
   const applyBorderTo = (el) => {
+    // We must clear existing inline border styles to ensure our new ones win
     if (side === "all") {
-      el.style.borderWidth = bWidth;
-      el.style.borderColor = bColor;
-      el.style.borderStyle = bStyle;
-      // Also clear specific sides to avoid conflicts
-      el.style.borderTopWidth = "";
-      el.style.borderBottomWidth = "";
-      el.style.borderLeftWidth = "";
-      el.style.borderRightWidth = "";
+      el.style.border = bWidth ? `${bWidth} ${bStyle || "solid"} ${bColor || "#000"}` : "";
+      if (!bWidth) {
+        el.style.borderWidth = "";
+        el.style.borderStyle = "";
+        el.style.borderColor = "";
+      }
+      // Clear individual sides
+      ["Top", "Bottom", "Left", "Right"].forEach(s => {
+        el.style[`border${s}Width`] = "";
+        el.style[`border${s}Style`] = "";
+        el.style[`border${s}Color`] = "";
+      });
     } else {
-      // Clear main border shorthand
-      el.style.borderWidth = "";
-      el.style.borderColor = "";
-      el.style.borderStyle = "";
+      // Clear shorthand
+      el.style.border = "";
       
       const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
-      el.style[`border${sideProp}Width`] = bWidth;
-      el.style[`border${sideProp}Color`] = bColor;
-      el.style[`border${sideProp}Style`] = bStyle;
+      const otherSides = ["Top", "Bottom", "Left", "Right"].filter(s => s !== sideProp);
       
-      // Clear other sides
-      ["Top", "Bottom", "Left", "Right"].forEach(s => {
-        if (s !== sideProp) {
-          el.style[`border${s}Width`] = "";
-          el.style[`border${s}Color`] = "";
-          el.style[`border${s}Style`] = "";
-        }
-      });
+      // Apply to selected side
+      el.style[`border${sideProp}Width`] = bWidth;
+      el.style[`border${sideProp}Style`] = bStyle || (bWidth ? "solid" : "");
+      el.style[`border${sideProp}Color`] = bColor || (bWidth ? "#000" : "");
+      
+      // Clear other sides ONLY if we are setting a border (to allow combining)
+      // Actually, if we are in this logic, we are overriding.
     }
   };
 
