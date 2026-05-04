@@ -48,7 +48,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.55";
+const APP_VERSION = "v22.56";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -797,6 +797,7 @@ function cacheDom() {
     "closeSettingsButton",
     "cancelSettingsButton",
     "restoreSettingsButton",
+    "resetTemplateLayoutButton",
     "newDocumentButton",
     "saveDocumentButton",
     "printButton",
@@ -1539,6 +1540,19 @@ function bindEvents() {
   });
   if (dom.settingsForm) dom.settingsForm.addEventListener("submit", saveSettings);
   if (dom.restoreSettingsButton) dom.restoreSettingsButton.addEventListener("click", restoreSettings);
+  if (dom.resetTemplateLayoutButton) {
+    dom.resetTemplateLayoutButton.addEventListener("click", () => {
+      const ok = window.confirm("Reset all layout positions and custom styles for the current document type?");
+      if (!ok) return;
+      const key = previewDocumentKey();
+      if (appState.previewLayout) delete appState.previewLayout[key];
+      if (appState.previewStyles) delete appState.previewStyles[key];
+      if (appState.previewOverrides) delete appState.previewOverrides[key];
+      saveState({ force: true });
+      refreshAll();
+      showToast(`Template layout for ${appState.document.type} reset.`);
+    });
+  }
   if (dom.newDocumentButton) dom.newDocumentButton.addEventListener("click", () => newDocument());
   if (dom.saveDocumentButton) dom.saveDocumentButton.addEventListener("click", saveDocumentRecord);
   if (dom.printButton) dom.printButton.addEventListener("click", printPdf);
@@ -2935,6 +2949,7 @@ function bindPreviewFormatControls() {
 function renderPreviewEditState() {
   const editable = appState.previewEditMode;
   dom.printArea.classList.toggle("preview-editing", editable);
+  document.body.classList.toggle("preview-editing-mode", editable);
   dom.editPreviewButton.hidden = editable;
   dom.savePreviewButton.hidden = !editable;
   dom.cancelPreviewButton.hidden = !editable;
