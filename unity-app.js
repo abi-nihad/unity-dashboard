@@ -6318,8 +6318,8 @@ function buildPreviewExcelHtml() {
         border: none;
         background: transparent;
         align-items: center;
-        width: 100% !important;
-        box-sizing: border-box !important;
+        width: 100%;
+        box-sizing: border-box;
       }
       .paper-totals dt {
         text-align: right !important;
