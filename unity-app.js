@@ -49,7 +49,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.60";
+const APP_VERSION = "v22.61";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -2568,14 +2568,19 @@ function renderDocumentTypeOptions() {
 
 function renderAdjustmentTypeOptions() {
   const isInvoice = isInvoiceDocument();
+  const isQuotation = isQuotationDocument();
   const currentValue = appState.document.adjustmentType || "GST";
   dom.adjustmentType.innerHTML = "";
   let types = normalizeAdjustmentTypes([...appState.settings.adjustmentTypes, currentValue], defaultSettings.adjustmentTypes);
   
   // Filter out Previously Paid/Progress Payment for non-invoices
+  // Filter out NONE for quotations
   if (!isInvoice) {
     types = types.filter(t => {
       const label = normalize(parseAdjustmentOption(t).label);
+      if (isQuotation && label === "none") {
+        return false; // Remove NONE from quotations
+      }
       return label !== "previouslypaid" && label !== "progresspayment";
     });
   }
