@@ -48,7 +48,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.53";
+const APP_VERSION = "v22.54";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -6279,6 +6279,13 @@ function buildPreviewExcelHtml() {
         align-items: center;
         width: 100% !important;
         box-sizing: border-box !important;
+      }
+      .paper-totals dl div,
+      .paper-totals dl div * {
+        transform: none !important;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
       }
       .paper-totals dt {
         text-align: right !important;
