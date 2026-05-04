@@ -1211,7 +1211,6 @@ function saveState(options = {}) {
         // Broadcast the change for instant sync on other browsers
         if (unityRealtimeChannel) {
           console.log("Broadcasting state_sync to channel...");
-          showToast("Sync: Broadcasting changes to all users...");
           unityRealtimeChannel.send({
             type: 'broadcast',
             event: 'state_sync',
@@ -6289,13 +6288,6 @@ function buildPreviewExcelHtml() {
         align-items: center;
         width: 100% !important;
         box-sizing: border-box !important;
-      }
-      .paper-totals dl div,
-      .paper-totals dl div * {
-        transform: none !important;
-        position: static !important;
-        left: auto !important;
-        top: auto !important;
       }
       .paper-totals dt {
         text-align: right !important;

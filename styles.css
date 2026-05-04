@@ -1591,14 +1591,6 @@ input:checked + .toggle-slider:before {
   box-sizing: border-box !important;
 }
 
-body:not(.preview-editing-mode) .paper-totals dl div,
-body:not(.preview-editing-mode) .paper-totals dl div * {
-  transform: none !important;
-  position: static !important;
-  left: auto !important;
-  top: auto !important;
-}
-
 .paper-totals dt {
   text-align: right !important;
   font-size: 11px !important;
