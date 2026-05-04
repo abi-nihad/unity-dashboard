@@ -4352,11 +4352,12 @@ function previewTableHeaderHtml() {
 function continuationTotalsHtml(totals) {
   const labels = appState.settings.labels;
   const isInvoice = isInvoiceDocument();
+  const isChangeNote = isChangeNoteDocument();
   const doc = appState.document;
   const isClaimOne = isInvoice && Number(doc.invoiceClaimNumber || 1) <= 1;
-  const hideAdjustmentTotals = !isInvoice && doc.adjustmentType === "NONE";
+  const hideAdjustmentTotals = !isInvoice && !isChangeNote && doc.adjustmentType === "NONE";
   const showAmountWords = shouldShowAmountWords(doc);
-  const payableAmount = payableTotal(totals);
+  const payableAmount = payableTotal(totals, doc);
   
   return `
     <section class="paper-totals" data-preview-move-id="previewTotalsBlock">
