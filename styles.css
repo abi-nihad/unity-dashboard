@@ -2312,8 +2312,8 @@ input:checked + .toggle-slider:before {
   }
 }
 
-.app-version-tag {
-  font-size: 8px;
+.version-tag {
+  font-size: 7px;
   font-weight: 500;
   color: #666;
   margin-left: 2px;
