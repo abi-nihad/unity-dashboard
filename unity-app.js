@@ -6,6 +6,7 @@ var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 console.log("UNITY Dashboard App v21.0 - Initializing...");
 
 var unityDb = null;
+var unityRealtimeChannel = null;
 try {
   if (window.supabase && typeof window.supabase.createClient === "function") {
     console.log("Initializing Supabase with URL:", SUPABASE_URL);
@@ -47,7 +48,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.48";
+const APP_VERSION = "v22.49";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -633,10 +634,10 @@ function setupAssetUploads() {
 function setupCloudRealtime() {
   if (!unityDb) return;
   
-  const channel = unityDb.channel('unity_realtime_sync');
+  unityRealtimeChannel = unityDb.channel('unity_realtime_sync');
 
   // 1. Database level sync (Postgres Changes)
-  channel.on('postgres_changes', { 
+  unityRealtimeChannel.on('postgres_changes', { 
     event: '*', 
     schema: 'public', 
     table: 'global_config', 
@@ -649,7 +650,7 @@ function setupCloudRealtime() {
     }
   });
 
-  channel.on('postgres_changes', { 
+  unityRealtimeChannel.on('postgres_changes', { 
     event: '*', 
     schema: 'public', 
     table: 'global_config', 
@@ -664,21 +665,21 @@ function setupCloudRealtime() {
   });
 
   // 2. Faster Broadcast sync (Direct Browser-to-Browser)
-  channel.on('broadcast', { event: 'state_sync' }, (payload) => {
+  unityRealtimeChannel.on('broadcast', { event: 'state_sync' }, (payload) => {
     console.log("Realtime State Broadcast Received:", payload);
     if (payload.payload?.data) {
       applyRemoteState(payload.payload.data);
     }
   });
 
-  channel.on('broadcast', { event: 'document_update' }, (payload) => {
+  unityRealtimeChannel.on('broadcast', { event: 'document_update' }, (payload) => {
     console.log("Realtime Document Broadcast Received:", payload);
     if (payload.payload?.document) {
       applyRemoteDocument(payload.payload.document);
     }
   });
 
-  channel.subscribe((status) => {
+  unityRealtimeChannel.subscribe((status) => {
     console.log("Realtime Subscription Status:", status);
   });
 }
@@ -694,7 +695,6 @@ function applyRemoteState(data) {
   if (data.document) {
     // Disabled document-level sync based on user request "dont change value for every user"
     // applyRemoteDocument(data.document); 
-    return;
   }
   
   // Apply Settings and Preview Template (Global sync remains active)
@@ -1192,9 +1192,10 @@ function saveState(options = {}) {
         })();
 
         // Broadcast the change for instant sync on other browsers
-        unityDb.channel('unity_realtime_sync').send({
-          type: 'broadcast',
-          event: 'state_sync',
+        if (unityRealtimeChannel) {
+          unityRealtimeChannel.send({
+            type: 'broadcast',
+            event: 'state_sync',
           payload: { 
             data: {
               previewLayout: appState.previewLayout,
@@ -1204,6 +1205,7 @@ function saveState(options = {}) {
             }
           }
         });
+        }
       }
     } else {
       // Even if NOT admin, sync the document sequence globally
@@ -1214,17 +1216,19 @@ function saveState(options = {}) {
           updated_at: new Date().toISOString()
         });
 
-        unityDb.channel('unity_realtime_sync').send({
-          type: 'broadcast',
-          event: 'state_sync',
+        if (unityRealtimeChannel) {
+          unityRealtimeChannel.send({
+            type: 'broadcast',
+            event: 'state_sync',
           payload: { 
             data: { settings: { nextDocumentNumber: appState.settings.nextDocumentNumber } }
           }
         });
+        }
       }
       // If NOT admin, still broadcast the document for real-time collaboration
-      if (unityDb) {
-        unityDb.channel('unity_realtime_sync').send({
+      if (unityRealtimeChannel) {
+        unityRealtimeChannel.send({
           type: 'broadcast',
           event: 'document_update',
           payload: { 
@@ -5725,11 +5729,12 @@ function buildXlsxFiles() {
 </Relationships>`,
     "docProps/app.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-  <Application>UNITY Dashboard</Application>
+  <Application>UNITY Dashboard v22.49</Application>
 </Properties>`,
     "docProps/core.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <dc:title>${escapeXml(documentFileBaseName())}</dc:title>
+  <dc:creator>UNITY Dashboard v22.49</dc:creator>
   <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
   <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
 </cp:coreProperties>`,
