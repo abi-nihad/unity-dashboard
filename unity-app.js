@@ -3190,31 +3190,29 @@ function applyPreviewStyleToElement(element, style = {}) {
     const bColor = style.borderColor || "#111";
     const bStyle = style.borderStyle || (bWidth ? "solid" : "none");
 
-    if (side === "all") {
-      element.style.borderWidth = bWidth;
-      element.style.borderColor = bColor;
-      element.style.borderStyle = bStyle;
-    } else {
-      const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
-      element.style[`border${sideProp}Width`] = bWidth;
-      element.style[`border${sideProp}Color`] = bColor;
-      element.style[`border${sideProp}Style`] = bStyle;
-    }
+    const applyBorderTo = (el) => {
+      if (side === "all") {
+        el.style.borderWidth = bWidth;
+        el.style.borderColor = bColor;
+        el.style.borderStyle = bStyle;
+      } else {
+        const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
+        el.style[`border${sideProp}Width`] = bWidth;
+        el.style[`border${sideProp}Color`] = bColor;
+        el.style[`border${sideProp}Style`] = bStyle;
+      }
+    };
+
+    applyBorderTo(element);
 
     // For TR elements, propagate border to child TH/TD cells
     if (element.tagName === "TR") {
-      Array.from(element.querySelectorAll("th, td")).forEach((cell) => {
-        if (side === "all") {
-          cell.style.borderWidth = bWidth;
-          cell.style.borderColor = bColor;
-          cell.style.borderStyle = bStyle;
-        } else {
-          const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
-          cell.style[`border${sideProp}Width`] = bWidth;
-          cell.style[`border${sideProp}Color`] = bColor;
-          cell.style[`border${sideProp}Style`] = bStyle;
-        }
-      });
+      Array.from(element.querySelectorAll("th, td")).forEach(applyBorderTo);
+    }
+
+    // For TH elements inside a header row, propagate border to ALL sibling TH cells
+    if (element.tagName === "TH" && element.closest("tr")) {
+      Array.from(element.closest("tr").querySelectorAll("th")).forEach(applyBorderTo);
     }
   }
 }
