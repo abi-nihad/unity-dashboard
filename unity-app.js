@@ -52,7 +52,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.61";
+const APP_VERSION = "v22.63";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -495,7 +495,12 @@ function automaticInvoiceClaimLabel(document = appState.document) {
       default: return "th";
     }
   };
-  return `${n}${suffix(n)} Claim`;
+  let label = `${n}${suffix(n)} Claim`;
+  if (n === 1) {
+    const remBalLabel = (appState.settings && appState.settings.labels && appState.settings.labels.remainingBalance) || "Remaining Balance";
+    label = `${label} / ${remBalLabel}`;
+  }
+  return label;
 }
 
 function invoiceClaimLabel(document = appState.document) {
@@ -3857,7 +3862,7 @@ function refreshCalculationsAndPreview() {
   
   dom.summaryStrip.classList.toggle("invoice-summary", isInvoice);
   dom.summaryStrip.classList.toggle("change-note-summary", isCN);
-  dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals || (isInvoice && isClaimOne));
+  dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals);
 
   if (isCN) {
     dom.summarySubtotalCard.style.display = "grid";
@@ -3874,9 +3879,9 @@ function refreshCalculationsAndPreview() {
     dom.totalValue.textContent = formatMoney(totals.revisedContractValue);
   } else {
     dom.summarySubtotalCard.style.display = hideAdjustmentTotals ? "none" : "grid";
-    dom.summaryAdjustmentCard.style.display = (hideAdjustmentTotals || (isInvoice && isClaimOne)) ? "none" : "grid";
-    dom.summaryRemainingCard.hidden = !isInvoice || isClaimOne;
-    dom.summaryRemainingCard.style.display = (isInvoice && !isClaimOne) ? "grid" : "none";
+    dom.summaryAdjustmentCard.style.display = hideAdjustmentTotals ? "none" : "grid";
+    dom.summaryRemainingCard.hidden = !isInvoice;
+    dom.summaryRemainingCard.style.display = isInvoice ? "grid" : "none";
     dom.summarySubtotalLabel.textContent = isInvoice ? "Contract Value" : "Sub-total";
     dom.subtotalValue.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
     dom.adjustmentLabel.textContent = isInvoice ? "Previously Paid" : adjustmentLabel();
@@ -3895,11 +3900,11 @@ function refreshCalculationsAndPreview() {
 
   if (dom.previouslyPaid) {
     const prevPaidLabel = dom.previouslyPaid.closest('label');
-    if (prevPaidLabel) prevPaidLabel.hidden = (isInvoice && isClaimOne) || isCN;
+    if (prevPaidLabel) prevPaidLabel.hidden = isCN;
   }
   if (dom.remainingBalanceValue) {
     const remBalCard = dom.remainingBalanceValue.closest('.invoice-balance-card');
-    if (remBalCard) remBalCard.hidden = (isInvoice && isClaimOne) || isCN;
+    if (remBalCard) remBalCard.hidden = isCN;
   }
 
   if (isInvoice) {
@@ -4072,7 +4077,7 @@ function renderPreview(totals) {
     dom.previewContractValue.textContent = formatMoney(totals.contractValue);
   }
   
-  const showRemaining = (isInvoice && !isClaimOne) || isChangeNote;
+  const showRemaining = isInvoice || isChangeNote;
   dom.previewRemainingRow.classList.toggle("is-hidden", !showRemaining);
   
   const singleTotalLayout = hideSubtotal && hideAdjustment && !showAmountWords && !isChangeNote;
