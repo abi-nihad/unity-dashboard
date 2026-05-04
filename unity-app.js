@@ -48,7 +48,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.50";
+const APP_VERSION = "v22.51";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -680,7 +680,10 @@ function setupCloudRealtime() {
   });
 
   unityRealtimeChannel.subscribe((status) => {
-    console.log("Realtime Subscription Status:", status);
+    console.log("Supabase Realtime Status:", status);
+    if (status === 'SUBSCRIBED') {
+      console.log("Successfully joined realtime sync channel.");
+    }
   });
 }
 
@@ -1061,6 +1064,7 @@ function cacheDom() {
     "saveFolderStatus",
     "recordStats",
     "toast",
+    "lineHeightInput",
   ].forEach((id) => {
     dom[id] = document.getElementById(id);
   });
@@ -1193,6 +1197,7 @@ function saveState(options = {}) {
 
         // Broadcast the change for instant sync on other browsers
         if (unityRealtimeChannel) {
+          console.log("Broadcasting state_sync to channel...");
           unityRealtimeChannel.send({
             type: 'broadcast',
             event: 'state_sync',
@@ -2846,6 +2851,10 @@ function bindPreviewFormatControls() {
     const val = readNumberControl(dom.letterSpacingInput, -50, 50);
     setSelectedPreviewStyle({ letterSpacing: val !== "" ? val + "px" : "" });
   });
+  dom.lineHeightInput.addEventListener("input", () => {
+    const val = readNumberControl(dom.lineHeightInput, 0, 10);
+    setSelectedPreviewStyle({ lineHeight: val !== "" ? val : "" });
+  });
   dom.fontColorInput.addEventListener("input", () => {
     setSelectedPreviewStyle({ color: dom.fontColorInput.value });
   });
@@ -3165,6 +3174,7 @@ function applyPreviewStyleToElement(element, style = {}) {
     element.style.gap = "";
   }
   element.style.letterSpacing = style.letterSpacing || "";
+  element.style.lineHeight = style.lineHeight || "";
   element.style.color = style.color || "";
   element.style.backgroundColor = style.backgroundColor || "";
   element.style.textAlign = style.textAlign || "";
@@ -3323,6 +3333,7 @@ function syncPreviewFormatControls() {
     dom.fontColorInput.value = "#111111";
     dom.backgroundColorInput.value = "#ffffff";
     dom.textAlignSelect.value = "";
+    dom.lineHeightInput.value = "";
     dom.boxXInput.value = "";
     dom.boxYInput.value = "";
     dom.boxWidthInput.value = "";
@@ -3346,6 +3357,7 @@ function syncPreviewFormatControls() {
   dom.fontColorInput.value = normalizeHexColor(style.color) || colorToHex(getComputedStyle(element).color) || "#111111";
   dom.backgroundColorInput.value = normalizeHexColor(style.backgroundColor) || "#ffffff";
   dom.textAlignSelect.value = style.textAlign || "";
+  dom.lineHeightInput.value = style.lineHeight || "";
   dom.boxXInput.value = Number(position.x || 0);
   dom.boxYInput.value = Number(position.y || 0);
   dom.boxWidthInput.value = style.width || Math.round(rect.width) || "";
@@ -3372,6 +3384,7 @@ function previewFormatControls() {
     dom.fontSizeInput,
     dom.boxSpacingInput,
     dom.letterSpacingInput,
+    dom.lineHeightInput,
     dom.fontColorInput,
     dom.backgroundColorInput,
     dom.clearBackgroundButton,
@@ -4104,6 +4117,7 @@ function renderPreviewRows(target, rows, startIndex, options = {}) {
   rows.forEach((item, index) => {
     const itemIndex = startIndex + index;
     const row = document.createElement("tr");
+    row.dataset.previewMoveId = `previewItemRow-${itemIndex}`;
     row.innerHTML = previewItemRowHtml(item, itemIndex);
     if (gapPerRow > 0) {
       // Apply extra height to the last cell or all cells
