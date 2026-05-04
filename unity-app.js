@@ -2442,9 +2442,19 @@ function renderDocumentTypeOptions() {
 }
 
 function renderAdjustmentTypeOptions() {
-  const currentValue = appState.document.adjustmentType || "NONE";
+  const isInvoice = isInvoiceDocument();
+  const currentValue = appState.document.adjustmentType || "GST";
   dom.adjustmentType.innerHTML = "";
-  const types = normalizeAdjustmentTypes([...appState.settings.adjustmentTypes, currentValue], defaultSettings.adjustmentTypes);
+  let types = normalizeAdjustmentTypes([...appState.settings.adjustmentTypes, currentValue], defaultSettings.adjustmentTypes);
+  
+  // Filter out Previously Paid/Progress Payment for non-invoices
+  if (!isInvoice) {
+    types = types.filter(t => {
+      const label = normalize(parseAdjustmentOption(t).label);
+      return label !== "previouslypaid" && label !== "progresspayment";
+    });
+  }
+
   types.forEach((rawType) => {
     const optionData = parseAdjustmentOption(rawType);
     const option = document.createElement("option");
@@ -2452,7 +2462,16 @@ function renderAdjustmentTypeOptions() {
     option.textContent = optionData.label === "NONE" ? "NONE" : `${optionData.sign < 0 ? "-" : "+"} ${optionData.label}`;
     dom.adjustmentType.appendChild(option);
   });
-  dom.adjustmentType.value = adjustmentOptionLabel(currentValue);
+  
+  // Fallback if current value was filtered out
+  const labels = types.map(t => parseAdjustmentOption(t).label);
+  const currentLabel = adjustmentOptionLabel(currentValue);
+  if (labels.includes(currentLabel)) {
+    dom.adjustmentType.value = currentLabel;
+  } else {
+    dom.adjustmentType.value = labels[0] || "";
+    appState.document.adjustmentType = dom.adjustmentType.value;
+  }
 }
 
 function syncDocumentFields() {
