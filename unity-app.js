@@ -48,7 +48,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.49";
+const APP_VERSION = "v22.50";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -121,7 +121,7 @@ const defaultSettings = {
     total: "TOTAL",
     contractValue: "Contract Value",
     previouslyPaid: "Previously Paid",
-    remainingBalance: "Remaining Balance",
+    revisedContractValue: "Revised Contract Value",
     footerGreeting: "Sincerely Yours,",
   },
   bank: {
@@ -632,7 +632,7 @@ function setupAssetUploads() {
 }
 
 function setupCloudRealtime() {
-  if (!unityDb) return;
+  if (!unityDb || unityRealtimeChannel) return;
   
   unityRealtimeChannel = unityDb.channel('unity_realtime_sync');
 
@@ -4267,21 +4267,25 @@ function continuationTotalsHtml(totals) {
         ${showAmountWords ? `<p data-preview-id="amountWords" data-preview-move-id="amountWords">${escapeHtml(payableAmount > 0 ? totalToWords(payableAmount) : "")}</p>` : ""}
       </div>
       <dl>
-        <div data-preview-move-id="previewSubtotalRow"${hideAdjustmentTotals ? ' class="is-hidden"' : ""}>
-          <dt data-preview-id="previewSubtotalLabel" data-preview-move-id="previewSubtotalLabel">${escapeHtml(isInvoice ? labels.contractValue : labels.subtotal)}</dt>
-          <dd data-preview-id="previewSubtotal" data-preview-move-id="previewSubtotal">${escapeHtml(formatMoney(isInvoice ? totals.contractValue : totals.subtotal))}</dd>
+        <div id="previewContractValueRow" data-preview-move-id="previewContractValueRow" ${!isChangeNote ? ' class="is-hidden"' : ""}>
+          <dt id="previewContractValueLabel" data-preview-id="previewContractValueLabel" data-preview-move-id="previewContractValueLabel">${escapeHtml(labels.contractValue)}</dt>
+          <dd id="previewContractValue" data-preview-id="previewContractValue" data-preview-move-id="previewContractValue">${escapeHtml(formatMoney(totals.contractValue))}</dd>
         </div>
-        <div data-preview-move-id="previewAdjustmentRow"${(hideAdjustmentTotals || (isInvoice && isClaimOne)) ? ' class="is-hidden"' : ""}>
-          <dt data-preview-id="previewAdjustmentLabel" data-preview-move-id="previewAdjustmentLabel">${escapeHtml(isInvoice ? labels.previouslyPaid : adjustmentLabel())}</dt>
-          <dd data-preview-id="previewAdjustment" data-preview-move-id="previewAdjustment">${escapeHtml(formatMoney(isInvoice ? totals.previouslyPaid : totals.adjustment))}</dd>
+        <div data-preview-move-id="previewSubtotalRow"${(hideAdjustmentTotals && !isChangeNote) ? ' class="is-hidden"' : ""}>
+          <dt data-preview-id="previewSubtotalLabel" data-preview-move-id="previewSubtotalLabel">${escapeHtml(isInvoice ? labels.contractValue : (isChangeNote ? "ADDITION" : labels.subtotal))}</dt>
+          <dd data-preview-id="previewSubtotal" data-preview-move-id="previewSubtotal">${escapeHtml(formatMoney(isInvoice ? totals.contractValue : (isChangeNote ? totals.additions : totals.subtotal)))}</dd>
         </div>
-        <div data-preview-move-id="previewRemainingRow"${(isInvoice && !isClaimOne) ? "" : ' class="is-hidden"'}>
-          <dt data-preview-id="previewRemainingLabel" data-preview-move-id="previewRemainingLabel">${escapeHtml(labels.remainingBalance)}</dt>
-          <dd data-preview-id="previewRemaining" data-preview-move-id="previewRemaining">${escapeHtml(formatMoney(totals.remainingBalance || 0))}</dd>
+        <div data-preview-move-id="previewAdjustmentRow"${((hideAdjustmentTotals || (isInvoice && isClaimOne)) && !isChangeNote) ? ' class="is-hidden"' : ""}>
+          <dt data-preview-id="previewAdjustmentLabel" data-preview-move-id="previewAdjustmentLabel">${escapeHtml(isInvoice ? labels.previouslyPaid : (isChangeNote ? "OMISSION" : adjustmentLabel()))}</dt>
+          <dd data-preview-id="previewAdjustment" data-preview-move-id="previewAdjustment">${escapeHtml(formatMoney(isInvoice ? totals.previouslyPaid : (isChangeNote ? totals.omissions : totals.adjustment)))}</dd>
+        </div>
+        <div data-preview-move-id="previewRemainingRow"${(isInvoice && !isClaimOne) || isChangeNote ? "" : ' class="is-hidden"'}>
+          <dt data-preview-id="previewRemainingLabel" data-preview-move-id="previewRemainingLabel">${escapeHtml(isChangeNote ? "NET VARIATION" : labels.remainingBalance)}</dt>
+          <dd data-preview-id="previewRemaining" data-preview-move-id="previewRemaining">${escapeHtml(formatMoney(isChangeNote ? totals.netVariation : (totals.remainingBalance || 0)))}</dd>
         </div>
         <div class="grand-total" data-preview-move-id="previewTotalRow">
-          <dt data-preview-id="previewTotalLabel" data-preview-move-id="previewTotalLabel">${escapeHtml(isInvoice ? invoiceClaimLabel() : labels.total)}</dt>
-          <dd data-preview-id="previewTotal" data-preview-move-id="previewTotal">${escapeHtml(formatMoney(isInvoice ? totals.currentClaimAmount : totals.total))}</dd>
+          <dt data-preview-id="previewTotalLabel" data-preview-move-id="previewTotalLabel">${escapeHtml(isInvoice ? invoiceClaimLabel() : (isChangeNote ? labels.revisedContractValue : labels.total))}</dt>
+          <dd data-preview-id="previewTotal" data-preview-move-id="previewTotal">${escapeHtml(formatMoney(isInvoice ? totals.currentClaimAmount : (isChangeNote ? totals.revisedContractValue : totals.total)))}</dd>
         </div>
       </dl>
     </section>
