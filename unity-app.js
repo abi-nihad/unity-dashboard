@@ -831,6 +831,8 @@ function cacheDom() {
     "boxYInput",
     "boxWidthInput",
     "boxHeightInput",
+    "paddingInput",
+    "borderRadiusInput",
     "borderWidthInput",
     "borderStyleSelect",
     "borderSideSelect",
@@ -2905,6 +2907,12 @@ function bindPreviewFormatControls() {
   dom.boxHeightInput.addEventListener("input", () => {
     setSelectedPreviewStyle({ height: readNumberControl(dom.boxHeightInput, 10, 1200) });
   });
+  dom.paddingInput.addEventListener("input", () => {
+    setSelectedPreviewStyle({ padding: readNumberControl(dom.paddingInput, 0, 100) });
+  });
+  dom.borderRadiusInput.addEventListener("input", () => {
+    setSelectedPreviewStyle({ borderRadius: readNumberControl(dom.borderRadiusInput, 0, 500) });
+  });
   dom.borderWidthInput.addEventListener("input", () => {
     const width = readNumberControl(dom.borderWidthInput, 0, 12);
     setSelectedPreviewStyle({
@@ -3206,6 +3214,8 @@ function applyPreviewStyleToElement(element, style = {}) {
   element.style.lineHeight = style.lineHeight || "";
   element.style.color = style.color || "";
   element.style.backgroundColor = style.backgroundColor || "";
+  element.style.padding = pixelStyle(style.padding);
+  element.style.borderRadius = pixelStyle(style.borderRadius);
   element.style.textAlign = style.textAlign || "";
   element.style.width = pixelStyle(style.width);
   element.style.maxWidth = style.width ? "none" : "";
@@ -3488,6 +3498,8 @@ function syncPreviewFormatControls() {
   dom.boxYInput.value = Number(position.y || 0);
   dom.boxWidthInput.value = style.width || Math.round(rect.width) || "";
   dom.boxHeightInput.value = style.height || Math.round(rect.height) || "";
+  dom.paddingInput.value = style.padding || "";
+  dom.borderRadiusInput.value = style.borderRadius || "";
   dom.borderWidthInput.value = style.borderWidth || "";
   dom.borderStyleSelect.value = style.borderStyle || (style.borderWidth ? "solid" : "none");
   dom.borderSideSelect.value = style.borderSide || "all";
