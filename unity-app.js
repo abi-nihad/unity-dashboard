@@ -187,6 +187,7 @@ const movablePreviewBlockIds = [
   "previewReLine",
   "previewPageNo",
   "previewItemsTable",
+  "previewHeaderRow",
   "previewSnHeader",
   "previewDescriptionHeader",
   "previewQtyHeader",
@@ -938,6 +939,7 @@ function cacheDom() {
     "previewFitContent",
     "previewItems",
     "previewItemsTable",
+    "previewHeaderRow",
     "previewSnHeader",
     "previewDescriptionHeader",
     "previewQtyHeader",
@@ -3198,6 +3200,22 @@ function applyPreviewStyleToElement(element, style = {}) {
       element.style[`border${sideProp}Color`] = bColor;
       element.style[`border${sideProp}Style`] = bStyle;
     }
+
+    // For TR elements, propagate border to child TH/TD cells
+    if (element.tagName === "TR") {
+      Array.from(element.querySelectorAll("th, td")).forEach((cell) => {
+        if (side === "all") {
+          cell.style.borderWidth = bWidth;
+          cell.style.borderColor = bColor;
+          cell.style.borderStyle = bStyle;
+        } else {
+          const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
+          cell.style[`border${sideProp}Width`] = bWidth;
+          cell.style[`border${sideProp}Color`] = bColor;
+          cell.style[`border${sideProp}Style`] = bStyle;
+        }
+      });
+    }
   }
 }
 
@@ -4242,7 +4260,7 @@ function continuationPageHtml(pageNumber, pageCount, rows, startIndex, totals) {
 function previewTableHeaderHtml() {
   if (isChangeNoteDocument()) {
     return `
-      <tr class="header-row">
+      <tr class="header-row" data-preview-move-id="previewHeaderRow">
         <th id="previewSnHeader" data-preview-id="previewSnHeader" data-preview-move-id="previewSnHeader" style="width: 44px">S/N</th>
         <th id="previewDescriptionHeader" data-preview-id="previewDescriptionHeader" data-preview-move-id="previewDescriptionHeader">Description of Variation</th>
         <th id="previewQtyHeader" data-preview-id="previewQtyHeader" data-preview-move-id="previewQtyHeader" style="width: 50px">Qty</th>
@@ -4254,7 +4272,7 @@ function previewTableHeaderHtml() {
     `;
   }
   return `
-    <tr class="header-row">
+    <tr class="header-row" data-preview-move-id="previewHeaderRow">
       <th id="previewSnHeader" data-preview-id="previewSnHeader" data-preview-move-id="previewSnHeader" style="width: 44px">S/N</th>
       <th id="previewDescriptionHeader" data-preview-id="previewDescriptionHeader" data-preview-move-id="previewDescriptionHeader">Description</th>
       <th id="previewQtyHeader" data-preview-id="previewQtyHeader" data-preview-move-id="previewQtyHeader" style="width: 50px">Qty</th>
