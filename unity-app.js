@@ -495,12 +495,7 @@ function automaticInvoiceClaimLabel(document = appState.document) {
       default: return "th";
     }
   };
-  let label = `${n}${suffix(n)} Claim`;
-  if (n === 1) {
-    const remBalLabel = (appState.settings && appState.settings.labels && appState.settings.labels.remainingBalance) || "Remaining Balance";
-    label = `${label} / ${remBalLabel}`;
-  }
-  return label;
+  return `${n}${suffix(n)} Claim`;
 }
 
 function invoiceClaimLabel(document = appState.document) {
