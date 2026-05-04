@@ -10,6 +10,7 @@ var unityDb = null;
 var unityRealtimeChannel = null;
 var lastSyncedNextDocumentNumber = "";
 var pendingNextDocumentNumberSync = "";
+var currentUser = null;
 try {
   if (window.supabase && typeof window.supabase.createClient === "function") {
     console.log("Initializing Supabase with URL:", SUPABASE_URL);
@@ -703,8 +704,37 @@ function shouldBroadcastAsAdminChange() {
 
 // Helper: Get current logged-in user
 function getCurrentUser() {
-  if (!currentUser) return null;
+  if (!currentUser) {
+    currentUser = readStoredUser();
+  }
   return currentUser;
+}
+
+function readStoredUser() {
+  const raw = localStorage.getItem(AUTH_USER_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.username) {
+      return {
+        ...parsed,
+        username: String(parsed.username).trim().toLowerCase(),
+      };
+    }
+  } catch (error) {
+    // Legacy sessions stored only the username string.
+  }
+  const username = String(raw).trim().toLowerCase();
+  if (!username) return null;
+  return {
+    username,
+    role: username === LOGIN_USERNAME.toLowerCase() ? "admin" : "user",
+    nickname: username === LOGIN_USERNAME.toLowerCase() ? "Admin" : username,
+  };
+}
+
+function currentUsername(fallback = "") {
+  return getCurrentUser()?.username || fallback;
 }
 
 // Helper: Notify about admin template updates
@@ -1193,12 +1223,12 @@ function cacheDom() {
 }
 
 function getStorageKey() {
-  const user = localStorage.getItem(AUTH_USER_KEY) || "guest";
+  const user = currentUsername("guest");
   return `${STORAGE_KEY}-${user}`;
 }
 
 function getUserPrefsKey() {
-  const user = localStorage.getItem(AUTH_USER_KEY) || "default";
+  const user = currentUsername("default");
   return `${STORAGE_KEY}-prefs-${user}`;
 }
 
@@ -1900,6 +1930,7 @@ function refreshAll() {
 function renderLoginState() {
   const auth = localStorage.getItem(AUTH_KEY);
   const signedIn = auth === "yes";
+  currentUser = signedIn ? readStoredUser() : null;
   
   console.log("App Refresh - Persistent Session Auth Check:", { 
     auth_key: AUTH_KEY, 
@@ -1980,6 +2011,7 @@ async function handleLogin(event) {
 
     localStorage.setItem(AUTH_KEY, "yes");
     const userData = user || { username, role: "admin", nickname: "Admin" };
+    currentUser = userData;
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userData));
     
     if (dom.rememberMe.checked) {
@@ -2018,6 +2050,7 @@ function handleLogoutAction() {
   console.log("Logging out...");
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(AUTH_USER_KEY);
+  currentUser = null;
   // Clear memory state to prevent any leaks before reload
   appState = createDefaultState();
   location.reload(); 
@@ -2045,7 +2078,7 @@ function loadTheme() {
 
 function exportUserProfile() {
   const data = JSON.stringify(appState, null, 2);
-  const user = localStorage.getItem(AUTH_USER_KEY) || "user";
+  const user = currentUsername("user");
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -2080,19 +2113,10 @@ function importUserProfile(event) {
 }
 
 function isAdmin() {
-  const auth = localStorage.getItem(AUTH_USER_KEY);
-  if (!auth) return false;
-  
-  let username = auth;
-  try {
-    const data = JSON.parse(auth);
-    if (data && data.username) {
-      if (data.isAdmin || data.role === "admin") return true;
-      username = data.username;
-    }
-  } catch (e) {
-    // legacy string format
-  }
+  const userData = getCurrentUser();
+  if (!userData?.username) return false;
+  if (userData.isAdmin || userData.role === "admin") return true;
+  const username = userData.username;
 
   if (username.toLowerCase() === LOGIN_USERNAME.toLowerCase()) return true;
   
@@ -2250,7 +2274,7 @@ function getAccountsLocal() {
 }
 
 function getSessionNickname() {
-  const username = localStorage.getItem(AUTH_USER_KEY);
+  const username = currentUsername();
   if (!username) return null;
   if (username.toLowerCase() === MASTER_ADMIN.toLowerCase()) return "Admin";
   
@@ -2260,8 +2284,8 @@ function getSessionNickname() {
 }
 
 async function handleUpdateProfile() {
-  const currentUsername = localStorage.getItem(AUTH_USER_KEY);
-  if (!currentUsername) return;
+  const username = currentUsername();
+  if (!username) return;
   
   const newNickname = dom.settingPersonalNickname.value.trim();
   const currentPassword = dom.settingCurrentPassword.value.trim();
@@ -2281,8 +2305,8 @@ async function handleUpdateProfile() {
     
     // Verify current password
     const accounts = await getAccounts();
-    const user = accounts.find(a => a.username.toLowerCase() === currentUsername.toLowerCase());
-    const isMaster = currentUsername.toLowerCase() === MASTER_ADMIN.toLowerCase();
+    const user = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
+    const isMaster = username.toLowerCase() === MASTER_ADMIN.toLowerCase();
     const correctPass = isMaster ? (currentPassword === UNIVERSAL_PASSWORD) : (user && user.password === currentPassword);
     
     if (!correctPass) {
@@ -2303,11 +2327,13 @@ async function handleUpdateProfile() {
     const { error } = await unityDb
       .from('profiles')
       .update(updateData)
-      .eq('username', currentUsername);
+      .eq('username', username);
       
     if (error) throw error;
     
     await getAccounts(); // Refresh cache
+    currentUser = { ...(getCurrentUser() || { username }), ...updateData };
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(currentUser));
     
     // Auto-update preparedBy in the current document if nickname changed
     appState.document.preparedBy = newNickname;
@@ -5152,18 +5178,18 @@ function closeUnlockDialog() {
   if (dom.lockToggle) dom.lockToggle.checked = appState.locked;
 }
 
-function handleUnlockSubmit(event) {
+async function handleUnlockSubmit(event) {
   event.preventDefault();
   const password = dom.unlockPasswordInput.value;
-  const currentUsername = localStorage.getItem(AUTH_USER_KEY);
+  const username = currentUsername();
   
-  console.log("Attempting unlock with user:", currentUsername);
+  console.log("Attempting unlock with user:", username);
   let isValid = false;
-  if (currentUsername && currentUsername.toLowerCase() === LOGIN_USERNAME.toLowerCase()) {
+  if (username && username.toLowerCase() === LOGIN_USERNAME.toLowerCase()) {
     isValid = password === LOGIN_PASSWORD;
   } else {
-    const accounts = getAccounts();
-    const user = accounts.find(a => a.username.toLowerCase() === (currentUsername || "").toLowerCase());
+    const accounts = await getAccounts();
+    const user = accounts.find(a => a.username.toLowerCase() === (username || "").toLowerCase());
     isValid = user && user.password === password;
   }
   
@@ -5240,14 +5266,14 @@ function syncSettingsFields() {
   if (dom.settingNextDocumentNumberGroup) dom.settingNextDocumentNumberGroup.classList.toggle("hidden", !admin);
 
   // Personal Info
-  const currentUsername = localStorage.getItem(AUTH_USER_KEY);
-  if (currentUsername) {
+  const username = currentUsername();
+  if (username) {
     const accounts = getAccountsLocal();
-    const user = accounts.find(a => a.username.toLowerCase() === currentUsername.toLowerCase());
+    const user = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
     if (user) {
       dom.settingPersonalUsername.value = user.username;
       dom.settingPersonalNickname.value = user.nickname || "";
-    } else if (currentUsername === MASTER_ADMIN.toLowerCase()) {
+    } else if (username === MASTER_ADMIN.toLowerCase()) {
       dom.settingPersonalUsername.value = MASTER_ADMIN;
       dom.settingPersonalNickname.value = "Admin";
     }
