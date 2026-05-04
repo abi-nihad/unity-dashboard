@@ -6322,23 +6322,23 @@ function buildPreviewExcelHtml() {
         box-sizing: border-box;
       }
       .paper-totals dt {
-        text-align: right !important;
-        font-size: 11px !important;
-        font-weight: 700 !important;
-        color: #444 !important;
-        text-transform: uppercase !important;
-        white-space: nowrap !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        text-align: right;
+        font-size: 11px;
+        font-weight: 700;
+        color: #444;
+        text-transform: uppercase;
+        white-space: nowrap;
+        margin: 0;
+        padding: 0;
       }
       .paper-totals dd {
-        text-align: right !important;
-        font-size: 11px !important;
-        font-weight: 700 !important;
-        color: #111 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        white-space: nowrap !important;
+        text-align: right;
+        font-size: 11px;
+        font-weight: 700;
+        color: #111;
+        margin: 0;
+        padding: 0;
+        white-space: nowrap;
       }
       .paper-totals .grand-total {
         border-top: 1.5px solid #000;
