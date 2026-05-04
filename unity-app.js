@@ -6156,34 +6156,37 @@ function buildPreviewExcelHtml() {
         overflow-wrap: break-word;
       }
       .preview-items th, .preview-items td { border: 0; padding: 7px 6px; color: #111; font-size: 12px; vertical-align: top; }
-      .preview-items th { background: #fff; border-top: 1.5px solid #000 !important; border-bottom: 1.5px solid #000 !important; text-align: center; color: #000 !important; }
+      .preview-items th { background: #fff; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; text-align: center; color: #000; }
       .preview-items tbody tr td { border-bottom: none; }
-      .preview-items tbody tr:last-child td { border-bottom: 1.5px solid #000 !important; }
+      .preview-items tbody tr:last-child td { border-bottom: 1.5px solid #000; }
       .preview-items th:first-child, .preview-items td:first-child { width: 44px; text-align: center; }
       .preview-items th:nth-child(2), .preview-items td:nth-child(2) { text-align: left; }
       .preview-items th:nth-child(3), .preview-items td:nth-child(3), .preview-items th:nth-child(4), .preview-items td:nth-child(4) { width: 62px; text-align: center; }
       .preview-items th:nth-child(5), .preview-items td:nth-child(5), .preview-items th:nth-child(6), .preview-items td:nth-child(6) { width: 82px; text-align: right; }
       .preview-description { white-space: pre-wrap; overflow-wrap: anywhere; }
-      .paper-totals { display: grid; grid-template-columns: 1fr 250px; gap: 24px; margin-top: 14px; }
-      .paper-totals.single-total { grid-template-columns: minmax(190px, 250px); justify-content: end; }
+      .paper-totals { display: flex; flex-direction: column; align-items: flex-end; margin-top: 14px; width: 100%; }
+      .paper-totals.single-total dl { width: 250px; }
       .paper-total-notes { display: grid; gap: 8px; padding-top: 12px; }
       .paper-total-notes[hidden] { display: none; }
       .paper-totals p { padding-top: 12px; font-size: 12px; font-weight: 700; line-height: 1.45; }
       .paper-total-notes p { padding-top: 0; }
       .invoice-note { font-weight: 500; }
-      .paper-totals dl { border-top: 1px solid #111; }
-      .paper-totals dl div { grid-template-columns: 1fr 96px; padding: 6px 0; border-bottom: 1px solid #111; }
+      .paper-totals dl { display: flex; flex-direction: column; width: 340px; margin: 10px 0 0 0; border: none; gap: 0; }
+      .paper-totals dl div { display: grid; grid-template-columns: 1fr 100px; gap: 15px; padding: 8px 10px; border: none; align-items: center; width: 100%; box-sizing: border-box; }
+      .paper-totals dt { text-align: right; font-size: 11px; font-weight: 700; color: #444; text-transform: uppercase; white-space: nowrap; }
+      .paper-totals dd { text-align: right; font-size: 11px; font-weight: 700; color: #111; margin: 0; white-space: nowrap; }
       .paper-totals .grand-total {
-        border-top: 1px solid #000;
-        border-bottom: 3.5px double #000;
-        padding-top: 5px;
-        padding-bottom: 5px;
-        margin-top: 4px;
+        border-top: 1.5px solid #000;
+        border-bottom: 4.5px double #000;
+        border-left: none;
+        border-right: none;
+        padding: 10px 10px;
+        margin-top: 12px;
         font-weight: 800;
       }
-      .paper-totals dd, .paper-totals .grand-total dt {
+      .paper-totals .grand-total dt, .paper-totals .grand-total dd {
         color: #000;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 12px;
       }
       .bank-details { margin-top: 18px; font-size: 12px; }

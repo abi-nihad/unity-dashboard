@@ -1478,7 +1478,7 @@ input:checked + .toggle-slider:before {
 
 /* Last row of each page table gets a solid single bottom border for closure */
 .preview-items tbody tr:last-child td {
-  border-bottom: 1px solid #000 !important;
+  border-bottom: 1px solid #000;
 }
 
 /* All table text/cells stay dark on white paper regardless of theme */
@@ -1489,9 +1489,9 @@ input:checked + .toggle-slider:before {
 
 .paper-page .preview-items th {
   background: #ffffff;
-  border-top: 1.5px solid #000 !important;
-  border-bottom: 1.5px solid #000 !important;
-  color: #000 !important;
+  border-top: 1.5px solid #000;
+  border-bottom: 1.5px solid #000;
+  color: #000;
 }
 
 .paper.preview-editing [contenteditable="true"] {
@@ -1576,7 +1576,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   flex-direction: column;
   margin: 10px 0 0 0;
-  width: 290px;
+  width: 340px;
   border: none;
   gap: 0;
 }
@@ -1586,7 +1586,7 @@ input:checked + .toggle-slider:before {
   grid-template-columns: 1fr 100px;
   gap: 15px;
   padding: 8px 10px;
-  margin-bottom: 2px;
+  margin-bottom: 0;
   border: none;
   background: transparent;
   align-items: center;
@@ -1600,6 +1600,7 @@ input:checked + .toggle-slider:before {
   font-weight: 700;
   color: #444;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .paper-totals dd {
@@ -1608,14 +1609,15 @@ input:checked + .toggle-slider:before {
   font-weight: 700;
   color: #111;
   margin: 0;
+  white-space: nowrap;
 }
 
 /* Specific styling for the grand total / revised contract value box */
 .paper-totals .grand-total {
-  border-top: 1.5px solid #000 !important;
-  border-bottom: 4.5px double #000 !important;
-  border-left: none !important;
-  border-right: none !important;
+  border-top: 1.5px solid #000;
+  border-bottom: 4.5px double #000;
+  border-left: none;
+  border-right: none;
   margin-top: 12px;
   background: transparent;
   padding: 10px 10px;
