@@ -3134,14 +3134,16 @@ function previewStyleMap() {
 }
 
 function previewTemplateMap(source) {
-  if (!source[PREVIEW_TEMPLATE_KEY]) {
-    const documentMap = source[previewDocumentKey()];
+  const docKey = previewDocumentKey();
+  if (!source[docKey]) {
+    // Migrate: copy from old shared "template" key or another doc type as starting point
+    const legacy = source[PREVIEW_TEMPLATE_KEY];
     const firstSavedMap = Object.entries(source).find(([key, value]) => {
       return key !== PREVIEW_TEMPLATE_KEY && value && typeof value === "object" && Object.keys(value).length;
     });
-    source[PREVIEW_TEMPLATE_KEY] = copy(documentMap || firstSavedMap?.[1] || {});
+    source[docKey] = copy(legacy || firstSavedMap?.[1] || {});
   }
-  return source[PREVIEW_TEMPLATE_KEY];
+  return source[docKey];
 }
 
 function applyPreviewStyles() {
