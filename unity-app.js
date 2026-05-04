@@ -826,6 +826,20 @@ function currentPreviewTemplate() {
     previewLayout: copy(appState.previewLayout || {}),
     previewStyles: copy(appState.previewStyles || {}),
     previewOverrides: copy(appState.previewOverrides || {}),
+    settings: {
+      companyName: appState.settings.companyName,
+      companyAddress: appState.settings.companyAddress,
+      companyEmail: appState.settings.companyEmail,
+      logoUrl: appState.settings.logoUrl,
+      bizsafeUrl: appState.settings.bizsafeUrl,
+      stampUrl: appState.settings.stampUrl,
+      labels: copy(appState.settings.labels || {}),
+      bank: copy(appState.settings.bank || {}),
+      uomOptions: copy(appState.settings.uomOptions || []),
+      adjustmentTypes: copy(appState.settings.adjustmentTypes || []),
+      currencySymbol: appState.settings.currencySymbol,
+      page: copy(appState.settings.page || {})
+    }
   };
 }
 
@@ -848,6 +862,24 @@ function applyPreviewTemplatePayload(data = {}) {
   if (hasOwnValue(data, "previewOverrides")) {
     appState.previewOverrides = data.previewOverrides && typeof data.previewOverrides === "object" ? copy(data.previewOverrides) : {};
     changed = true;
+  }
+  if (hasOwnValue(data, "settings")) {
+    const remoteSettings = data.settings;
+    if (remoteSettings && typeof remoteSettings === "object") {
+      if (remoteSettings.labels) appState.settings.labels = copy(remoteSettings.labels);
+      if (remoteSettings.bank) appState.settings.bank = copy(remoteSettings.bank);
+      if (remoteSettings.companyName) appState.settings.companyName = remoteSettings.companyName;
+      if (remoteSettings.companyAddress) appState.settings.companyAddress = remoteSettings.companyAddress;
+      if (remoteSettings.companyEmail) appState.settings.companyEmail = remoteSettings.companyEmail;
+      if (remoteSettings.logoUrl) appState.settings.logoUrl = remoteSettings.logoUrl;
+      if (remoteSettings.bizsafeUrl) appState.settings.bizsafeUrl = remoteSettings.bizsafeUrl;
+      if (remoteSettings.stampUrl) appState.settings.stampUrl = remoteSettings.stampUrl;
+      if (remoteSettings.uomOptions) appState.settings.uomOptions = copy(remoteSettings.uomOptions);
+      if (remoteSettings.adjustmentTypes) appState.settings.adjustmentTypes = copy(remoteSettings.adjustmentTypes);
+      if (remoteSettings.currencySymbol) appState.settings.currencySymbol = remoteSettings.currencySymbol;
+      if (remoteSettings.page) appState.settings.page = copy(remoteSettings.page);
+      changed = true;
+    }
   }
   return changed;
 }
@@ -5403,7 +5435,7 @@ async function saveSettings(event) {
     }
   });
   appState.settings = settings;
-  saveState({ force: true });
+  saveState({ force: true, syncTemplate: isAdmin() });
   refreshAll();
   closeSettings();
   showToast("Settings saved.");
@@ -5416,7 +5448,7 @@ function restoreSettings() {
   if (!appState.settings.documentTypes.includes(appState.document.type)) {
     appState.settings.documentTypes.push(appState.document.type);
   }
-  saveState({ force: true });
+  saveState({ force: true, syncTemplate: isAdmin() });
   syncSettingsFields();
   refreshAll();
   showToast("Settings restored.");
