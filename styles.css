@@ -1317,9 +1317,7 @@ input:checked + .toggle-slider:before {
   border-bottom: none;
 }
 
-.is-hidden {
-  display: none !important;
-}
+
 
 .document-info-placeholder {
   visibility: hidden;
@@ -2427,4 +2425,12 @@ input:checked + .toggle-slider:before {
 
 .delete-btn:hover {
   background: #ffebee !important;
+}
+
+.paper-totals dl div.is-hidden {
+  display: none !important;
+}
+
+.is-hidden {
+  display: none !important;
 }
