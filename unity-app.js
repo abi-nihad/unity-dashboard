@@ -48,7 +48,7 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.56";
+const APP_VERSION = "v22.57";
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -3924,7 +3924,7 @@ function renderPreview(totals) {
   dom.previewTotal.textContent = formatMoney(isInvoice ? totals.currentClaimAmount : (isChangeNote ? totals.revisedContractValue : totals.total));
   
   const hideSubtotal = (!isInvoice && !isChangeNote && doc.adjustmentType === "NONE");
-  const hideAdjustment = (!isInvoice && !isChangeNote && doc.adjustmentType === "NONE") || (isInvoice && isClaimOne);
+  const hideAdjustment = (!isInvoice && !isChangeNote && doc.adjustmentType === "NONE");
   const showAmountWords = shouldShowAmountWords(doc);
   
   // For Change Note, we show Addition, Omission, and Net Variation
@@ -4410,11 +4410,11 @@ function continuationTotalsHtml(totals) {
           <dt data-preview-id="previewSubtotalLabel" data-preview-move-id="previewSubtotalLabel">${escapeHtml(isInvoice ? labels.contractValue : (isChangeNote ? "ADDITION" : labels.subtotal))}</dt>
           <dd data-preview-id="previewSubtotal" data-preview-move-id="previewSubtotal">${escapeHtml(formatMoney(isInvoice ? totals.contractValue : (isChangeNote ? totals.additions : totals.subtotal)))}</dd>
         </div>
-        <div data-preview-move-id="previewAdjustmentRow"${((hideAdjustmentTotals || (isInvoice && isClaimOne)) && !isChangeNote) ? ' class="is-hidden"' : ""}>
+        <div data-preview-move-id="previewAdjustmentRow"${((hideAdjustmentTotals) && !isChangeNote) ? ' class="is-hidden"' : ""}>
           <dt data-preview-id="previewAdjustmentLabel" data-preview-move-id="previewAdjustmentLabel">${escapeHtml(isInvoice ? labels.previouslyPaid : (isChangeNote ? "OMISSION" : adjustmentLabel()))}</dt>
           <dd data-preview-id="previewAdjustment" data-preview-move-id="previewAdjustment">${escapeHtml(formatMoney(isInvoice ? totals.previouslyPaid : (isChangeNote ? totals.omissions : totals.adjustment)))}</dd>
         </div>
-        <div data-preview-move-id="previewRemainingRow"${(isInvoice && !isClaimOne) || isChangeNote ? "" : ' class="is-hidden"'}>
+        <div data-preview-move-id="previewRemainingRow"${(isInvoice) || isChangeNote ? "" : ' class="is-hidden"'}>
           <dt data-preview-id="previewRemainingLabel" data-preview-move-id="previewRemainingLabel">${escapeHtml(isChangeNote ? "NET VARIATION" : labels.remainingBalance)}</dt>
           <dd data-preview-id="previewRemaining" data-preview-move-id="previewRemaining">${escapeHtml(formatMoney(isChangeNote ? totals.netVariation : (totals.remainingBalance || 0)))}</dd>
         </div>
