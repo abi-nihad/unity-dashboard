@@ -1202,6 +1202,7 @@ function saveState(options = {}) {
         // Broadcast the change for instant sync on other browsers
         if (unityRealtimeChannel) {
           console.log("Broadcasting state_sync to channel...");
+          showToast("Sync: Broadcasting changes to all users...");
           unityRealtimeChannel.send({
             type: 'broadcast',
             event: 'state_sync',
@@ -6259,9 +6260,37 @@ function buildPreviewExcelHtml() {
       .paper-total-notes p { padding-top: 0; }
       .invoice-note { font-weight: 500; }
       .paper-totals dl { display: flex; flex-direction: column; width: 340px; margin: 10px 0 0 0; border: none; gap: 0; }
-      .paper-totals dl div { display: grid; grid-template-columns: 1fr 100px; gap: 15px; padding: 8px 10px; border: none; align-items: center; width: 100%; box-sizing: border-box; }
-      .paper-totals dt { text-align: right; font-size: 11px; font-weight: 700; color: #444; text-transform: uppercase; white-space: nowrap; }
-      .paper-totals dd { text-align: right; font-size: 11px; font-weight: 700; color: #111; margin: 0; white-space: nowrap; }
+      .paper-totals dl div {
+        display: grid !important;
+        grid-template-columns: 1fr 120px !important;
+        gap: 15px !important;
+        padding: 6px 10px !important;
+        margin: 0 !important;
+        border: none;
+        background: transparent;
+        align-items: center;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .paper-totals dt {
+        text-align: right !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        color: #444 !important;
+        text-transform: uppercase !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .paper-totals dd {
+        text-align: right !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        color: #111 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
+      }
       .paper-totals .grand-total {
         border-top: 1.5px solid #000;
         border-bottom: 4.5px double #000;
