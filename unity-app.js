@@ -8,6 +8,8 @@ console.log("UNITY Dashboard App v21.0 - Initializing...");
 
 var unityDb = null;
 var unityRealtimeChannel = null;
+var lastSyncedNextDocumentNumber = "";
+var pendingNextDocumentNumberSync = "";
 try {
   if (window.supabase && typeof window.supabase.createClient === "function") {
     console.log("Initializing Supabase with URL:", SUPABASE_URL);
@@ -662,8 +664,11 @@ function setupCloudRealtime() {
   }, (payload) => {
     const remoteData = payload.new ? payload.new.data : null;
     if (remoteData && remoteData.nextDocumentNumber) {
-      appState.settings.nextDocumentNumber = String(remoteData.nextDocumentNumber);
-      saveState({ skipHistory: true });
+      const nextDocumentNumber = String(remoteData.nextDocumentNumber);
+      markDocumentSequenceSynced(nextDocumentNumber);
+      if (nextDocumentNumber === String(appState.settings.nextDocumentNumber || "")) return;
+      appState.settings.nextDocumentNumber = nextDocumentNumber;
+      localStorage.setItem(getStorageKey(), JSON.stringify(appState));
       refreshAll();
     }
   });
@@ -679,13 +684,6 @@ function setupCloudRealtime() {
         changeType: payload.payload.changeType || 'template'
       };
       applyRemoteState(payload.payload.data, metadata);
-    }
-  });
-
-  unityRealtimeChannel.on('broadcast', { event: 'document_update' }, (payload) => {
-    console.log("Realtime Document Broadcast Received:", payload);
-    if (payload.payload?.document) {
-      applyRemoteDocument(payload.payload.document);
     }
   });
 
@@ -789,91 +787,89 @@ function clearAdminChangeHistory() {
   }
 }
 
-function applyRemoteState(data, metadata = {}) {
-  if (!data) return;
-  console.log("[APPLY_REMOTE] Applying remote state changes...", metadata);
-  if (data.previewLayout) {
-    appState.previewLayout = { ...appState.previewLayout, ...data.previewLayout };
-  }
-  if (data.previewStyles) {
-    appState.previewStyles = { ...appState.previewStyles, ...data.previewStyles };
-  }
-  if (data.previewOverrides) {
-    appState.previewOverrides = { ...appState.previewOverrides, ...data.previewOverrides };
-  }
-  if (data.settings) {
-    appState.settings = { ...appState.settings, ...data.settings };
-  }
-  
-  if (data.document) {
-    // Disabled document-level sync based on user request "dont change value for every user"
-    // applyRemoteDocument(data.document); 
-  }
-  
-  // Apply Settings and Preview Template (Global sync remains active)
-    // Persist as global default too if it's a template update
-    const globalTemplate = {
-      previewLayout: appState.previewLayout,
-      previewStyles: appState.previewStyles,
-      previewOverrides: appState.previewOverrides
-    };
-    localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
-    localStorage.setItem(getStorageKey(), JSON.stringify(appState));
-    refreshAll();
-    
-    // Notify about admin template change if applicable
-    if (metadata.isAdminChange && !isAdmin()) {
-      notifyAdminTemplateUpdate(metadata);
-    }
+function hasOwnValue(data, key) {
+  return !!data && Object.prototype.hasOwnProperty.call(data, key);
 }
 
-function applyRemoteDocument(documentData) {
-  if (!documentData) return;
-  console.log("Applying remote document update...");
-  
-  // Merge but respect local edits in progress (simple version: overwrite if no focus)
-  const isEditing = !!document.activeElement && 
-    (document.activeElement.tagName === "INPUT" || 
-     document.activeElement.tagName === "SELECT" || 
-     document.activeElement.classList.contains("description-editor"));
-  
-  appState.document = { ...appState.document, ...documentData };
-  localStorage.setItem(getStorageKey(), JSON.stringify(appState));
-  
-  // Always update preview
-  refreshCalculationsAndPreview();
-  
-  // Only update fields if not currently editing to avoid cursor jumping
-  if (!isEditing) {
-    syncDocumentFields();
-    renderItems();
+function currentPreviewTemplate() {
+  return {
+    previewLayout: copy(appState.previewLayout || {}),
+    previewStyles: copy(appState.previewStyles || {}),
+    previewOverrides: copy(appState.previewOverrides || {}),
+  };
+}
+
+function persistGlobalPreviewTemplate() {
+  const globalTemplate = currentPreviewTemplate();
+  localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
+  return globalTemplate;
+}
+
+function applyPreviewTemplatePayload(data = {}) {
+  let changed = false;
+  if (hasOwnValue(data, "previewLayout")) {
+    appState.previewLayout = data.previewLayout && typeof data.previewLayout === "object" ? copy(data.previewLayout) : {};
+    changed = true;
   }
+  if (hasOwnValue(data, "previewStyles")) {
+    appState.previewStyles = data.previewStyles && typeof data.previewStyles === "object" ? copy(data.previewStyles) : {};
+    changed = true;
+  }
+  if (hasOwnValue(data, "previewOverrides")) {
+    appState.previewOverrides = data.previewOverrides && typeof data.previewOverrides === "object" ? copy(data.previewOverrides) : {};
+    changed = true;
+  }
+  return changed;
+}
+
+function markDocumentSequenceSynced(value) {
+  lastSyncedNextDocumentNumber = String(value || "");
+}
+
+async function syncDocumentSequenceIfChanged() {
+  if (!unityDb) return;
+  const nextDocumentNumber = String(appState.settings.nextDocumentNumber || "");
+  if (!nextDocumentNumber) return;
+  if (nextDocumentNumber === lastSyncedNextDocumentNumber || nextDocumentNumber === pendingNextDocumentNumberSync) return;
+
+  pendingNextDocumentNumberSync = nextDocumentNumber;
+  try {
+    const { error } = await unityDb.from('global_config').upsert({
+      key: 'document_sequence',
+      data: { nextDocumentNumber },
+      updated_at: new Date().toISOString()
+    });
+    if (error) throw error;
+    markDocumentSequenceSynced(nextDocumentNumber);
+  } catch (err) {
+    console.error("[DOCUMENT_SEQUENCE] Sync failed:", err);
+  } finally {
+    if (pendingNextDocumentNumberSync === nextDocumentNumber) {
+      pendingNextDocumentNumberSync = "";
+    }
+  }
+}
+
+function applyRemoteState(data, metadata = {}) {
+  if (!data) return;
+  console.log("[APPLY_REMOTE] Applying remote template changes...", metadata);
+  applyRemoteTemplate(data, metadata);
 }
 
 function applyRemoteTemplate(data, metadata = {}) {
   if (!data) return;
   console.log("[APPLY_TEMPLATE] Applying remote template changes...", metadata);
-  appState.previewLayout = { ...appState.previewLayout, ...(data.previewLayout || {}) };
-  appState.previewStyles = { ...appState.previewStyles, ...(data.previewStyles || {}) };
-  appState.previewOverrides = { ...appState.previewOverrides, ...(data.previewOverrides || {}) };
-  appState.settings = { ...appState.settings, ...(data.settings || {}) };
-  if (data.clients) appState.clients = data.clients;
-  
-  // Records are now PRIVATE per user device, so we don't sync them globally anymore
+  const changed = applyPreviewTemplatePayload(data);
+  if (!changed) return;
   
   // Persist locally so it survives refresh
   localStorage.setItem(getStorageKey(), JSON.stringify(appState));
-  const globalTemplate = {
-    previewLayout: appState.previewLayout,
-    previewStyles: appState.previewStyles,
-    previewOverrides: appState.previewOverrides
-  };
-  localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
+  persistGlobalPreviewTemplate();
   
   refreshAll();
   
   // Show notification for admin template changes (from DB postgres_changes)
-  if (metadata && metadata.lastModifiedBy && !isAdmin()) {
+  if (metadata && (metadata.lastModifiedBy || metadata.isAdminChange) && !isAdmin()) {
     notifyAdminTemplateUpdate(metadata);
   } else if (!metadata || !metadata.lastModifiedBy) {
     showToast("Cloud sync: Template updated.");
@@ -1227,13 +1223,9 @@ async function loadState() {
       if (error && error.code !== 'PGRST116') {
         console.error("Cloud state load failed:", error);
       } else if (data && data.data) {
-        const cloudTemplate = {
-          previewLayout: data.data.previewLayout,
-          previewStyles: data.data.previewStyles,
-          previewOverrides: data.data.previewOverrides
-        };
-        localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(cloudTemplate));
-        appState = normalizeState({ ...appState, ...data.data });
+        if (applyPreviewTemplatePayload(data.data)) {
+          persistGlobalPreviewTemplate();
+        }
       }
 
       // Fetch latest sequence specifically
@@ -1244,6 +1236,7 @@ async function loadState() {
         .maybeSingle();
       if (seqData && seqData.data && seqData.data.nextDocumentNumber) {
         appState.settings.nextDocumentNumber = String(seqData.data.nextDocumentNumber);
+        markDocumentSequenceSynced(appState.settings.nextDocumentNumber);
       }
     }
 
@@ -1259,6 +1252,9 @@ async function loadState() {
     if (!appState) appState = createDefaultState();
   }
   appState = normalizeState(appState);
+  if (!lastSyncedNextDocumentNumber) {
+    markDocumentSequenceSynced(appState.settings.nextDocumentNumber);
+  }
   
   // Migration: Delete all previous records for everyone (one-time reset)
   const MIGRATION_CLEANUP_KEY = "unity_records_reset_v21_59";
@@ -1277,73 +1273,53 @@ function saveState(options = {}) {
   if (!options.skipHistory) trackDocumentHistory();
   try {
     localStorage.setItem(getStorageKey(), JSON.stringify(appState));
+
+    if (unityDb) {
+      syncDocumentSequenceIfChanged();
+    }
     
-    // If admin is saving, also force update the Global Default template
-    if (isAdmin()) {
+    // If admin is saving template edits, update the Global Default template.
+    if (isAdmin() && options.syncTemplate) {
       // Update useCount for the selected client if any
       const client = findClient(appState.document.clientName);
       if (client) {
         client.useCount = (client.useCount || 0) + 1;
       }
 
-      const globalTemplate = {
-        previewLayout: appState.previewLayout,
-        previewStyles: appState.previewStyles,
-        previewOverrides: appState.previewOverrides
-      };
-      localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
+      persistGlobalPreviewTemplate();
 
       if (unityDb) {
         // Run cloud sync in the background so it doesn't block local state saving
         (async () => {
           try {
-            const syncData = {
-              previewLayout: appState.previewLayout,
-              previewStyles: appState.previewStyles,
-              previewOverrides: appState.previewOverrides,
-              settings: appState.settings,
-              metadata: {
-                lastModifiedBy: currentUser?.username || 'admin',
-                lastModifiedAt: new Date().toISOString()
-              }
-              // Removed 'clients' from every save to prevent payload size issues
+            const syncData = currentPreviewTemplate();
+            const metadata = {
+              lastModifiedBy: currentUser?.username || 'admin',
+              lastModifiedAt: new Date().toISOString()
             };
 
-            await unityDb.from('global_config').upsert({
+            const { error: templateError } = await unityDb.from('global_config').upsert({
               key: 'app_state',
               data: syncData,
-              metadata: {
-                lastModifiedBy: currentUser?.username || 'admin',
-                lastModifiedAt: new Date().toISOString()
-              },
+              metadata,
               updated_at: new Date().toISOString()
             });
+            if (templateError) throw templateError;
 
-            await unityDb.from('global_config').upsert({
-              key: 'document_sequence',
-              data: { nextDocumentNumber: appState.settings.nextDocumentNumber },
-              updated_at: new Date().toISOString()
-            });
-            
-            console.log("[ADMIN_SAVE] ✓ Admin changes synced to cloud:", syncData.metadata);
+            console.log("[ADMIN_SAVE] ✓ Preview template synced to cloud:", metadata);
           } catch (cloudErr) {
             console.error("[ADMIN_SAVE] Cloud Sync failed (non-blocking):", cloudErr);
           }
         })();
 
-        // Broadcast the change for instant sync on other browsers with admin metadata
+        // Broadcast the template change for instant sync on other browsers with admin metadata
         if (unityRealtimeChannel) {
           console.log("[ADMIN_BROADCAST] Broadcasting template changes from:", currentUser?.username);
           unityRealtimeChannel.send({
             type: 'broadcast',
             event: 'state_sync',
             payload: { 
-              data: {
-                previewLayout: appState.previewLayout,
-                previewStyles: appState.previewStyles,
-                previewOverrides: appState.previewOverrides,
-                settings: appState.settings
-              },
+              data: currentPreviewTemplate(),
               isAdminChange: true,
               adminName: currentUser?.username || 'admin',
               timestamp: new Date().toISOString(),
@@ -1351,35 +1327,6 @@ function saveState(options = {}) {
             }
           });
         }
-      }
-    } else {
-      // Even if NOT admin, sync the document sequence globally
-      if (unityDb) {
-        unityDb.from('global_config').upsert({
-          key: 'document_sequence',
-          data: { nextDocumentNumber: appState.settings.nextDocumentNumber },
-          updated_at: new Date().toISOString()
-        });
-
-        if (unityRealtimeChannel) {
-          unityRealtimeChannel.send({
-            type: 'broadcast',
-            event: 'state_sync',
-          payload: { 
-            data: { settings: { nextDocumentNumber: appState.settings.nextDocumentNumber } }
-          }
-        });
-        }
-      }
-      // If NOT admin, still broadcast the document for real-time collaboration
-      if (unityRealtimeChannel) {
-        unityRealtimeChannel.send({
-          type: 'broadcast',
-          event: 'document_update',
-          payload: { 
-            document: appState.document
-          }
-        });
       }
     }
 
@@ -1645,6 +1592,10 @@ function cleanList(value, fallback) {
   return [...new Set(list.length ? list : fallback)];
 }
 
+function compactKey(value) {
+  return normalize(value).replace(/\s+/g, "");
+}
+
 function bindEvents() {
   if (dom.settingsButton) dom.settingsButton.addEventListener("click", openSettings);
   if (dom.adminPanelButton) dom.adminPanelButton.addEventListener("click", openAdminPanel);
@@ -1674,7 +1625,7 @@ function bindEvents() {
       if (appState.previewLayout) delete appState.previewLayout[key];
       if (appState.previewStyles) delete appState.previewStyles[key];
       if (appState.previewOverrides) delete appState.previewOverrides[key];
-      saveState({ force: true });
+      saveState({ force: true, syncTemplate: true });
       refreshAll();
       showToast(`Template layout for ${appState.document.type} reset.`);
     });
@@ -2577,7 +2528,7 @@ function renderAdjustmentTypeOptions() {
   // Filter out NONE for quotations
   if (!isInvoice) {
     types = types.filter(t => {
-      const label = normalize(parseAdjustmentOption(t).label);
+      const label = compactKey(parseAdjustmentOption(t).label);
       if (isQuotation && label === "none") {
         return false; // Remove NONE from quotations
       }
@@ -2818,15 +2769,10 @@ function savePreviewEdits() {
   
   // If admin, save this template as the Global Default for all users
   if (isAdmin()) {
-    const globalTemplate = {
-      previewLayout: appState.previewLayout,
-      previewStyles: appState.previewStyles,
-      previewOverrides: appState.previewOverrides
-    };
-    localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
+    persistGlobalPreviewTemplate();
   }
   
-  saveState({ skipHistory: true, force: true });
+  saveState({ skipHistory: true, force: true, syncTemplate: true });
   renderPreviewEditState();
   showToast(isAdmin() ? "Preview template saved globally for all users." : "Preview template saved.");
 }
