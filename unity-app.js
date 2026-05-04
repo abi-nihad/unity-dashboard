@@ -3275,36 +3275,53 @@ function applyPreviewStyleToElement(element, style = {}) {
       });
     }
   }
-  if (style.borderWidth !== undefined && style.borderWidth !== "") {
-    const side = style.borderSide || "all";
-    const bWidth = pixelStyle(style.borderWidth);
-    const bColor = style.borderColor || "#111";
-    const bStyle = style.borderStyle || (bWidth ? "solid" : "none");
+  const side = style.borderSide || "all";
+  const bWidth = pixelStyle(style.borderWidth);
+  const bColor = style.borderColor || "";
+  const bStyle = style.borderStyle || (bWidth ? "solid" : "");
 
-    const applyBorderTo = (el) => {
-      if (side === "all") {
-        el.style.borderWidth = bWidth;
-        el.style.borderColor = bColor;
-        el.style.borderStyle = bStyle;
-      } else {
-        const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
-        el.style[`border${sideProp}Width`] = bWidth;
-        el.style[`border${sideProp}Color`] = bColor;
-        el.style[`border${sideProp}Style`] = bStyle;
-      }
-    };
-
-    applyBorderTo(element);
-
-    // For TR elements, propagate border to child TH/TD cells
-    if (element.tagName === "TR") {
-      Array.from(element.querySelectorAll("th, td")).forEach(applyBorderTo);
+  const applyBorderTo = (el) => {
+    if (side === "all") {
+      el.style.borderWidth = bWidth;
+      el.style.borderColor = bColor;
+      el.style.borderStyle = bStyle;
+      // Also clear specific sides to avoid conflicts
+      el.style.borderTopWidth = "";
+      el.style.borderBottomWidth = "";
+      el.style.borderLeftWidth = "";
+      el.style.borderRightWidth = "";
+    } else {
+      // Clear main border shorthand
+      el.style.borderWidth = "";
+      el.style.borderColor = "";
+      el.style.borderStyle = "";
+      
+      const sideProp = side.charAt(0).toUpperCase() + side.slice(1);
+      el.style[`border${sideProp}Width`] = bWidth;
+      el.style[`border${sideProp}Color`] = bColor;
+      el.style[`border${sideProp}Style`] = bStyle;
+      
+      // Clear other sides
+      ["Top", "Bottom", "Left", "Right"].forEach(s => {
+        if (s !== sideProp) {
+          el.style[`border${s}Width`] = "";
+          el.style[`border${s}Color`] = "";
+          el.style[`border${s}Style`] = "";
+        }
+      });
     }
+  };
 
-    // For TH elements inside a header row, propagate border to ALL sibling TH cells
-    if (element.tagName === "TH" && element.closest("tr")) {
-      Array.from(element.closest("tr").querySelectorAll("th")).forEach(applyBorderTo);
-    }
+  applyBorderTo(element);
+
+  // For TR elements, propagate border to child TH/TD cells
+  if (element.tagName === "TR") {
+    Array.from(element.querySelectorAll("th, td")).forEach(applyBorderTo);
+  }
+
+  // For TH elements inside a header row, propagate border to ALL sibling TH cells
+  if (element.tagName === "TH" && element.closest("tr")) {
+    Array.from(element.closest("tr").querySelectorAll("th")).forEach(applyBorderTo);
   }
 }
 
@@ -3527,8 +3544,9 @@ function readNumberControl(control, min, max) {
 }
 
 function pixelStyle(value) {
-  const number = Number(value || 0);
-  return Number.isFinite(number) && number > 0 ? `${number}px` : "";
+  if (value === "" || value === null || value === undefined) return "";
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number}px` : "";
 }
 
 function normalizeHexColor(value) {
