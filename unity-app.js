@@ -692,10 +692,18 @@ function setupCloudRealtime() {
 function applyRemoteState(data) {
   if (!data) return;
   console.log("Applying remote state changes...");
-  if (data.previewLayout) appState.previewLayout = data.previewLayout;
-  if (data.previewStyles) appState.previewStyles = data.previewStyles;
-  if (data.previewOverrides) appState.previewOverrides = data.previewOverrides;
-  if (data.settings) appState.settings = { ...appState.settings, ...data.settings };
+  if (data.previewLayout) {
+    appState.previewLayout = { ...appState.previewLayout, ...data.previewLayout };
+  }
+  if (data.previewStyles) {
+    appState.previewStyles = { ...appState.previewStyles, ...data.previewStyles };
+  }
+  if (data.previewOverrides) {
+    appState.previewOverrides = { ...appState.previewOverrides, ...data.previewOverrides };
+  }
+  if (data.settings) {
+    appState.settings = { ...appState.settings, ...data.settings };
+  }
   
   if (data.document) {
     // Disabled document-level sync based on user request "dont change value for every user"
@@ -740,11 +748,11 @@ function applyRemoteDocument(documentData) {
 function applyRemoteTemplate(data) {
   if (!data) return;
   console.log("Applying remote template changes...");
-  appState.previewLayout = data.previewLayout || appState.previewLayout;
-  appState.previewStyles = data.previewStyles || appState.previewStyles;
-  appState.previewOverrides = data.previewOverrides || appState.previewOverrides;
+  appState.previewLayout = { ...appState.previewLayout, ...(data.previewLayout || {}) };
+  appState.previewStyles = { ...appState.previewStyles, ...(data.previewStyles || {}) };
+  appState.previewOverrides = { ...appState.previewOverrides, ...(data.previewOverrides || {}) };
   appState.settings = { ...appState.settings, ...(data.settings || {}) };
-  if (data.clients) appState.clients = data.clients; // Added client sync
+  if (data.clients) appState.clients = data.clients;
   
   // Records are now PRIVATE per user device, so we don't sync them globally anymore
   
