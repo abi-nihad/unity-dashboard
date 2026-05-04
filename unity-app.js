@@ -3896,22 +3896,17 @@ function renderPreview(totals) {
   const showAmountWords = shouldShowAmountWords(doc);
   
   // For Change Note, we show Addition, Omission, and Net Variation
-  dom.previewSubtotalRow.style.display = (hideSubtotal && !isChangeNote) ? "none" : "grid";
-  dom.previewAdjustmentRow.style.display = (hideAdjustment && !isChangeNote) ? "none" : "grid";
+  dom.previewSubtotalRow.classList.toggle("is-hidden", hideSubtotal && !isChangeNote);
+  dom.previewAdjustmentRow.classList.toggle("is-hidden", hideAdjustment && !isChangeNote);
   
   // For Change Note, show the original Contract Value at the top of the totals
+  dom.previewContractValueRow.classList.toggle("is-hidden", !isChangeNote);
   if (isChangeNote) {
-    dom.previewContractValueRow.style.display = "grid";
-    dom.previewContractValueRow.hidden = false;
     dom.previewContractValue.textContent = formatMoney(totals.contractValue);
-  } else {
-    dom.previewContractValueRow.style.display = "none";
-    dom.previewContractValueRow.hidden = true;
   }
-
+  
   const showRemaining = (isInvoice && !isClaimOne) || isChangeNote;
-  dom.previewRemainingRow.hidden = !showRemaining;
-  dom.previewRemainingRow.style.display = showRemaining ? "grid" : "none";
+  dom.previewRemainingRow.classList.toggle("is-hidden", !showRemaining);
   
   const singleTotalLayout = hideSubtotal && hideAdjustment && !showAmountWords && !isChangeNote;
   
