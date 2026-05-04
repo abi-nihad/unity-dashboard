@@ -1,5 +1,6 @@
 var STORAGE_KEY = "unity-dashboard-app-v2";
 var GLOBAL_TEMPLATE_KEY = "unity-global-template-v1";
+var ADMIN_CHANGE_HISTORY_KEY = "unity-admin-change-history-v1";
 var SUPABASE_URL = "https://ujhljzsbslqszwewkdtf.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqaGxqenNic2xxc3p3ZXdrZHRmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzY1NjAzOCwiZXhwIjoyMDkzMjMyMDM4fQ.rY2hMKSBGnYITWHguTlHSom0vSbGRlOfI1t8mYpSyLE";
 
@@ -645,10 +646,11 @@ function setupCloudRealtime() {
     table: 'global_config', 
     filter: 'key=eq.app_state' 
   }, (payload) => {
-    console.log("Realtime DB Change Detected:", payload);
+    console.log("[DB_SYNC] Realtime DB Change Detected:", payload);
     const remoteData = payload.new ? payload.new.data : null;
+    const remoteMetadata = payload.new ? payload.new.metadata : null;
     if (remoteData) {
-      applyRemoteTemplate(remoteData);
+      applyRemoteTemplate(remoteData, remoteMetadata);
     }
   });
 
@@ -668,9 +670,15 @@ function setupCloudRealtime() {
 
   // 2. Faster Broadcast sync (Direct Browser-to-Browser)
   unityRealtimeChannel.on('broadcast', { event: 'state_sync' }, (payload) => {
-    console.log("Realtime State Broadcast Received:", payload);
+    console.log("[BROADCAST] Realtime State Broadcast Received - Admin Change:", payload.payload?.isAdminChange, "From:", payload.payload?.adminName);
     if (payload.payload?.data) {
-      applyRemoteState(payload.payload.data);
+      const metadata = {
+        isAdminChange: payload.payload.isAdminChange || false,
+        adminName: payload.payload.adminName || null,
+        timestamp: payload.payload.timestamp || new Date().toISOString(),
+        changeType: payload.payload.changeType || 'template'
+      };
+      applyRemoteState(payload.payload.data, metadata);
     }
   });
 
@@ -682,16 +690,108 @@ function setupCloudRealtime() {
   });
 
   unityRealtimeChannel.subscribe((status) => {
-    console.log("Supabase Realtime Status:", status);
+    console.log("[REALTIME] Supabase Channel Status:", status);
     if (status === 'SUBSCRIBED') {
-      console.log("Successfully joined realtime sync channel.");
+      console.log("[REALTIME] ✓ Successfully joined realtime sync channel.");
+      console.log("[REALTIME] User:", currentUser?.username, "| Admin:", isAdmin());
     }
   });
 }
 
-function applyRemoteState(data) {
+// Helper: Track if this is an admin-initiated change
+function shouldBroadcastAsAdminChange() {
+  return isAdmin() && !getCurrentUser()?.isBlocked;
+}
+
+// Helper: Get current logged-in user
+function getCurrentUser() {
+  if (!currentUser) return null;
+  return currentUser;
+}
+
+// Helper: Notify about admin template updates
+let lastAdminNotificationTime = 0;
+function notifyAdminTemplateUpdate(metadata = {}) {
+  // Debounce notifications: only show once per 2 seconds to avoid spam
+  const now = Date.now();
+  if (now - lastAdminNotificationTime < 2000) return;
+  lastAdminNotificationTime = now;
+  
+  const adminName = metadata.adminName || 'Admin';
+  const timestamp = new Date(metadata.timestamp).toLocaleTimeString();
+  const message = `📋 ${adminName} updated the template at ${timestamp}`;
+  
+  console.log("[NOTIFICATION] Admin template update:", message);
+  showToast(message);
+  
+  // Track this change in history
+  trackAdminChange(metadata);
+}
+
+// Helper: Track admin changes in local history
+function trackAdminChange(metadata = {}) {
+  try {
+    let history = [];
+    const stored = localStorage.getItem(ADMIN_CHANGE_HISTORY_KEY);
+    if (stored) {
+      history = JSON.parse(stored);
+    }
+    
+    const changeEntry = {
+      id: Date.now(),
+      adminName: metadata.adminName || metadata.lastModifiedBy || 'admin',
+      timestamp: metadata.timestamp || metadata.lastModifiedAt || new Date().toISOString(),
+      changeType: metadata.changeType || 'template_update',
+      description: `Template updated by ${metadata.adminName || 'admin'}`
+    };
+    
+    history.push(changeEntry);
+    
+    // Keep only last 100 changes to avoid storage bloat
+    if (history.length > 100) {
+      history = history.slice(-100);
+    }
+    
+    localStorage.setItem(ADMIN_CHANGE_HISTORY_KEY, JSON.stringify(history));
+    console.log("[HISTORY] Recorded admin change:", changeEntry);
+  } catch (err) {
+    console.error("[HISTORY] Failed to track change:", err);
+  }
+}
+
+// Helper: Get admin change history
+function getAdminChangeHistory(limit = 20) {
+  try {
+    const stored = localStorage.getItem(ADMIN_CHANGE_HISTORY_KEY);
+    if (!stored) return [];
+    
+    const history = JSON.parse(stored);
+    return history.slice(-limit).reverse(); // Most recent first
+  } catch (err) {
+    console.error("[HISTORY] Failed to retrieve history:", err);
+    return [];
+  }
+}
+
+// Helper: Clear admin change history (admin only)
+function clearAdminChangeHistory() {
+  if (!isAdmin()) {
+    console.warn("[HISTORY] Only admins can clear history");
+    return false;
+  }
+  try {
+    localStorage.removeItem(ADMIN_CHANGE_HISTORY_KEY);
+    console.log("[HISTORY] Cleared admin change history");
+    return true;
+  } catch (err) {
+    console.error("[HISTORY] Failed to clear history:", err);
+    return false;
+  }
+}
+
+function applyRemoteState(data, metadata = {}) {
   if (!data) return;
-  console.log("Applying remote state changes...");
+  console.log("[APPLY_REMOTE] Applying remote state changes...", metadata);
   if (data.previewLayout) {
     appState.previewLayout = { ...appState.previewLayout, ...data.previewLayout };
   }
@@ -720,6 +820,11 @@ function applyRemoteState(data) {
     localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
     localStorage.setItem(getStorageKey(), JSON.stringify(appState));
     refreshAll();
+    
+    // Notify about admin template change if applicable
+    if (metadata.isAdminChange && !isAdmin()) {
+      notifyAdminTemplateUpdate(metadata);
+    }
 }
 
 function applyRemoteDocument(documentData) {
@@ -745,9 +850,9 @@ function applyRemoteDocument(documentData) {
   }
 }
 
-function applyRemoteTemplate(data) {
+function applyRemoteTemplate(data, metadata = {}) {
   if (!data) return;
-  console.log("Applying remote template changes...");
+  console.log("[APPLY_TEMPLATE] Applying remote template changes...", metadata);
   appState.previewLayout = { ...appState.previewLayout, ...(data.previewLayout || {}) };
   appState.previewStyles = { ...appState.previewStyles, ...(data.previewStyles || {}) };
   appState.previewOverrides = { ...appState.previewOverrides, ...(data.previewOverrides || {}) };
@@ -766,7 +871,13 @@ function applyRemoteTemplate(data) {
   localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(globalTemplate));
   
   refreshAll();
-  showToast("Cloud sync: Template updated from Admin.");
+  
+  // Show notification for admin template changes (from DB postgres_changes)
+  if (metadata && metadata.lastModifiedBy && !isAdmin()) {
+    notifyAdminTemplateUpdate(metadata);
+  } else if (!metadata || !metadata.lastModifiedBy) {
+    showToast("Cloud sync: Template updated.");
+  }
 }
 
 async function syncCloudTemplateOnly() {
@@ -1190,13 +1301,21 @@ function saveState(options = {}) {
               previewLayout: appState.previewLayout,
               previewStyles: appState.previewStyles,
               previewOverrides: appState.previewOverrides,
-              settings: appState.settings
+              settings: appState.settings,
+              metadata: {
+                lastModifiedBy: currentUser?.username || 'admin',
+                lastModifiedAt: new Date().toISOString()
+              }
               // Removed 'clients' from every save to prevent payload size issues
             };
 
             await unityDb.from('global_config').upsert({
               key: 'app_state',
               data: syncData,
+              metadata: {
+                lastModifiedBy: currentUser?.username || 'admin',
+                lastModifiedAt: new Date().toISOString()
+              },
               updated_at: new Date().toISOString()
             });
 
@@ -1205,26 +1324,32 @@ function saveState(options = {}) {
               data: { nextDocumentNumber: appState.settings.nextDocumentNumber },
               updated_at: new Date().toISOString()
             });
+            
+            console.log("[ADMIN_SAVE] ✓ Admin changes synced to cloud:", syncData.metadata);
           } catch (cloudErr) {
-            console.error("Cloud Sync failed (non-blocking):", cloudErr);
+            console.error("[ADMIN_SAVE] Cloud Sync failed (non-blocking):", cloudErr);
           }
         })();
 
-        // Broadcast the change for instant sync on other browsers
+        // Broadcast the change for instant sync on other browsers with admin metadata
         if (unityRealtimeChannel) {
-          console.log("Broadcasting state_sync to channel...");
+          console.log("[ADMIN_BROADCAST] Broadcasting template changes from:", currentUser?.username);
           unityRealtimeChannel.send({
             type: 'broadcast',
             event: 'state_sync',
-          payload: { 
-            data: {
-              previewLayout: appState.previewLayout,
-              previewStyles: appState.previewStyles,
-              previewOverrides: appState.previewOverrides,
-              settings: appState.settings
+            payload: { 
+              data: {
+                previewLayout: appState.previewLayout,
+                previewStyles: appState.previewStyles,
+                previewOverrides: appState.previewOverrides,
+                settings: appState.settings
+              },
+              isAdminChange: true,
+              adminName: currentUser?.username || 'admin',
+              timestamp: new Date().toISOString(),
+              changeType: 'template_update'
             }
-          }
-        });
+          });
         }
       }
     } else {
