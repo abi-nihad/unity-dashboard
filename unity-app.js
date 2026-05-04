@@ -121,6 +121,7 @@ const defaultSettings = {
     total: "TOTAL",
     contractValue: "Contract Value",
     previouslyPaid: "Previously Paid",
+    remainingBalance: "Remaining Balance",
     revisedContractValue: "Revised Contract Value",
     footerGreeting: "Sincerely Yours,",
   },
@@ -1051,6 +1052,7 @@ function cacheDom() {
     "settingContractValueLabel",
     "settingPreviouslyPaidLabel",
     "settingRemainingBalanceLabel",
+    "settingRevisedContractValueLabel",
     "settingPersonalUsername",
     "settingPersonalNickname",
     "settingPersonalPassword",
@@ -5141,6 +5143,7 @@ function syncSettingsFields() {
   dom.settingContractValueLabel.value = labels.contractValue;
   dom.settingPreviouslyPaidLabel.value = labels.previouslyPaid;
   dom.settingRemainingBalanceLabel.value = labels.remainingBalance;
+  dom.settingRevisedContractValueLabel.value = labels.revisedContractValue;
   dom.settingFooterGreeting.value = labels.footerGreeting;
   dom.settingBankHeading.value = settings.bank.heading;
   dom.settingBankLineOne.value = settings.bank.lineOne;
@@ -5194,6 +5197,7 @@ async function saveSettings(event) {
       contractValue: dom.settingContractValueLabel.value.trim() || defaultSettings.labels.contractValue,
       previouslyPaid: dom.settingPreviouslyPaidLabel.value.trim() || defaultSettings.labels.previouslyPaid,
       remainingBalance: dom.settingRemainingBalanceLabel.value.trim() || defaultSettings.labels.remainingBalance,
+      revisedContractValue: dom.settingRevisedContractValueLabel.value.trim() || defaultSettings.labels.revisedContractValue,
       footerGreeting: dom.settingFooterGreeting.value.trim(),
     },
     bank: {
