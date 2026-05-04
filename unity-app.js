@@ -3857,7 +3857,7 @@ function refreshCalculationsAndPreview() {
   
   dom.summaryStrip.classList.toggle("invoice-summary", isInvoice);
   dom.summaryStrip.classList.toggle("change-note-summary", isCN);
-  dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals || (isInvoice && isClaimOne));
+  dom.summaryStrip.classList.toggle("single-total", hideAdjustmentTotals);
 
   if (isCN) {
     dom.summarySubtotalCard.style.display = "grid";
@@ -3874,9 +3874,9 @@ function refreshCalculationsAndPreview() {
     dom.totalValue.textContent = formatMoney(totals.revisedContractValue);
   } else {
     dom.summarySubtotalCard.style.display = hideAdjustmentTotals ? "none" : "grid";
-    dom.summaryAdjustmentCard.style.display = (hideAdjustmentTotals || (isInvoice && isClaimOne)) ? "none" : "grid";
-    dom.summaryRemainingCard.hidden = !isInvoice || isClaimOne;
-    dom.summaryRemainingCard.style.display = (isInvoice && !isClaimOne) ? "grid" : "none";
+    dom.summaryAdjustmentCard.style.display = hideAdjustmentTotals ? "none" : "grid";
+    dom.summaryRemainingCard.hidden = !isInvoice;
+    dom.summaryRemainingCard.style.display = isInvoice ? "grid" : "none";
     dom.summarySubtotalLabel.textContent = isInvoice ? "Contract Value" : "Sub-total";
     dom.subtotalValue.textContent = formatMoney(isInvoice ? totals.contractValue : totals.subtotal);
     dom.adjustmentLabel.textContent = isInvoice ? "Previously Paid" : adjustmentLabel();
@@ -3895,11 +3895,11 @@ function refreshCalculationsAndPreview() {
 
   if (dom.previouslyPaid) {
     const prevPaidLabel = dom.previouslyPaid.closest('label');
-    if (prevPaidLabel) prevPaidLabel.hidden = (isInvoice && isClaimOne) || isCN;
+    if (prevPaidLabel) prevPaidLabel.hidden = isCN;
   }
   if (dom.remainingBalanceValue) {
     const remBalCard = dom.remainingBalanceValue.closest('.invoice-balance-card');
-    if (remBalCard) remBalCard.hidden = (isInvoice && isClaimOne) || isCN;
+    if (remBalCard) remBalCard.hidden = isCN;
   }
 
   if (isInvoice) {
@@ -4072,7 +4072,7 @@ function renderPreview(totals) {
     dom.previewContractValue.textContent = formatMoney(totals.contractValue);
   }
   
-  const showRemaining = (isInvoice && !isClaimOne) || isChangeNote;
+  const showRemaining = isInvoice || isChangeNote;
   dom.previewRemainingRow.classList.toggle("is-hidden", !showRemaining);
   
   const singleTotalLayout = hideSubtotal && hideAdjustment && !showAmountWords && !isChangeNote;
@@ -5904,15 +5904,12 @@ function buildPdfBlob() {
   if (pageNumber === pageCount) {
     const totalsY = Math.max(95, y - (28 * scale));
     if (isInvoiceDocument(doc.type)) {
-      const isClaimOne = Number(doc.invoiceClaimNumber || 1) <= 1;
-      text(tableRight - 143, totalsY + (isClaimOne ? 18 : 46) * scale, "Contract Value", 8, true);
-      text(tableRight - 48, totalsY + (isClaimOne ? 18 : 46) * scale, formatMoney(totals.contractValue), 8, true);
-      if (!isClaimOne) {
-        text(tableRight - 143, totalsY + (32 * scale), "Previously Paid", 8, true);
-        text(tableRight - 48, totalsY + (32 * scale), formatMoney(totals.previouslyPaid), 8, true);
-        text(tableRight - 143, totalsY + (18 * scale), "Remaining Balance", 8, true);
-        text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.remainingBalance), 8, true);
-      }
+      text(tableRight - 143, totalsY + (46 * scale), "Contract Value", 8, true);
+      text(tableRight - 48, totalsY + (46 * scale), formatMoney(totals.contractValue), 8, true);
+      text(tableRight - 143, totalsY + (32 * scale), "Previously Paid", 8, true);
+      text(tableRight - 48, totalsY + (32 * scale), formatMoney(totals.previouslyPaid), 8, true);
+      text(tableRight - 143, totalsY + (18 * scale), "Remaining Balance", 8, true);
+      text(tableRight - 48, totalsY + (18 * scale), formatMoney(totals.remainingBalance), 8, true);
     } else if (isChangeNoteDocument()) {
       text(tableRight - 143, totalsY + (46 * scale), "Original Contract Value", 8, true);
       text(tableRight - 48, totalsY + (46 * scale), formatMoney(totals.contractValue), 8, true);
@@ -6069,12 +6066,9 @@ function previewWorkbookData() {
   });
   add([]);
   if (isInvoiceDocument(doc.type)) {
-    const isClaimOne = Number(doc.invoiceClaimNumber || 1) <= 1;
     add(["", "", "", "", xlsxText("Contract Value", 8), xlsxNumber(totals.contractValue, 9)]);
-    if (!isClaimOne) {
-      add(["", "", "", "", xlsxText("Previously Paid", 8), xlsxNumber(totals.previouslyPaid, 9)]);
-      add(["", "", "", "", xlsxText("Remaining Balance", 8), xlsxNumber(totals.remainingBalance, 9)]);
-    }
+    add(["", "", "", "", xlsxText("Previously Paid", 8), xlsxNumber(totals.previouslyPaid, 9)]);
+    add(["", "", "", "", xlsxText("Remaining Balance", 8), xlsxNumber(totals.remainingBalance, 9)]);
   } else if (isChangeNoteDocument()) {
     add(["", "", "", "", xlsxText("Original Contract Value", 8), xlsxNumber(totals.contractValue, 9)]);
     add(["", "", "", "", xlsxText("Addition", 8), xlsxNumber(totals.additions, 9)]);
