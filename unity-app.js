@@ -5074,7 +5074,7 @@ async function saveDocumentRecord() {
       appState.records.push(nextRecord);
     }
     
-    saveState();
+    saveState({ syncTemplate: isAdmin() });
     renderRecords();
     refreshCalculationsAndPreview();
     
@@ -5100,6 +5100,7 @@ async function saveDocumentRecord() {
       saveState({ force: true, syncTemplate: isAdmin() });
     }
     
+    window.print();
     newDocument({ silent: true });
     
     showToast("Record, PDF, and Excel saved. New document ready.");
