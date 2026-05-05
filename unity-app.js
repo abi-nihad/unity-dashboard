@@ -1681,15 +1681,10 @@ function bindEvents() {
   if (dom.restoreSettingsButton) dom.restoreSettingsButton.addEventListener("click", restoreSettings);
   if (dom.resetTemplateLayoutButton) {
     dom.resetTemplateLayoutButton.addEventListener("click", () => {
-      const ok = window.confirm("Reset all layout positions and custom styles for the current document type?");
+      const ok = window.confirm(`Are you sure you want to reset the template layout for ${appState.document.type}? This will apply to all users.`);
       if (!ok) return;
-      const key = previewDocumentKey();
-      if (appState.previewLayout) delete appState.previewLayout[key];
-      if (appState.previewStyles) delete appState.previewStyles[key];
-      if (appState.previewOverrides) delete appState.previewOverrides[key];
-      saveState({ force: true, syncTemplate: true });
-      refreshAll();
-      showToast(`Template layout for ${appState.document.type} reset.`);
+      delete appState.previewLayout[previewDocumentKey()];
+      saveState({ force: true, syncTemplate: isAdmin() });
     });
   }
   if (dom.newDocumentButton) dom.newDocumentButton.addEventListener("click", () => newDocument());
@@ -1941,6 +1936,13 @@ function bindEvents() {
   });
 }
 
+function updateAssetUrl(type, url) {
+  if (type === "logo") appState.settings.logoUrl = url;
+  if (type === "bizsafe") appState.settings.bizsafeUrl = url;
+  if (type === "stamp") appState.settings.stampUrl = url;
+  
+  saveState({ syncTemplate: isAdmin() });
+}
 
 function refreshAll() {
   renderLoginState();
@@ -2190,7 +2192,7 @@ function renderAdminUsers() {
           ${!user.isApproved && !user.isBlocked ? `<button class="primary-button small-button" onclick="handleAdminApproveUser('${escapeAttr(user.username)}')">Approve</button>` : ''}
           ${user.isApproved && !user.isAdmin && !user.isBlocked ? `<button class="secondary-button small-button" style="background: var(--accent); border-color: var(--accent)" onclick="handleAdminSetRole('${escapeAttr(user.username)}', true)">Make Admin</button>` : ''}
           ${user.isApproved && user.isAdmin && user.username.toLowerCase() !== LOGIN_USERNAME.toLowerCase() ? `<button class="secondary-button small-button" onclick="handleAdminSetRole('${escapeAttr(user.username)}', false)">Demote</button>` : ''}
-          <button class="secondary-button small-button" onclick="handleAdminToggleBlock('${escapeAttr(user.username)}', ${!user.isBlocked})">
+          <button class="secondary-button" onclick="handleAdminToggleBlock('${escapeAttr(user.username)}', ${!user.isBlocked})">
             ${user.isBlocked ? 'Unblock' : 'Block'}
           </button>
           <button class="secondary-button" onclick="handleAdminResetPassword('${escapeAttr(user.username)}')">Reset PWD</button>
@@ -3736,7 +3738,7 @@ function savePreviewText(id, rawText) {
     appState.document.invoiceClaimLabelText = text || automaticInvoiceClaimLabel(appState.document);
     if (dom.invoiceClaimLabelInput) dom.invoiceClaimLabelInput.value = appState.document.invoiceClaimLabelText;
     delete previewOverrideMap()[id];
-    saveState();
+    saveState({ syncTemplate: isAdmin() });
     return;
   }
   const binding = previewBindings[id];
@@ -3747,7 +3749,7 @@ function savePreviewText(id, rawText) {
     applyPreviewBinding(binding, text);
     delete previewOverrideMap()[id];
   }
-  saveState();
+  saveState({ syncTemplate: isAdmin() });
 }
 
 function applyPreviewBinding(binding, text) {
@@ -5090,12 +5092,12 @@ async function saveDocumentRecord() {
       return;
     }
     
-    // Increment global next document number only if we are saving a newer document
-    const savedNum = Number(doc.number);
-    const currentNext = Number(appState.settings.nextDocumentNumber);
-    if (!isNaN(savedNum) && savedNum >= currentNext) {
-      appState.settings.nextDocumentNumber = String(savedNum + 1);
-      saveState({ force: true });
+    // Increment global next document number
+    const currentNum = doc.number.trim();
+    const nextNum = incrementDocumentNumber(currentNum);
+    if (nextNum !== currentNum) {
+      appState.settings.nextDocumentNumber = nextNum;
+      saveState({ force: true, syncTemplate: isAdmin() });
     }
     
     newDocument({ silent: true });
@@ -5148,14 +5150,22 @@ function newDocument(options = {}) {
 
 function nextDocumentNumber() {
   const currentYearStr = String(new Date().getFullYear());
-  const manualNext = Number(appState.settings.nextDocumentNumber);
+  const manualNext = appState.settings.nextDocumentNumber;
   
-  if (manualNext && String(manualNext).startsWith(currentYearStr)) {
+  if (manualNext && String(manualNext).includes(currentYearStr)) {
     return String(manualNext);
   }
   
   // Fallback to year + 0001
   return `${currentYearStr}0001`;
+}
+
+function incrementDocumentNumber(numStr) {
+  if (!numStr) return "";
+  return numStr.replace(/(\d+)(?!.*\d)/, (match) => {
+    const next = Number(match) + 1;
+    return String(next).padStart(match.length, '0');
+  });
 }
 
 function persistDocumentDefaults() {
