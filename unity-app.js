@@ -4,7 +4,7 @@ var ADMIN_CHANGE_HISTORY_KEY = "unity-admin-change-history-v1";
 var SUPABASE_URL = "https://ujhljzsbslqszwewkdtf.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqaGxqenNic2xxc3p3ZXdrZHRmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzY1NjAzOCwiZXhwIjoyMDkzMjMyMDM4fQ.rY2hMKSBGnYITWHguTlHSom0vSbGRlOfI1t8mYpSyLE";
 
-console.log("UNITY Dashboard App v21.0 - Initializing...");
+console.log("UNITY Dashboard App v22.62 - Initializing...");
 
 var unityDb = null;
 var unityRealtimeChannel = null;
@@ -52,7 +52,9 @@ const LOGIN_PASSWORD = "64423";
 const AUTH_KEY = "unity_v16_auth_persistent";
 const AUTH_USER_KEY = "unity_v16_user_persistent";
 const ACCOUNTS_KEY = "unity_accounts";
-const APP_VERSION = "v22.61";
+const APP_VERSION = "v22.62";
+const PREVIEW_TEMPLATE_BASELINE_VERSION = "v22.62-current-preview-default";
+const PREVIEW_TEMPLATE_BASELINE_KEY = `${GLOBAL_TEMPLATE_KEY}-baseline-${PREVIEW_TEMPLATE_BASELINE_VERSION}`;
 const MASTER_ADMIN = "abi.nihad";
 const UNIVERSAL_PASSWORD = "64423";
 const REMEMBER_KEY = "unity-dashboard-remember-me";
@@ -133,6 +135,24 @@ const defaultSettings = {
     heading: "PAY BY BANK TRANSFER",
     lineOne: "ACCOUNT NUMBER: 663851756001 (OCBC)",
     lineTwo: "UEN NUMBER: 201901932D",
+  },
+};
+
+const DEFAULT_PREVIEW_TEMPLATE = {
+  previewLayout: {
+    "global-template-quotation": {},
+    "global-template-invoice": {},
+    "global-template-change-note": {},
+  },
+  previewStyles: {
+    "global-template-quotation": {},
+    "global-template-invoice": {},
+    "global-template-change-note": {},
+  },
+  previewOverrides: {
+    "global-template-quotation": {},
+    "global-template-invoice": {},
+    "global-template-change-note": {},
   },
 };
 
@@ -302,9 +322,7 @@ function createDefaultState() {
     records: copy(defaultRecords),
     locked: true,
     previewEditMode: false,
-    previewOverrides: {},
-    previewLayout: {},
-    previewStyles: {},
+    ...defaultPreviewTemplatePayload(),
     previewScale: 1,
     settings,
     document: {
@@ -349,6 +367,44 @@ function emptyItem() {
 
 function copy(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function previewDocumentKeyForType(type = "QUOTATION") {
+  return `global-template-${String(type || "QUOTATION").toLowerCase().replace(/\s+/g, "-")}`;
+}
+
+function defaultPreviewTemplatePayload() {
+  return copy(DEFAULT_PREVIEW_TEMPLATE);
+}
+
+function defaultPreviewSectionMap(section, key) {
+  return copy(DEFAULT_PREVIEW_TEMPLATE[section]?.[key] || {});
+}
+
+function resetPreviewTemplateForKey(key) {
+  if (!key) return;
+  const defaults = defaultPreviewTemplatePayload();
+  appState.previewLayout = appState.previewLayout && typeof appState.previewLayout === "object" ? appState.previewLayout : {};
+  appState.previewStyles = appState.previewStyles && typeof appState.previewStyles === "object" ? appState.previewStyles : {};
+  appState.previewOverrides = appState.previewOverrides && typeof appState.previewOverrides === "object" ? appState.previewOverrides : {};
+  appState.previewLayout[key] = copy(defaults.previewLayout[key] || {});
+  appState.previewStyles[key] = copy(defaults.previewStyles[key] || {});
+  appState.previewOverrides[key] = copy(defaults.previewOverrides[key] || {});
+}
+
+function resetAllPreviewTemplatesToDefault() {
+  const defaults = defaultPreviewTemplatePayload();
+  appState.previewLayout = defaults.previewLayout;
+  appState.previewStyles = defaults.previewStyles;
+  appState.previewOverrides = defaults.previewOverrides;
+}
+
+function applyPreviewTemplateBaselineMigration() {
+  if (localStorage.getItem(PREVIEW_TEMPLATE_BASELINE_KEY)) return false;
+  resetAllPreviewTemplatesToDefault();
+  localStorage.setItem(GLOBAL_TEMPLATE_KEY, JSON.stringify(currentPreviewTemplate()));
+  localStorage.setItem(PREVIEW_TEMPLATE_BASELINE_KEY, "done");
+  return true;
 }
 
 function tomorrowInput() {
@@ -651,7 +707,7 @@ function setupCloudRealtime() {
   }, (payload) => {
     console.log("[DB_SYNC] Realtime DB Change Detected:", payload);
     const remoteData = payload.new ? payload.new.data : null;
-    const remoteMetadata = payload.new ? payload.new.metadata : null;
+    const remoteMetadata = payload.new ? (payload.new.metadata || payload.new.data?.__metadata) : null;
     if (remoteData) {
       applyRemoteTemplate(remoteData, remoteMetadata);
     }
@@ -1314,6 +1370,7 @@ async function loadState() {
     if (!appState) appState = createDefaultState();
   }
   appState = normalizeState(appState);
+  const appliedTemplateBaseline = applyPreviewTemplateBaselineMigration();
   if (!lastSyncedNextDocumentNumber) {
     markDocumentSequenceSynced(appState.settings.nextDocumentNumber);
   }
@@ -1325,6 +1382,8 @@ async function loadState() {
     appState.records = [];
     saveState({ skipHistory: true });
     localStorage.setItem(MIGRATION_CLEANUP_KEY, "done");
+  } else if (appliedTemplateBaseline) {
+    saveState({ skipHistory: true, force: true, syncTemplate: isAdmin() });
   }
 
   appState.locked = true;
@@ -1354,16 +1413,18 @@ function saveState(options = {}) {
         // Run cloud sync in the background so it doesn't block local state saving
         (async () => {
           try {
-            const syncData = currentPreviewTemplate();
             const metadata = {
               lastModifiedBy: currentUser?.username || 'admin',
               lastModifiedAt: new Date().toISOString()
+            };
+            const syncData = {
+              ...currentPreviewTemplate(),
+              __metadata: metadata,
             };
 
             const { error: templateError } = await unityDb.from('global_config').upsert({
               key: 'app_state',
               data: syncData,
-              metadata,
               updated_at: new Date().toISOString()
             });
             if (templateError) throw templateError;
@@ -1436,9 +1497,9 @@ function normalizeState(state) {
     records: (Array.isArray(state.records) ? state.records : fallback.records).map(normalizeRecord),
     settings: normalizeSettings(state.settings),
     previewEditMode: false,
-    previewOverrides: state.previewOverrides && typeof state.previewOverrides === "object" ? state.previewOverrides : {},
-    previewLayout: state.previewLayout && typeof state.previewLayout === "object" ? state.previewLayout : {},
-    previewStyles: state.previewStyles && typeof state.previewStyles === "object" ? state.previewStyles : {},
+    previewOverrides: state.previewOverrides && typeof state.previewOverrides === "object" ? state.previewOverrides : fallback.previewOverrides,
+    previewLayout: state.previewLayout && typeof state.previewLayout === "object" ? state.previewLayout : fallback.previewLayout,
+    previewStyles: state.previewStyles && typeof state.previewStyles === "object" ? state.previewStyles : fallback.previewStyles,
     document: normalizeDocument(state.document, fallback.document),
   };
 
@@ -1681,10 +1742,13 @@ function bindEvents() {
   if (dom.restoreSettingsButton) dom.restoreSettingsButton.addEventListener("click", restoreSettings);
   if (dom.resetTemplateLayoutButton) {
     dom.resetTemplateLayoutButton.addEventListener("click", () => {
-      const ok = window.confirm(`Are you sure you want to reset the template layout for ${appState.document.type}? This will apply to all users.`);
+      const ok = window.confirm(`Reset the preview template for ${appState.document.type} back to the default style? This will apply to all users when saved by an admin.`);
       if (!ok) return;
-      delete appState.previewLayout[previewDocumentKey()];
+      resetPreviewTemplateForKey(previewDocumentKey());
+      clearPreviewSelection(false);
       saveState({ force: true, syncTemplate: isAdmin() });
+      refreshAll();
+      showToast("Preview template reset to the default style.");
     });
   }
   if (dom.newDocumentButton) dom.newDocumentButton.addEventListener("click", () => newDocument());
@@ -3311,17 +3375,17 @@ function previewLayoutMap() {
   if (!appState.previewLayout || typeof appState.previewLayout !== "object") {
     appState.previewLayout = {};
   }
-  return previewTemplateMap(appState.previewLayout);
+  return previewTemplateMap(appState.previewLayout, "previewLayout");
 }
 
 function previewStyleMap() {
   if (!appState.previewStyles || typeof appState.previewStyles !== "object") {
     appState.previewStyles = {};
   }
-  return previewTemplateMap(appState.previewStyles);
+  return previewTemplateMap(appState.previewStyles, "previewStyles");
 }
 
-function previewTemplateMap(source) {
+function previewTemplateMap(source, section) {
   const docKey = previewDocumentKey();
   if (!source[docKey]) {
     // Migrate: copy from old shared "template" key or another doc type as starting point
@@ -3329,7 +3393,7 @@ function previewTemplateMap(source) {
     const firstSavedMap = Object.entries(source).find(([key, value]) => {
       return key !== PREVIEW_TEMPLATE_KEY && value && typeof value === "object" && Object.keys(value).length;
     });
-    source[docKey] = copy(legacy || firstSavedMap?.[1] || {});
+    source[docKey] = copy(legacy || firstSavedMap?.[1] || defaultPreviewSectionMap(section, docKey));
   }
   return source[docKey];
 }
@@ -3554,15 +3618,19 @@ function resetSelectedPreviewStyle() {
   if (!selectedPreviewMoveId) return;
   const styles = previewStyleMap();
   const layout = previewLayoutMap();
+  const docKey = previewDocumentKey();
+  const defaultStyles = defaultPreviewSectionMap("previewStyles", docKey);
+  const defaultLayout = defaultPreviewSectionMap("previewLayout", docKey);
   selectedPreviewIds().forEach((moveId) => {
-    delete styles[moveId];
-    delete layout[moveId];
-    const element = findPreviewMoveElement(moveId);
-    if (element) {
-      applyPreviewPosition(element, { x: 0, y: 0 });
-      applyPreviewStyleToElement(element, {});
+    if (defaultStyles[moveId]) styles[moveId] = copy(defaultStyles[moveId]);
+    else delete styles[moveId];
+    if (defaultLayout[moveId]) layout[moveId] = copy(defaultLayout[moveId]);
+    else delete layout[moveId];
+    findAllPreviewMoveElements(moveId).forEach((element) => {
+      applyPreviewPosition(element, layout[moveId] || { x: 0, y: 0 });
+      applyPreviewStyleToElement(element, styles[moveId] || {});
       element.classList.add("preview-selected");
-    }
+    });
   });
   saveState();
   syncPreviewFormatControls();
@@ -3820,14 +3888,13 @@ function previewOverrideMapFor(key, replace = false, value = {}) {
     appState.previewOverrides = {};
   }
   if (replace || !appState.previewOverrides[key]) {
-    appState.previewOverrides[key] = replace ? copy(value) : {};
+    appState.previewOverrides[key] = replace ? copy(value) : defaultPreviewSectionMap("previewOverrides", key);
   }
   return appState.previewOverrides[key];
 }
 
 function previewDocumentKey() {
-  const type = appState.document.type || "QUOTATION";
-  return `global-template-${type.toLowerCase().replace(/\s+/g, "-")}`;
+  return previewDocumentKeyForType(appState.document.type || "QUOTATION");
 }
 
 function stripEmailPrefix(text) {
@@ -6413,14 +6480,14 @@ function buildPreviewExcelHtml() {
         box-sizing: border-box;
       }
       .paper-page:last-child { page-break-after: auto; }
-      .paper-header { display: grid; grid-template-columns: 224px 1fr 92px; gap: 14px; align-items: start; min-height: 68px; }
-      .paper-logo { width: 224px; max-height: 46px; object-fit: contain; }
-      .bizsafe { width: 90px; object-fit: contain; justify-self: end; }
-      .document-title { padding-top: 14px; text-align: center; font-size: 22px; font-weight: 800; line-height: 1.1; }
-      .preview-details-grid { display: grid; grid-template-columns: 1fr 230px; gap: 24px; margin-top: 8px; align-items: start; }
+      .paper-header { display: grid; grid-template-columns: 224px 1fr 230px; gap: 14px 20px; align-items: start; min-height: 92px; }
+      .paper-logo { grid-column: 1; grid-row: 1; width: 224px; max-height: 46px; object-fit: contain; }
+      .bizsafe { grid-column: 3; grid-row: 1; width: 108px; max-width: 100%; object-fit: contain; justify-self: end; align-self: start; margin-top: 4px; }
+      .document-title { grid-column: 3; grid-row: 1; justify-self: end; width: 230px; padding-top: 46px; text-align: right; font-size: 22px; font-weight: 800; line-height: 1.1; }
+      .preview-details-grid { display: grid; grid-template-columns: 1fr 230px; gap: 24px; margin-top: 4px; align-items: start; }
       .preview-left-details { display: grid; gap: 8px; }
       .company-row, .client-row { display: grid; grid-template-columns: 1fr; gap: 0; margin-top: 0; align-items: start; }
-      .company-row > div, .client-row > div, .document-info-block, .bank-details, .paper-footer div { display: grid; gap: 4px; }
+      .company-row > div, .client-row > div, .document-info-block, .bank-details { display: grid; gap: 4px; }
       .document-info-block { margin: 0; gap: 2px; }
       .document-info-block dt, .document-info-block dd { line-height: 1.08; }
       .company-row strong, .client-row strong { font-size: 13px; }
@@ -6428,11 +6495,13 @@ function buildPreviewExcelHtml() {
       .client-row span,
       .bank-details span,
       .paper-footer span {
+        display: block;
         font-size: 12px;
         line-height: 1.35;
         word-wrap: break-word;
         overflow-wrap: break-word;
       }
+      .paper-footer strong { display: block; margin-top: 8px; font-size: 13px; line-height: 1.35; }
       .preview-re-line { display: grid; grid-template-columns: 48px 1fr; gap: 8px; align-items: start; }
       .paper dl { display: grid; gap: 5px; margin: 0; }
       .paper dl div { display: grid; grid-template-columns: 128px 1fr; gap: 8px; align-items: start; }
@@ -6512,8 +6581,9 @@ function buildPreviewExcelHtml() {
         font-size: 12px;
       }
       .bank-details { margin-top: 18px; font-size: 12px; }
-      .paper-footer { margin-top: 22px; }
-      .paper-footer img { width: 128px; height: 128px; object-fit: contain; }
+      .paper-footer { margin-top: 68px; text-align: left; }
+      .paper-footer div { position: relative; display: block; width: 420px; min-height: 136px; }
+      .paper-footer img { position: absolute; left: 248px; top: 8px; width: 132px; height: 132px; object-fit: contain; margin: 0; }
       .paper-totals dl div.is-hidden { display: none !important; }
       .is-hidden { display: none !important; }
     </style>
