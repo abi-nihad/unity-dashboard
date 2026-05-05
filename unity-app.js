@@ -969,6 +969,8 @@ function cacheDom() {
     "resetTemplateLayoutButton",
     "newDocumentButton",
     "saveDocumentButton",
+    "forcePrintSavePreviewButton",
+    "savePreviewButton",
     "printButton",
     "exportButton",
     "editPreviewButton",
@@ -1688,7 +1690,10 @@ function bindEvents() {
     });
   }
   if (dom.newDocumentButton) dom.newDocumentButton.addEventListener("click", () => newDocument());
-  if (dom.saveDocumentButton) dom.saveDocumentButton.addEventListener("click", saveDocumentRecord);
+  if (dom.saveDocumentButton) dom.saveDocumentButton.addEventListener("click", () => saveDocumentRecord());
+  if (dom.forcePrintSavePreviewButton) dom.forcePrintSavePreviewButton.addEventListener("click", () => {
+    saveDocumentRecord({ forcePrint: true, syncTemplate: true });
+  });
   if (dom.printButton) dom.printButton.addEventListener("click", printPdf);
   if (dom.exportButton) dom.exportButton.addEventListener("click", exportExcel);
   if (dom.editPreviewButton) dom.editPreviewButton.addEventListener("click", togglePreviewEditMode);
@@ -5032,7 +5037,7 @@ function fileUrlFromPath(path) {
   return `file://${text.split("/").map(encodeURIComponent).join("/")}`;
 }
 
-async function saveDocumentRecord() {
+async function saveDocumentRecord(options = {}) {
   if (appState.isSaving) return;
   const doc = appState.document;
   if (!doc.number.trim()) {
@@ -5074,7 +5079,7 @@ async function saveDocumentRecord() {
       appState.records.push(nextRecord);
     }
     
-    saveState({ syncTemplate: isAdmin() });
+    saveState({ syncTemplate: options.syncTemplate && isAdmin() });
     renderRecords();
     refreshCalculationsAndPreview();
     
@@ -5100,7 +5105,9 @@ async function saveDocumentRecord() {
       saveState({ force: true, syncTemplate: isAdmin() });
     }
     
-    window.print();
+    if (options.forcePrint) {
+      window.print();
+    }
     newDocument({ silent: true });
     
     showToast("Record, PDF, and Excel saved. New document ready.");
