@@ -5670,6 +5670,10 @@ async function exportExcel(options = {}) {
 }
 
 async function saveBlobForFileType(fileType, blob, fileName, mimeType, extension, description) {
+  // Try Electron API first if available
+  const electronResult = await saveBlobWithElectron(fileType, blob, fileName);
+  if (electronResult !== "unavailable") return electronResult;
+  
   const macBridgeResult = await saveBlobWithMacBridge(fileType, blob, fileName);
   if (macBridgeResult !== "unavailable") return macBridgeResult;
   const folderResult = await saveBlobToPermittedFolder(fileType, blob, fileName);
@@ -5678,6 +5682,39 @@ async function saveBlobForFileType(fileType, blob, fileName, mimeType, extension
   if (pickerResult !== "download") return pickerResult;
   downloadBlob(blob, fileName);
   return "download";
+}
+
+async function saveBlobWithElectron(fileType, blob, fileName) {
+  if (!window.electron?.saveFile) return "unavailable";
+  try {
+    const base64 = await blobToBase64(blob);
+    const result = await window.electron.saveFile({
+      content: base64,
+      fileName: fileName,
+      path: configuredSavePath(fileType) || appState.settings.defaultDownloadPath,
+      filters: [
+        {
+          name: fileType === "pdf" ? "PDF Document" : "Excel Workbook",
+          extensions: [fileType === "pdf" ? "pdf" : "xlsx"]
+        }
+      ]
+    });
+    
+    if (result.cancelled) return "cancelled";
+    if (result.path) {
+      if (fileType === "pdf") {
+        appState.settings.pdfSavePath = result.path;
+      } else {
+        appState.settings.excelSavePath = result.path;
+      }
+      saveState({ force: true });
+      return "saved";
+    }
+    return "unavailable";
+  } catch (error) {
+    console.error("Electron save error:", error);
+    return "unavailable";
+  }
 }
 
 function hasMacSaveBridge() {
